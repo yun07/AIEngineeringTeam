@@ -2,7 +2,9 @@
 
 **Project Context & Living Specification**
 
-Last updated: 18 November 2026
+Last updated: 19 November 2026
+
+**Status:** Canonical charter, revision 2. The Phase 1 plan is aligned with this charter; no implementation has started.
 
 ## 1. Project Vision
 
@@ -63,6 +65,7 @@ Possible roles include:
 - Environment Manager
 - Profiling Specialist
 - Gardening Agent
+- Independent Consultant / Reviewer
 
 These are examples, not a fixed list. New roles can be introduced when they provide real value.
 
@@ -96,6 +99,32 @@ Use scripts and deterministic tools for predictable tasks. Use AI where reasonin
 
 Avoid building infrastructure that does not solve an actual problem.
 
+### 2.7 Controlled Self-Improvement
+
+The team should improve its own capabilities over time through a controlled, measurable and independently verified process.
+
+The system should eventually be able to:
+
+- Analyse task outcomes, failures, retries, costs and QA results.
+- Identify recurring weaknesses and inefficiencies.
+- Propose improvements to agent prompts, workflows, tools and architecture.
+- Delegate approved improvements to development agents.
+- Use independent QA to verify changes.
+- Evaluate whether the changes actually improve performance.
+- Retain successful improvements and support rollback when necessary.
+
+Improvements should be accepted on evidence rather than confidence. The team must not weaken its own security rules, approval requirements, budget limits or verification standards without explicit human approval.
+
+Self-improvement is a long-term design principle. Phase 1 does not implement it.
+
+### 2.8 Governance of the Team's Own Rules
+
+The human remains the ultimate authority.
+
+Agents may analyse, recommend, plan and execute permitted work. They may not change the rules that govern them, including architecture boundaries, security rules, permission policies, approval requirements, verification standards or financial limits, without explicit human approval.
+
+A system that can lower its own guardrails is not autonomous, it is uncontrolled.
+
 ---
 
 ## 3. System Overview
@@ -117,6 +146,28 @@ It should focus on project-level reasoning rather than doing every specialist ta
 Independent agents responsible for specific work.
 
 They should have suitable tools, permissions and isolated working contexts.
+
+### Independent Consultant / Reviewer — future role
+
+A possible future role that reviews work rather than producing it.
+
+Its responsibilities may include:
+
+- Independently reviewing architecture and implementation decisions.
+- Inspecting project files, Git history, execution records and QA reports.
+- Identifying weaknesses and challenging existing assumptions.
+- Recommending improvements.
+- Producing independent technical review reports.
+
+The Consultant must have a separate session and context from the Orchestrator and Developer. It should not automatically implement or approve its own recommendations. Implementation remains with the Developer and verification remains with QA, both under the Workflow Engine's control.
+
+This role is not a Phase 1 requirement.
+
+### Agents, roles and model providers
+
+An agent is a role with its own instructions, context, tools and permissions. A model provider such as DeepSeek is the technology that powers a role.
+
+The same provider may power several independent roles without making those roles the same agent. Role definitions and provider configuration stay separate, so a provider can be replaced without changing who does what.
 
 ### Python Workflow Engine
 
@@ -183,6 +234,8 @@ Actions with wider system impact, security implications or significant risk shou
 
 Examples include system-level software installation, driver changes, registry modifications and administrative operations.
 
+The boundary between routine and sensitive action is defined by the current phase plan and may be tightened by the human at any time. Agents cannot widen their own permissions.
+
 ### 4.4 Environment Management
 
 The team should be able to inspect project environments, identify missing dependencies and handle routine setup where permitted.
@@ -190,6 +243,8 @@ The team should be able to inspect project environments, identify missing depend
 Installation and configuration should be recorded and verified.
 
 Uncertain or risky system changes should be escalated to the user.
+
+Setup is limited by the current phase plan. Phase 1 permits no package installation at all; missing dependencies are reported to the user as manual actions.
 
 ### 4.5 Cost Management
 
@@ -199,17 +254,40 @@ The system should be able to track costs by task and agent, enforce budgets, lim
 
 Provider-specific pricing and limits should not be hardcoded into the overall architecture.
 
-### 4.6 Continuous Improvement
+### 4.6 Controlled Self-Improvement
 
-A future Gardening Agent may analyse recurring failures, duplicated work and common mistakes.
+A future Gardening Agent may analyse recurring failures, duplicated work, retry costs and QA results.
 
 It should help improve shared instructions, tools, tests and workflows rather than relying only on agents remembering past mistakes.
+
+Any proposed improvement follows the same path as ordinary work:
+
+1. Evidence is collected from task outcomes, failures, retries, costs and QA reports.
+2. A weakness or inefficiency is identified and described.
+3. An improvement is proposed, scoped and tied to the evidence that motivated it.
+4. The proposal is approved by the human where it affects architecture, security, permissions, approvals, budgets or verification standards.
+5. Approved work is delegated to development agents.
+6. Independent QA verifies the change.
+7. The change is evaluated against the previous behaviour.
+8. Successful changes are retained; failed changes are rolled back.
+
+The team must never weaken its own security rules, approval requirements, budget limits or verification standards without explicit human approval.
+
+### 4.7 Governance and Human Authority
+
+The human remains the ultimate authority.
+
+Agents may analyse, recommend, plan and execute permitted work. Changes to core architecture, security boundaries, permission policies, approval requirements, verification standards and financial limits remain subject to explicit human control.
+
+The Orchestrator and any other agent must not be able to modify the rules that govern their own operation. Changes of that kind are human actions, or require recorded human approval before taking effect.
 
 ---
 
 ## 5. Development Roadmap
 
 This is an indicative development direction, not a fixed implementation plan.
+
+The phase names describe capability order, not a one-to-one mapping to implementation plan milestones. A phase plan may combine several early capabilities into one vertical slice, provided the principles in this charter are preserved.
 
 ### Phase 1 — Foundation
 
@@ -242,6 +320,7 @@ Gradually introduce:
 - Environment management.
 - Better logging and recovery.
 - Shared tools and reusable agent skills.
+- Recorded, human-approved improvements to prompts, tools and workflows based on evidence.
 
 ### Phase 5 — Expansion
 
@@ -250,12 +329,14 @@ Explore additional specialist agents and more complex workflows.
 Potential future features:
 
 - Gardening Agent.
+- Independent Consultant / Reviewer.
+- Controlled self-improvement loop with evaluation and rollback.
 - Proactive project monitoring.
 - Mobile control interface.
 - Voice commands and voice responses.
 - Human approval through a mobile device.
 
-These features should be added when the foundation is reliable, not all at once.
+These features should be added when the foundation is reliable, not all at once. None of them are Phase 1 requirements.
 
 ---
 
@@ -275,20 +356,30 @@ Verification status:
 | IDE | VS Code | Verified |
 | Coding assistant | Zoo Code | Verified |
 | Main project directory | `C:\AIProjects\AIEngineeringTeam` | Verified |
-| Python | 3.12.16 | Previously confirmed |
-| Python environment | Conda: `local-agent` | Previously confirmed |
+| Python | 3.12.16 | Verified in `ai-team` |
+| Python environment | Conda: `ai-team` | Verified |
+| Second Python environment | Conda: `local-agent` | Previously confirmed |
 | Python distribution | Miniconda | Previously confirmed |
-| Version control | Git | Previously confirmed |
-| OpenAI SDK | Installed | Previously confirmed |
-| Git repository in this workspace | Not yet checked | Not yet confirmed |
+| pip | Available in `ai-team` | Verified |
+| Version control | Git | Verified |
+| OpenAI SDK | Installed only in `local-agent` | Not yet confirmed in `ai-team` |
+| pytest | Not yet verified | Not yet confirmed in `ai-team` |
+| tkinter | Not yet verified | Not yet confirmed in `ai-team` |
+| Git repository in this workspace | Exists, with an initial commit | Verified |
 
 Zoo Code is currently installed and being used in VS Code. The choice of coding assistant remains revisable.
+
+The OpenAI SDK is the client currently assumed by the Phase 1 plan. The live provider and model identifiers remain open decisions, and the provider adapter must stay replaceable.
 
 `C:\AIProjects\UnrealAIEngineering` is a separate Unreal Engine project. It is not part of this AI Engineering Team workspace.
 
 ### Current Stage
 
 The project is at the architecture and foundation planning stage.
+
+The canonical principles, the Phase 1 architecture plan and its milestones are documented. No implementation code has been written yet.
+
+The Phase 1 blueprint is kept in `plans/phase1-architecture-plan.md` and is subordinate to this charter.
 
 The immediate objective is to build a working basic system, not to implement every future feature.
 
@@ -298,7 +389,7 @@ The immediate objective is to build a working basic system, not to implement eve
 
 The following areas remain flexible and should be evaluated as the project develops:
 
-- Which AI model providers to use.
+- Which AI model providers to use for the first live run, and which model to assign to each role. DeepSeek is one candidate; the Workflow Engine must not depend on any specific provider.
 - Which coding assistant and agent execution framework to adopt.
 - How to create and manage independent agent sessions.
 - How agents should communicate and exchange task information.
@@ -306,6 +397,9 @@ The following areas remain flexible and should be evaluated as the project devel
 - How to balance model cost, speed and quality.
 - How to provide mobile and voice control.
 - Which additional specialist agents are worth creating.
+- When to introduce the Independent Consultant / Reviewer, and whether it reports to the human, the Orchestrator, or both.
+- Which measures define a genuine improvement for controlled self-improvement, and how rollback decisions are governed.
+- How human approval should govern changes to policies, prompts and budgets as the system gains autonomy.
 
 New technologies and better approaches can be considered at any stage.
 
@@ -324,6 +418,7 @@ When continuing the project:
 3. Avoid asking the user to repeat information already documented here.
 4. Suggest improvements when there is a clear practical benefit.
 5. Update this document when important decisions, architecture or project progress change.
+6. Treat this document as authoritative when it conflicts with an implementation plan or with code. Resolve the conflict in favour of this charter, or update the charter deliberately first.
 
 **This is a living document, not a rigid technical contract.**
 

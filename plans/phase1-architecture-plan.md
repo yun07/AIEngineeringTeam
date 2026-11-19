@@ -1,0 +1,757 @@
+# Phase 1 Architecture and Implementation Plan
+
+**Project:** Generic AI Engineering Team
+**Scope:** Phase 1 = minimal but complete end-to-end system
+**Status:** Design baseline for review. No implementation started.
+**Revision:** 4 — aligned with canonical charter revision 2; future roles and self-improvement kept out of Phase 1; governance constraint added
+**Companion documents:** [`AI_Engineering_Team.md`](../AI_Engineering_Team.md)
+
+**Relationship to the charter:** This plan implements one minimal Phase 1 slice of the canonical charter. Where the two documents disagree, the charter is authoritative and this plan is corrected. The charter's indicative Phase 1 to Phase 3 capabilities are delivered here as a single Phase 1 vertical slice; later charter phases remain future direction.
+
+---
+
+## Revision Notes
+
+Changes in revision 2:
+
+1. Path restrictions are no longer described as a sandbox. Phase 1 isolation is logical, in-process, and explicitly not a security boundary.
+2. Execution of any agent-generated code now requires a separate human approval for each execution.
+3. Child processes receive a scrubbed environment allowlist. No API keys or secrets are inherited or passed as arguments.
+4. Package installation is denied in Phase 1 rather than approval-gated.
+5. QA writes only inside `qa_tests/`. The engine, not QA, writes evidence reports under `runs/`.
+6. The plan task-count limit is a single value, `max_tasks_per_plan = 3`, used consistently.
+7. Success, retry, retry exhaustion, budget stop, approval denial and approval grant are separate test runs with separate fake scripts and separate state directories.
+8. Removed from Phase 1: event replay, resumable approvals, `approve` and `resume` commands, `status` command, SQLite, plugin registries, batch approval flags.
+9. Roadmap reordered so each milestone adds only what the next milestone needs, starting from a FakeProvider vertical slice.
+10. Environment assumptions corrected: `ai-team` conda environment is the target, Python 3.12.16 and pip confirmed there, OpenAI SDK not yet confirmed there, pytest and tkinter unverified, Git repository and initial commit already exist.
+
+Changes in revision 3:
+
+1. Execution limits are now part of M1 and the hard constraints. Token accounting, USD pricing and budget enforcement remain in M3.
+2. The fake provider returns simulated usage so limits are testable without paid calls.
+3. The session-wide approval option `a` is removed. Every execution of generated code needs its own `y` or `n`.
+4. Secret access is split explicitly: the trusted engine may read the key, agent tools and child processes never can.
+5. Live provider mode validates model identifiers and pricing before any API call.
+
+Changes in revision 4:
+
+1. This plan is explicitly subordinate to `AI_Engineering_Team.md`; conflicts resolve in favour of the charter.
+2. The Independent Consultant / Reviewer, the Gardening Agent and controlled self-improvement are recorded as future directions, not Phase 1 roles.
+3. A governance constraint states that no agent, including the Orchestrator, can change security rules, approval requirements, budget limits, verification standards or its own permissions.
+4. The live provider and model identifiers are recorded as an open configuration decision, so no provider is embedded in the engine.
+5. The charter's verified environment and Git facts are mirrored here.
+
+---
+
+## Scope Statement
+
+Phase 1 delivers one working vertical slice of a generic AI engineering team:
+
+- Chief of Staff / Orchestrator
+- Independent Developer Agent
+- Independent QA Agent
+- Python Workflow Engine that owns state, routing, retries and limits
+- Basic Cost Manager with budgets
+- Human approval gate for sensitive operations
+
+The Independent Consultant / Reviewer, the Gardening Agent and controlled self-improvement are long-term directions in the charter. They are not Phase 1 roles and are not part of this plan's scope.
+
+The Snake Game is the first end-to-end fixture only. Nothing in the architecture may depend on Snake, on game development, or on Unreal Engine. The same engine must later host unrelated specialists without structural change.
+
+Hard constraints:
+
+1. Developer and QA are genuinely separate agent sessions with separate contexts, prompts, tool sets and transcripts.
+2. The Workflow Engine owns task state and execution flow deterministically.
+3. QA executes tests itself and produces evidence that the engine validates against the tool audit log.
+4. Deterministic execution limits — task count, turns per session and LLM calls per task — exist from the first executable milestone. Token accounting, USD pricing and budget enforcement arrive at M3, when they can be tested against real usage data.
+5. The model provider is replaceable behind a narrow interface.
+6. No API keys in source, Git, transcripts, prompts or child processes. Only the trusted engine reads them.
+7. Small Python implementation, no agent framework.
+8. Zoo Code modes are development tooling, not runtime agents.
+9. No agent, including the Orchestrator, can change or weaken security rules, approval requirements, budget limits, verification standards, its own permissions or the policy that governs it. Policy is human-owned.
+
+Deferred to later phases: Independent Consultant / Reviewer, Gardening Agent, controlled self-improvement, Git worktree isolation, OS-level process or container isolation, resumable approvals, complex permission systems, parallel execution, mobile and voice control, SQLite, dashboards.
+
+---
+
+## A. Proposed Architecture and Responsibilities
+
+### A.1 Layering principle
+
+Control flow lives in exactly one place: the Python Workflow Engine. AI is used only where judgement is required, namely planning, implementing and verifying. State, routing, retry counting, budgets, permissions and evidence checking are deterministic code.
+
+The strongest structural rule:
+
+> The only channel between two agents is a serialized handoff bundle produced by the engine. No agent ever sees another agent's conversation.
+
+### A.2 Security posture, stated plainly
+
+This section exists so that no later reader overestimates Phase 1.
+
+- Phase 1 runs every agent in the **same Python process, under the same Windows user account**, as the engine. There is no operating system sandbox, no container, no virtual machine and no reduced-privilege account.
+- Filesystem path checks are a **guardrail against mistakes**, not a security boundary. They reject `..` traversal, absolute paths outside allowed roots and `.env` access. They cannot stop code that has already run.
+- **All execution of agent-generated code requires a separate, explicit human approval for that specific execution.** This includes `python file.py`, `python -m pytest`, and any command that imports or evaluates generated code. Approval prompts show the exact command, the working directory and the files that will be executed. There is no batch, session-wide or run-wide approval.
+- **Secret access is asymmetric by design.** The trusted Workflow Engine may read `.env` or the configured environment variable to build the provider client. Agent tools, handoff bundles, prompts and transcripts never receive secret values. Child processes never inherit or receive secrets.
+- Child processes are launched with a **scrubbed environment allowlist**. API keys and other secrets are never inherited and never passed as arguments.
+- **No automatic package installation.** Installation requests are denied in Phase 1 and reported to the user as a manual action.
+- The QA evidence cross-check protects against fabricated or sloppy reporting. It is an integrity control, not a security control.
+- Agent session separation is **logical, not physical**. Separate message lists and transcripts prevent context contamination. They do not prevent one agent's code from affecting the machine.
+
+Consequence for acceptance testing: the first live end-to-end run is performed with a small budget, on a repository the user controls, with approvals visible in the console.
+
+### A.3 Components
+
+| Component | Owns | Explicitly must not do |
+|---|---|---|
+| CLI `aiteam/cli.py` | One command: `run`, with `--project`, `--request`, `--budget`, `--plan-only`, `--fake` | Contain workflow logic |
+| Workflow Engine `aiteam/engine/workflow.py` | Task and run states, routing, retry counting, execution limits, budget stops, escalation, finalization | Call the model directly or edit project files |
+| Policy `aiteam/engine/policy.py` | Role permission matrix, exact-command allowlist, risk classification, approval prompt, child environment scrubbing | Pretend to be an OS sandbox |
+| Handoff Builder `aiteam/engine/handoff.py` | Bounded, role-specific context bundles built from state | Pass raw transcripts |
+| Agent Session `aiteam/agents/base.py` | One throwaway conversation per run, task, attempt and role: prompt, message list, tool loop, turn cap, transcript | Share memory with another agent |
+| Role definitions `aiteam/agents/roles.py` plus `agents/prompts/` | Role instructions, allowed tools, model selector, output schema | Decide retries or task state |
+| Tool Layer `aiteam/tools/filesystem.py`, `shell.py` | Path-contained file operations, command execution, timeout, output cap, scrubbed environment | Trust model-supplied paths |
+| Provider Adapter `aiteam/providers/` | Narrow protocol: neutral messages, tool specs, usage. OpenAI implementation plus a fake provider that returns simulated usage. | Leak into engine logic, or expose credentials to agents |
+| Cost Manager `aiteam/cost/manager.py` | Usage records, USD from configured pricing, pre-call budget checks, hard stops | Hardcode provider prices |
+| State Store `aiteam/state/store.py` | `index.json` snapshot plus append-only `events.jsonl`, `usage.jsonl`, `approvals.jsonl`, session transcripts | Provide a general event-sourcing framework |
+| Reporting, part of `engine/workflow.py` | Markdown run report and QA evidence summary under `runs/<run_id>/` | Be authored by an agent |
+| Project Workspace `projects/<slug>/` | Generated artifacts under test | Be edited by the Orchestrator |
+
+### A.4 Agent identity versus agent session
+
+An agent identity persists on disk:
+
+- role name and system prompt file
+- tool permission set
+- model selector
+- archived transcripts
+
+A session is created fresh for each unit of work:
+
+- new `session_id`
+- new message list
+- new transcript file
+- explicit attempt number
+- a handoff bundle as its only input
+- no inherited conversation and no shared message objects
+
+Phase 1 implements this with separate Python objects and separate transcript files. It does not use separate processes. Separate processes, worktrees or containers are Phase 4 concerns listed in section G.
+
+### A.5 Component diagram
+
+```mermaid
+flowchart TD
+    U[User] --> CLI[CLI python -m aiteam]
+    CLI --> ENG[Workflow Engine deterministic]
+    ENG --> ORC[Orchestrator Session]
+    ENG --> DEV[Developer Session]
+    ENG --> QA[QA Session]
+    ORC --> PROV[Provider Adapter]
+    DEV --> PROV
+    QA --> PROV
+    DEV --> TOOLS[Tool Layer path guards and limits]
+    QA --> TOOLS
+    TOOLS -->|CONFIRM action| APPR[Human approval prompt]
+    APPR --> U
+    TOOLS --> WS[Project Workspace projects slash slug]
+    PROV --> COST[Cost Manager]
+    COST --> STORE[State Store]
+    ENG --> STORE
+    ENG --> REP[Run report under runs]
+```
+
+### A.6 State model
+
+Task states:
+
+- `pending`
+- `dev_running`
+- `qa_running`
+- `qa_passed`
+- `qa_failed`
+- `blocked`
+- `escalated`
+- `done`
+
+Run states:
+
+- `planning`
+- `executing`
+- `verifying`
+- `completed`
+- `blocked`
+- `escalated`
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending
+    pending --> dev_running
+    dev_running --> qa_running
+    qa_running --> qa_passed
+    qa_running --> qa_failed
+    qa_failed --> dev_running: attempt below max
+    qa_failed --> escalated: attempts exhausted
+    dev_running --> blocked: denial or limit reached
+    qa_running --> blocked: denial or limit reached
+    qa_passed --> done
+    escalated --> [*]
+    blocked --> [*]
+    done --> [*]
+```
+
+Approvals are handled synchronously inside the tool call, so there is no `awaiting_approval` state and no resume machinery. A denial moves the task directly to `blocked`, which is the honest outcome for a non-interactive run.
+
+The engine is a loop over a pure function `next_action(run, tasks) -> Action`, plus deterministic handlers. Purity makes every routing rule testable offline with a fake provider.
+
+Actions:
+
+- `orchestrate_plan`
+- `run_developer`
+- `run_qa`
+- `retry_task`
+- `escalate`
+- `finalize`
+- `abort_budget`
+
+### A.7 Independent verification
+
+QA is not trusted; QA evidence is validated by the engine.
+
+1. QA receives a fresh session. It never receives the Developer transcript. It receives the user request, the task acceptance criteria, the file manifest with hashes and the previous QA verdict when retrying.
+2. QA writes tests only inside `projects/<slug>/qa_tests/`. Every other write path is refused by the tool layer.
+3. QA runs verification commands itself. Each execution is a CONFIRM action and therefore approved by the human.
+4. QA must return verdict JSON:
+
+```json
+{
+  "verdict": "pass",
+  "summary": "short explanation",
+  "checks": [
+    {
+      "name": "wall collision kills snake",
+      "command": "python -m pytest qa_tests -q",
+      "exit_code": 0,
+      "evidence": "captured output excerpt"
+    }
+  ],
+  "unverified_requirements": []
+}
+```
+
+5. The engine cross-checks every `checks[].command` and `exit_code` against the QA session's actual tool audit log. Any mismatch, zero executed commands, or empty `checks` downgrades the verdict to `fail` with an engine-attributed reason.
+6. **The engine writes every report file**, including the QA evidence summary inside `runs/<run_id>/report.md`. QA writes no report files at all.
+
+### A.8 Permissions and human approval
+
+**AUTO** means the action proceeds and is logged:
+
+- reading files inside the active project, except `.env` and other secret files, which are always denied
+- Developer writes inside `projects/<slug>/`, excluding `qa_tests/`
+- QA writes inside `projects/<slug>/qa_tests/` only
+- reading a fixed allowlist of informational commands that execute no generated code, matched by exact argument list, for example `git status --short` and `python --version`
+
+**CONFIRM** means the human is asked before execution:
+
+- any command that runs, imports or evaluates generated code, including `python <file>`, `python -m pytest`, and any test runner
+- writes outside the active project
+- deletions beyond a small threshold
+- any command not on the informational allowlist
+
+**DENY** means the action is refused and recorded:
+
+- reading or writing `.env` or any secret store through an agent tool; only the trusted engine may read them
+- paths outside the repository
+- deleting the repository root or `projects/` root
+- package installation of any kind, in any form, including `pip`, `conda`, `npm`, `winget` and subprocess-wrapped variants
+- privilege escalation attempts
+
+The allowlist matches complete argument vectors, never prefixes. Matching prefixes would make `python` a universal code-execution grant, which is precisely what must not happen.
+
+```mermaid
+flowchart LR
+    CALL[Agent requests tool call] --> CLS{Risk class}
+    CLS -->|AUTO safe read or in-project write| EXEC[Execute and log]
+    CLS -->|CONFIRM generated code or outside write| PROMPT[Prompt shows command cwd and target files]
+    PROMPT -->|yes| EXEC
+    PROMPT -->|no or no TTY| DENY[Log denial and block the task]
+    CLS -->|DENY secrets installs outside repo| DENY
+```
+
+Approval prompt rules:
+
+- The prompt shows the exact argv, working directory, every file that will be executed, and a warning that the code was produced by an AI and is unreviewed.
+- Default and empty input is No.
+- Choices are exactly `y` to approve this specific execution and `n` to deny this specific execution. There is no approve-once-for-the-session option, no batch approval, and no session-wide or run-wide flag.
+- Every execution of agent-generated code receives its own decision, even when the same command was approved earlier in the same session.
+- When stdin is not a TTY, a CONFIRM action is treated as denied and the task becomes `blocked` with a clear message.
+- Every decision is appended to `state/approvals.jsonl` with timestamp, run, task, session, argv and decision.
+
+Governance of these rules:
+
+- Policy constants, approval requirements, budget limits and verification standards are human-owned configuration.
+- No agent, including the Orchestrator, can modify them, grant itself permissions, or relax a check. A run that needs such a change stops and reports it to the user.
+- Phase 1 has no self-modification path at all.
+
+Child environment rules:
+
+- Build the child environment from an allowlist only, for example `PATH`, `PATHEXT`, `SystemRoot`, `WINDIR`, `TEMP`, `TMP`, `COMSPEC`, `USERPROFILE`, `HOMEDRIVE`, `HOMEPATH`, `APPDATA`, `LOCALAPPDATA`, `NUMBER_OF_PROCESSORS`, plus `PYTHONUTF8=1` and `PYTHONIOENCODING=utf-8`.
+- Never copy `os.environ` wholesale.
+- Never forward variables matching `AITEAM_`, `OPENAI_`, `AZURE_`, `AWS_`, `ANTHROPIC_`, `GITHUB_`, `TOKEN`, `SECRET`, `KEY` or `PASSWORD`.
+- Never pass secrets in argv.
+- The engine keeps the key in memory only to build the provider client. It is never placed in a child environment, argv, prompt, handoff bundle, transcript or error message.
+- Tests assert that the child environment contains none of the configured secret values.
+
+### A.9 Execution limits, cost and budget
+
+Deterministic execution limits and cost accounting are deliberately separate, so limits exist at the first executable milestone without pulling pricing in early.
+
+**Execution limits, from M1**
+
+- `max_tasks_per_plan`, `max_turns_per_session`, `max_llm_calls_per_task`, command timeout and output cap are enforced by the engine and the session runtime.
+- `max_attempts` joins these limits at M4, when retry routing exists.
+- Counters increment deterministically. Reaching a limit moves the task or run to `blocked` with the breached limit named in the report.
+- The fake provider returns simulated usage counts, configurable per scripted response, so every limit is testable without a paid call.
+
+**Cost accounting and budget enforcement, from M3**
+
+- Every provider call emits a `UsageRecord` with run, task, agent, model, input tokens, output tokens and USD. Records are written even when the call fails.
+- USD is computed only from the pricing table in `config/aiteam.toml`. An unknown model is a hard configuration error, never a silent zero cost.
+- The run budget is checked before each call. Exhaustion moves the task and run to `blocked` with a per-agent cost breakdown in the report.
+- Live provider mode validates models and pricing before the first API call, as described in C.1.
+
+Limits are enforced by the engine, never by asking a model to stop.
+
+---
+
+## B. System Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI
+    participant Engine
+    participant Orchestrator
+    participant Developer
+    participant QA
+    participant Tools
+    participant Store
+    User->>CLI: request plus budget
+    CLI->>Engine: start run
+    Engine->>Store: create run and events
+    Engine->>Orchestrator: plan request
+    Orchestrator-->>Engine: JSON plan with at most three tasks
+    Engine->>Engine: validate schema and task count
+    Engine->>Store: save plan and tasks
+    loop each task until pass or escalation
+        Engine->>Developer: new session plus handoff bundle
+        Developer->>Tools: write files inside project
+        Tools-->>Developer: results
+        Developer->>Tools: request execution of generated code
+        Tools->>User: approval prompt
+        User-->>Tools: approve or deny
+        Developer-->>Engine: summary and file manifest
+        Engine->>QA: new session plus criteria and manifest
+        QA->>Tools: write tests in qa_tests only
+        QA->>Tools: request test execution
+        Tools->>User: approval prompt
+        User-->>Tools: approve or deny
+        QA-->>Engine: verdict JSON with checks and evidence
+        Engine->>Engine: validate evidence against audit log
+    end
+    Engine->>Store: terminal state and usage records
+    Engine->>Engine: write report and evidence summary
+    Engine->>CLI: report path and summary
+    CLI->>User: result or escalation
+```
+
+### B.1 Narrative of the Snake run
+
+1. User runs `python -m aiteam run --project snake --budget 2.00 --request "Build a playable Snake game"`.
+2. The engine creates a run and a project record and appends events.
+3. The Orchestrator session, with no file tools, returns a plan of one to three tasks, each with a description, acceptance criteria and technology constraints. The engine validates the schema, enforces `max_tasks_per_plan = 3` and persists the plan.
+4. For each task the engine builds a Developer bundle and starts a fresh Developer session with path-contained filesystem tools and shell access inside `projects/snake`.
+5. The Developer writes files without approval. Each attempt to execute them triggers its own CONFIRM prompt showing the command and targets. There is no session-wide approval.
+6. The engine builds a QA bundle from state only and starts a fresh QA session with read access to the project, write access limited to `qa_tests/` and shell access. QA writes its own tests and requests execution; each execution is approved or denied separately.
+7. The engine validates the verdict against the audit log and writes the evidence summary into the report.
+8. Pass leads to `done`. Fail increments the attempt and starts a new Developer session containing the failed checks. Exhaustion leads to `escalated`.
+9. The engine writes `runs/<run_id>/report.md` with the plan, attempts, commands and exit codes, evidence, cost per agent and any denial or block reason.
+10. The CLI prints the verdict and report path.
+
+### B.2 Context separation
+
+| Handoff | Contains | Excludes |
+|---|---|---|
+| Orchestrator input | user request, budget, project type hint | any prior agent transcript |
+| Developer bundle | request, task description, acceptance criteria, technology constraints, previous QA failed checks, file manifest | QA transcript, QA reasoning, engine internals |
+| QA bundle | request, acceptance criteria, file manifest with hashes, previous QA verdict, testing conventions | Developer transcript, Developer claims |
+| User report | plan, states, commands and exit codes, evidence, cost, denials and blocks | secrets, full transcripts by default |
+
+---
+
+## C. Proposed Folder and File Structure
+
+```text
+c:/AIProjects/AIEngineeringTeam/
+├─ AI_Engineering_Team.md          existing living spec, unchanged in Phase 1 plan
+├─ .gitignore                      exists, extend for state/, runs/, projects/
+├─ .env.example                    key names only, no values
+├─ README.md                       how to run, security posture, environment setup
+├─ pyproject.toml                  metadata, dependencies, pytest config
+├─ config/
+│  └─ aiteam.toml                  models per role, pricing, budgets, limits
+├─ aiteam/
+│  ├─ __main__.py                  python -m aiteam entry point
+│  ├─ cli.py                       run command and approval prompt wiring
+│  ├─ config.py                    toml loading, env overrides, validation, redaction
+│  ├─ models.py                    dataclasses for Project, Task, Run, UsageRecord, ApprovalRecord, Event
+│  ├─ state/
+│  │  └─ store.py                  atomic index.json plus three jsonl logs and session transcripts
+│  ├─ engine/
+│  │  ├─ workflow.py               pure next_action plus handlers and report writing
+│  │  ├─ policy.py                 role matrix, exact allowlist, risk classes, approval prompt, env scrubbing
+│  │  └─ handoff.py                bounded bundles, file manifest, failure feedback
+│  ├─ agents/
+│  │  ├─ base.py                   AgentSession, tool loop, turn cap, transcript, JSON repair
+│  │  ├─ roles.py                  role definitions, tool sets, model selectors
+│  │  └─ prompts/
+│  │     ├─ orchestrator.md
+│  │     ├─ developer.md
+│  │     └─ qa.md
+│  ├─ providers/
+│  │  ├─ base.py                   LLMProvider protocol, LLMResponse, ToolSpec
+│  │  ├─ fake.py                   scripted responses with simulated usage, used by tests and the walking skeleton
+│  │  └─ openai_provider.py        openai SDK implementation
+│  ├─ tools/
+│  │  ├─ filesystem.py             path-contained read, write, list, hash
+│  │  └─ shell.py                  scrubbed env, timeout, cwd pin, output cap
+│  └─ cost/
+│     └─ manager.py                pricing lookup, budget checks, usage aggregation
+├─ tests/
+│  ├─ fakes.py                     fake scripts, simulated usage builders and temporary workspace helpers
+│  ├─ fixtures/
+│  │  ├─ aiteam.fake.toml          fake provider, fake models and zero prices for tests
+│  │  └─ aiteam.invalid-live.toml  placeholder models and bad pricing for validation tests
+│  ├─ test_config.py               includes placeholder, missing pricing and negative price checks
+│  ├─ test_state_store.py
+│  ├─ test_policy.py               allowlist, path guards, env scrubbing, install denial, per-execution approval
+│  ├─ test_cost_manager.py
+│  ├─ test_agent_session.py        separate sessions and transcript isolation
+│  └─ scenarios/
+│     ├─ test_success.py
+│     ├─ test_retry_then_pass.py
+│     ├─ test_retry_exhausted.py
+│     ├─ test_budget_stop.py
+│     ├─ test_approval_denied.py
+│     └─ test_approval_granted.py
+├─ plans/
+├─ projects/                       generated work such as projects/snake, git ignored in Phase 1
+├─ runs/                           per-run transcripts and report.md, git ignored
+└─ state/                          engine state and logs, git ignored
+```
+
+Configuration is deliberately small. Command policy lives in code as constants in `policy.py`; only models, prices and limits are configurable.
+
+```toml
+[provider]
+name = "openai"                  # example only; provider choice is open and the adapter is replaceable
+
+[models]
+orchestrator = "gpt-4.1"         # example values, replace with your provider's current model IDs
+developer = "gpt-4.1-mini"
+qa = "gpt-4.1-mini"
+
+[limits]
+max_tasks_per_plan = 3
+max_turns_per_session = 12
+max_llm_calls_per_task = 20
+max_attempts = 2
+command_timeout_seconds = 120
+max_tool_output_chars = 8000
+
+[pricing."gpt-4.1"]              # illustrative rates, set from the provider's published prices
+input_per_mtok = 2.00
+output_per_mtok = 8.00
+
+[pricing."gpt-4.1-mini"]
+input_per_mtok = 0.40
+output_per_mtok = 1.60
+```
+
+### C.1 Configuration validation
+
+Live provider mode fails before any API call when:
+
+- any role model identifier is empty or contains a placeholder such as `update-me`, `changeme`, `todo`, `your-model-id`, `xxx` or an unfilled angle-bracket token
+- any role model lacks a `[pricing."<model>"]` entry
+- any pricing value is missing, non-numeric or negative
+
+The engine checks this while loading configuration and again immediately before the first live call. Failure exits with the offending role, model and field, records no usage and makes no request. Fake mode uses `tests/fixtures/aiteam.fake.toml` with `provider.name = "fake"`, fake model identifiers and zero prices, so tests never need real model IDs or real rates. Validation is provider agnostic: no provider- or model-specific rule is embedded in the engine.
+
+Generated project layout for the first fixture. Note that QA writes only `qa_tests/` and no report file:
+
+```text
+projects/snake/
+├─ game.py            pure game logic, no UI, deterministic and seedable
+├─ app.py             thin renderer, tkinter if available
+├─ README.md          how to run
+└─ qa_tests/          written only by QA
+   └─ test_game.py
+```
+
+Runtime artefacts:
+
+```text
+state/
+├─ index.json         authoritative snapshot of projects, tasks, runs, counters
+├─ events.jsonl       append-only audit log, never replayed in Phase 1
+├─ usage.jsonl        one record per provider call
+└─ approvals.jsonl    one record per approval decision
+
+runs/<run_id>/
+├─ plan.json
+├─ orchestrator.session.jsonl
+├─ task-1.developer.a1.session.jsonl
+├─ task-1.qa.a1.session.jsonl
+└─ report.md          includes the QA evidence summary written by the engine
+```
+
+`index.json` is authoritative. `events.jsonl` is an audit and reporting trail only. There is no replay, no reconstruction step and no event-sourcing abstraction in Phase 1.
+
+---
+
+## D. Minimal Dependencies and Rationale
+
+### D.1 Verified and unverified environment
+
+| Item | Status | Action |
+|---|---|---|
+| Conda environment `ai-team` | Target environment | Use it for everything |
+| Python 3.12.16 | Confirmed in `ai-team` | None |
+| pip | Confirmed in `ai-team` | None |
+| OpenAI SDK | Confirmed only in `local-agent`, not in `ai-team` | Check in `ai-team`. Install manually by the user if missing. Never installed by an agent. |
+| pytest | Not yet verified in `ai-team` | Check and install manually if missing |
+| tkinter | Not yet verified in `ai-team` | Check. The Snake fixture must pass without it. |
+| Git repository and initial commit | Already exist | Verify clean tree and current branch |
+
+If the OpenAI SDK, pytest or tkinter is missing, the agent team reports it. The user installs it in a normal shell. Phase 1 contains no installation path at all.
+
+### D.2 Dependencies
+
+| Dependency | Type | Why it is needed |
+|---|---|---|
+| `openai` | runtime | SDK for the currently assumed provider adapter. Handles tool schemas, retries and usage reporting. Already available in another environment, must be confirmed in `ai-team`. |
+| `pytest` | dev | Runs the engine's own tests and is reused as the project test runner for QA, so no second test framework appears. |
+
+The adapter isolates the engine from the SDK. If a different live provider is selected, its SDK replaces `openai` and the pricing table is updated; engine code and configuration keys stay unchanged.
+
+Standard library modules used intentionally:
+
+| Module | Use |
+|---|---|
+| `argparse` | CLI parsing |
+| `tomllib` | Configuration and pricing on Python 3.12 |
+| `dataclasses`, `enum`, `uuid` | Domain models and state enumerations |
+| `json`, `pathlib`, `hashlib`, `os` | State files, manifests, atomic writes via `os.replace` |
+| `subprocess` | Command execution with `shell=False`, argument lists, scrubbed environment and timeouts |
+| `logging` | Engine and tool audit trail |
+| `datetime` | Event and usage timestamps |
+
+Deliberately excluded:
+
+- **Agent frameworks** such as LangChain, LangGraph, CrewAI, AutoGen or the OpenAI Agents SDK. They own the control flow that must stay in the engine, add large dependency trees and obscure where state and retries live.
+- **`pydantic`**. One small validation module with clear messages and a single repair retry.
+- **`python-dotenv`**. A small parser inside `config.py`. Real environment variables remain the primary path.
+- **`rich`** and **`typer`**. Plain stdout keeps output pipeable.
+- **`gitpython`**. No Git automation in Phase 1.
+- **Playwright** or **Selenium**. The Snake fixture is stdlib Python, so verification is headless.
+- **Any sandboxing library**. Phase 1 does not claim sandboxing, so it must not pretend to implement it.
+
+### D.3 Secret handling
+
+Three distinct access levels:
+
+| Actor | May read `.env` and secret values | Notes |
+|---|---|---|
+| Trusted Workflow Engine | Yes | Reads the configured environment variable, falling back to `.env` for local development. Holds the value in memory only to build the provider client. |
+| Agent tools, Orchestrator, Developer, QA | No | Denied by policy. Handoffs, prompts, transcripts and tool arguments never contain secret values. Agents reach the model only through the provider adapter. |
+| Child processes | No | Receive the scrubbed allowlist environment from A.8, with secret-shaped names removed. |
+
+- `.env` is already ignored by `.gitignore`. `.env.example` lists variable names with empty values.
+- The logger and transcript writer redact any configured secret value, including inside error messages and tool output.
+- Transcripts never include the process environment.
+- The engine refuses to start when a required key is missing and warns when a key appears to be committed.
+
+---
+
+## E. Step-by-Step Implementation Roadmap
+
+Guiding rule: no feature is built before the milestone that needs it. The first milestone is a working FakeProvider vertical slice, so the whole loop is demonstrable and testable before any paid call or any generated code execution.
+
+### M0 Environment and repository verification
+
+Confirm the `ai-team` conda environment: Python 3.12.16, pip, `openai`, `pytest`, `tkinter`. Confirm the existing Git repository, branch and clean tree. Extend `.gitignore` for `state/`, `runs/`, `projects/`. Add `.env.example`.
+
+Exit criterion: a short environment report records each item as present or missing. Missing packages are reported as manual user actions. No installation is attempted.
+
+### M1 Walking skeleton with FakeProvider, plan, write and execution limits
+
+Add only: `models.py`, minimal `config.py`, `state/store.py` with the snapshot and events log, `providers/base.py`, `providers/fake.py`, `agents/base.py`, the Orchestrator and Developer prompts, `engine/handoff.py` in minimal form, `engine/workflow.py` covering plan and Developer stages, `cli.py run`, and report writing.
+
+Includes deterministic execution limits from the start: task count per plan, turns per session and LLM calls per task, with counters enforced by the engine and the session runtime. The fake provider returns simulated usage counts so the counters are testable without a paid call.
+
+Not yet: code execution, QA, usage records, token accounting, USD pricing, budget enforcement, retries.
+
+Exit criterion: one `python -m aiteam run --fake ...` with a scripted plan creates tasks, writes a file inside `projects/demo/`, emits the event log, writes `runs/<id>/report.md`, and the execution-limits assertions pass, with each cap stopping the run and naming the breached limit.
+
+### M2 Execution, QA and approval
+
+Add only: `tools/shell.py` with the scrubbed environment and timeout, exact-argument informational allowlist, CONFIRM prompts for generated code, `qa_tests/` write restriction, the QA role and prompt, QA evidence JSON and the engine's audit-log cross-check, the approvals log, and denial leading to `blocked`.
+
+Exit criterion: the success, approval-granted and approval-denial scenarios pass against the fake provider, every generated-code execution prompts separately, and `test_policy.py` proves that `pip install` and `.env` access are denied while secret values never reach the child environment.
+
+### M3 Cost accounting and budget enforcement
+
+Add only: `cost/manager.py`, usage records written to `state/usage.jsonl`, token accounting, USD pricing from `config/aiteam.toml`, the run budget check before each call, per-agent cost aggregation, and the live-mode model and pricing validation from C.1.
+
+Exit criterion: the budget-stop scenario passes and the report shows tokens and cost per agent. `test_config.py` proves that placeholder models, missing pricing entries and negative prices are rejected before any call.
+
+### M4 Retry and escalation
+
+Add only: `qa_failed` routing, failure feedback in the Developer bundle, attempt counting and `escalated` when attempts are exhausted.
+
+Exit criterion: the retry-then-pass and retry-exhausted scenarios pass as separate runs.
+
+### M5 Live provider validation
+
+Add only: wiring for the currently assumed OpenAI adapter, or the selected provider's adapter, with a tiny budget and one small task. Keys come from the environment or `.env`, read only by the engine. Every generated-code execution is approved separately.
+
+Exit criterion: live mode refuses to start with placeholder models or invalid pricing, usage and cost are recorded, redaction is verified in the transcript and log, and the per-execution approval prompt is observed.
+
+### M6 Snake specification and QA test plan
+
+Write the requirement, the pure-logic interface, the deterministic headless mode and the exact QA test list. The Developer writes `game.py`, `app.py` and `README.md`. QA writes only `qa_tests/`.
+
+Exit criterion: a human can read the specification and predict each test outcome.
+
+### M7 Snake live end-to-end success run
+
+Run the real flow for the happy path. Retry, budget-stop and denial paths are already proven by dedicated fake-provider scenarios and are not re-proven on a paid run.
+
+Exit criterion: the live criteria in section F are satisfied and `runs/<run_id>/report.md` is published.
+
+### M8 Documentation and backlog
+
+Update `AI_Engineering_Team.md` progress and environment tables. Write `plans/phase1-backlog.md` with the deferred items in section G.
+
+M0 through M4 are sequential. M5 and M6 may proceed in parallel once M4 exists.
+
+---
+
+## F. Acceptance Criteria for the First Snake End-to-End Test
+
+### F.1 Scenario separation
+
+Each scenario is a distinct test run with its own fake script, its own temporary state directory and its own assertions. Scenarios are never combined inside one run.
+
+| Scenario | Provider | Proves |
+|---|---|---|
+| Success | Fake | Plan, Developer write, approved QA execution, validated evidence, `done` |
+| Execution limits | Fake | Turn cap, LLM call cap and task cap each stop the run deterministically |
+| Retry then pass | Fake | Failure feedback reaches a new Developer session, final verdict `done` |
+| Retry exhausted | Fake | Attempt cap respected, terminal state `escalated`, no loop |
+| Budget stop | Fake | Stop before exceeding the budget, terminal state `blocked`, cost detail present |
+| Approval denied | Fake | CONFIRM denial produces `blocked` with a recorded denial and no execution |
+| Approval granted | Fake | A recorded approval allows that one execution to proceed and the run to continue |
+| Snake success | Live | Real model behaviour and real cost on the first fixture |
+
+### F.2 Workflow criteria
+
+1. One command starts a run and it completes without manual intervention except per-execution CONFIRM approvals.
+2. Orchestrator output is schema-valid: between one and three tasks, non-empty acceptance criteria per task. The limit `max_tasks_per_plan = 3` is enforced by the engine and asserted in tests.
+3. Deterministic execution limits work from M1 onward: the turn cap, the LLM call cap per task and the task cap each block the run with the breached limit named, using simulated usage from the fake provider.
+4. Developer and QA ran as separate sessions with different session identifiers, different transcript files and a recorded attempt number.
+5. The QA handoff and transcript contain no Developer transcript content, and QA writes were confined to `qa_tests/`.
+6. QA executed at least one verification command, every reported check matches a command and exit code in the audit log, and the engine performed and logged the cross-check.
+7. The QA verdict is `pass`. `runs/<run_id>/report.md` contains the plan, the evidence summary written by the engine, unverified requirements, and tokens and cost per agent and total.
+8. Retry behaviour is proven by the retry-then-pass run and the retry-exhausted run.
+9. Budget behaviour is proven by the budget-stop run, which fails on cost only, not on the deterministic limits already covered by the execution-limits run.
+10. Approval behaviour is proven by the approval-denied and approval-granted runs. The granted run shows one decision per execution, with no session-wide or run-wide approval.
+11. State integrity: `state/index.json` agrees with the run report, and `events.jsonl` contains every transition in order with no gaps.
+
+### F.3 Functional Snake criteria
+
+Verified by QA's own tests, not by claims.
+
+12. Initial state: snake length at least three, fully inside the grid, food placed on a free cell.
+13. Movement: each tick advances the head one cell in the current direction.
+14. Growth: eating food increases length by one and score by one, and respawns food off the body.
+15. Wall collision ends the game with a `game_over` state.
+16. Self-collision ends the game when the head enters a body cell.
+17. Direction reversal into the immediate neck is rejected.
+18. Headless mode is deterministic. The same seed and input sequence produce the same state trace, and a five hundred tick simulation completes without exceptions.
+19. `app.py` imports cleanly only if its optional renderer dependency is available. tkinter is not required for acceptance, and the UI remains a human spot check.
+
+### F.4 Safety criteria
+
+20. No key, token or secret appears in Git, `state/`, `runs/`, reports, transcripts or child environments. Only the engine reads the configured secret.
+21. Every command executed by any agent is logged with argv, working directory, exit code, approval decision and truncated output.
+22. No agent wrote outside its permitted paths. No agent-generated code ran without its own recorded approval. No installation was attempted or permitted.
+
+---
+
+## G. Risks and Design Decisions
+
+| # | Decision | Phase 1 choice | Risk if wrong | Revisit trigger |
+|---|---|---|---|---|
+| 1 | Isolation level | In-process sessions, separate contexts and transcripts. Explicitly not OS isolation. | A misbehaving model runs with full user privileges. Mitigated only by approval of every execution, not by path checks. | Any need for unattended or parallel work, or execution of untrusted code |
+| 2 | Path checks | Framed and implemented as guardrails against mistakes | Someone may later treat them as a security boundary | Any proposal to run without approval |
+| 3 | Executing generated code | Every execution is CONFIRM, showing command, cwd and target files. `y` or `n` only, one decision per execution. Non-TTY means deny. | Frequent prompts slow the loop; a user who reflexively approves weakens the control | Prompt fatigue observed in practice |
+| 4 | Package installation | Denied in Phase 1, reported as a manual user action | A task may be impossible without a dependency; the run ends `blocked` with a clear reason | First project that genuinely needs a third-party package |
+| 5 | QA independence | Fresh session plus engine-validated evidence plus `qa_tests/`-only writes | QA may write shallow tests that pass; independence is structural but quality is not guaranteed | Recurring bugs in QA-passed work |
+| 6 | Report authorship | Engine writes all reports. QA writes no report files. | Evidence summaries are less rich than a model-written narrative | Reports judged insufficient |
+| 7 | State persistence | Authoritative `index.json` plus append-only audit logs. No replay. | Snapshot corruption loses state; audit log is not a recovery mechanism | Concurrency or recovery requirements appear |
+| 8 | Approval resumability | Synchronous prompts, no persisted pending approvals, no resume command | An interrupted run must be restarted | Unattended or long-running operation |
+| 9 | Plan size | `max_tasks_per_plan = 3`, enforced and tested | Over-decomposition would raise cost and QA complexity | Larger projects need more tasks |
+| 10 | Retry semantics | Only QA verdicts and hard Developer errors consume attempts. `max_attempts = 2`. Infrastructure errors consume budget, not attempts. | Misattribution could loop or escalate early | Observed misclassification |
+| 11 | Provider strategy | Tool-calling capable models only. Strict JSON validation with one repair retry. | A provider without native tool calls cannot be used | Adding such a provider |
+| 12 | Pricing source | Static per-million-token table. Placeholder models, missing pricing entries and negative prices fail live mode before any call. | Reported USD drifts from real billing, or a live run starts with no valid price | Any billing-relevant decision |
+| 13 | Snake technology | Pure logic in `game.py`, optional tkinter shell in `app.py`, deterministic headless mode | tkinter may be absent; accepted because it is not required for acceptance | If a real UI is required as a gate |
+| 14 | Generated work location | `projects/<slug>/`, git ignored in Phase 1, tracked by file hashes | No version history for generated code | First time a rollback is needed |
+| 15 | Git strategy | Human-driven commits only. `git status` allowed as an informational command. | Generated work is not isolated or attributable | Phase 4 worktrees and branches |
+| 16 | Context growth | Turn caps, tool output truncation, handoff size caps, never passing transcripts | Agents starve for context and produce weaker work | Agents failing for missing information |
+
+### G.1 Phase 1 essentials versus deferred
+
+| Phase 1 essential | Deferred |
+|---|---|
+| Deterministic engine with explicit states, retry counting and escalation | Parallel tasks and multi-run scheduling |
+| Three roles with separate sessions, prompts, tools and transcripts | Researcher, Environment Manager, Gardening, Independent Consultant / Reviewer and other specialists |
+| Exact-command allowlist, CONFIRM for generated code, DENY for installs and secrets | Full permission policy language, signed approvals, OS sandbox, containers, worktrees |
+| Scrubbed child environment | Secret brokers or per-agent credential scopes |
+| Token and USD tracking with hard stops | Cost forecasting, provider routing, dashboards |
+| Snapshot state plus audit logs | SQLite, event replay, recovery tooling |
+| Interactive approval, non-TTY deny | Resumable approvals, `approve` and `resume` commands, remote approval |
+| Policy and limits owned by the human | Controlled self-improvement, evaluation and rollback, and any agent-proposed change to its own rules |
+| CLI plus markdown report | Web interface, mobile and voice control |
+| Snake as the end-to-end fixture | Unreal Engine tooling and other production projects |
+
+### G.2 Remaining decisions before implementation
+
+1. Real provider model identifiers for each role and their current pricing entries. Placeholders are rejected in live mode, so these must be settled before M5.
+2. Whether the OpenAI SDK must be installed into `ai-team`, and whether `pytest` and `tkinter` are present. This is a manual user action determined at M0.
+3. Run budget and model choice for the single live Snake run, keeping the first live run deliberately small.
+4. Whether `projects/` should remain git ignored after Phase 1. Recommendation: yes, until Git isolation exists.
+5. Initial live provider identity. Provider choice remains open, including a DeepSeek option; the adapter and pricing table isolate the engine from that choice.
+
+---
+
+## Phase 1 Implementation Checklist
+
+- [ ] M0 Verify `ai-team` environment and repository, extend `.gitignore`, add `.env.example`, record missing packages as manual actions
+- [ ] M1 Build the FakeProvider walking skeleton: models, minimal config, snapshot store, agent session, plan and Developer write stages, execution limits and report
+- [ ] M2 Add execution with scrubbed environment, per-execution CONFIRM approval prompts, QA session, `qa_tests/` restriction, evidence validation and denial handling
+- [ ] M3 Add cost accounting: usage records, token accounting, USD pricing, budget enforcement and live-mode configuration validation
+- [ ] M4 Add retry, failure feedback and escalation
+- [ ] M5 Validate the live OpenAI adapter on one small task with a tiny budget, rejected placeholders and per-execution approvals
+- [ ] M6 Write the Snake specification and QA test plan
+- [ ] M7 Run the live Snake end-to-end success case and verify acceptance criteria
+- [ ] M8 Update project documentation and record the deferred backlog
