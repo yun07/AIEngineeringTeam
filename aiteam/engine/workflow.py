@@ -1005,10 +1005,12 @@ class WorkflowEngine:
                 f"- max_llm_calls_per_task = {limits.max_llm_calls_per_task}",
                 f"- max_attempts = {limits.max_attempts} (enforced from M4)",
                 "",
-                "## Not in this milestone",
+                "## Reporting notes",
                 "",
-                "Retries, token accounting and USD cost arrive in M3 and M4. "
-                "This report contains no cost figures on purpose.",
+                "Cost figures come from the Cost Guard: local token estimates "
+                "for each preflight reservation, then provider-reported usage "
+                "for the actual USD. Retry and escalation routing is not "
+                "implemented yet, so no attempt beyond the first is recorded.",
                 "",
             ]
         )

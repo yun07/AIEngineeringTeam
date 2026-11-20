@@ -138,6 +138,36 @@ def test_live_mode_missing_pricing_exits_before_key_lookup(
     assert "pricing" in capsys.readouterr().err
 
 
+def test_live_mode_zero_price_exits_before_key_lookup(
+    tmp_path, monkeypatch, capsys
+):
+    path = _write_live_config(tmp_path)
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            "input_per_mtok = 0.4", "input_per_mtok = 0", 1
+        ),
+        encoding="utf-8",
+    )
+    called = {"resolve": False, "factory": False}
+
+    def fail_resolve():
+        called["resolve"] = True
+        raise AssertionError("a zero price must be rejected before key lookup")
+
+    def fail_factory(*args, **kwargs):
+        called["factory"] = True
+        raise AssertionError("a zero price must be rejected before a client")
+
+    monkeypatch.setattr(cli, "resolve_api_key", fail_resolve)
+    monkeypatch.setattr(cli, "create_openai_provider", fail_factory)
+
+    code = cli.main(_live_args(path, tmp_path))
+
+    assert code == 2
+    assert called == {"resolve": False, "factory": False}
+    assert "greater than 0" in capsys.readouterr().err
+
+
 def test_live_mode_unsupported_model_exits_before_key_lookup(
     tmp_path, monkeypatch, capsys
 ):

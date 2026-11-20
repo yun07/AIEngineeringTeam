@@ -279,11 +279,17 @@ def validate_live_config(config: Config) -> None:
             value = entry.get(key)
             if isinstance(value, bool) or not isinstance(value, (int, float)):
                 raise ConfigError(
-                    f"pricing.{model}.{key} must be a number"
+                    f"pricing.{model}.{key} must be a positive number in live "
+                    "mode; got a non-numeric value"
                 )
-            if value < 0:
+            # A zero price would record real spend as 0 USD, so live mode
+            # rejects it. Fake mode never reaches this check and keeps its
+            # zero-price fixture.
+            if value <= 0:
                 raise ConfigError(
-                    f"pricing.{model}.{key} must not be negative"
+                    f"pricing.{model}.{key} must be greater than 0 in live "
+                    f"mode; got {value!r}. A zero price would record real "
+                    "cost as 0 USD"
                 )
 
     if config.cost.max_context_tokens is None:

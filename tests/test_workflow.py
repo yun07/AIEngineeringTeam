@@ -82,7 +82,8 @@ def test_successful_run_writes_file_logs_events_and_report(tmp_path):
     assert "notes.md" in report
     assert "T1" in report
     assert "max_tasks_per_plan = 3" in report
-    assert "no cost figures on purpose" in report
+    assert "## Reporting notes" in report
+    assert "no cost figures on purpose" not in report
 
     stored = store.load_run(run.id)
     assert stored is not None
