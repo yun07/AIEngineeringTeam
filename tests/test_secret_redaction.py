@@ -80,7 +80,11 @@ def test_sec1_provider_error_is_redacted_in_block_reason_and_persisted_files(
     tmp_path,
 ):
     boundary = _boundary()
-    provider = StubProvider({}, error=RuntimeError(f"provider said {KEY}"))
+    # Fake mode requires a fake-classified provider; the stub still raises the
+    # provider error this test is about.
+    provider = StubProvider(
+        {}, error=RuntimeError(f"provider said {KEY}"), name="fake"
+    )
     engine, store = _engine(tmp_path, provider, boundary)
 
     run = engine.start("clean request")

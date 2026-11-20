@@ -85,20 +85,25 @@ TEST_PRICING: dict[str, dict[str, float]] = {
 
 
 class StubProvider:
-    """Billable-shape test double with explicit, caller-controlled usage."""
+    """Billable-shape test double with explicit, caller-controlled usage.
 
-    name = "stub"
+    ``name`` defaults to a non-fake identity so billing tests keep exercising
+    the live branch. Pass ``name="fake"`` when a test needs a non-billable
+    provider in fake mode (the engine refuses to mix the two).
+    """
 
     def __init__(
         self,
         responses: Mapping[str, Sequence[LLMResponse]],
         *,
         error: Exception | None = None,
+        name: str = "stub",
     ) -> None:
         self._queues: dict[str, deque[LLMResponse]] = {
             role: deque(script) for role, script in responses.items()
         }
         self.error = error
+        self.name = name
         self.calls: list[dict[str, Any]] = []
 
     def complete(

@@ -21,7 +21,7 @@ from aiteam.agents.roles import (
     load_mandatory_prompt,
     model_for_role,
 )
-from aiteam.config import Config
+from aiteam.config import Config, validate_live_config
 from aiteam.cost.guard import BudgetError, BudgetGuard
 from aiteam.cost.manager import CostManager
 from aiteam.engine.context import (
@@ -217,6 +217,30 @@ class WorkflowEngine:
         context_root: str | Path | None = None,
         secret_boundary: SecretBoundary | None = None,
     ) -> None:
+        # Fake and non-fake providers must not be mixed with the opposite
+        # config mode. A fake config with a billable adapter would skip live
+        # validation, the budget requirement and the Cost Guard entirely, while
+        # a live config with the fake adapter would record synthetic usage as
+        # real cost against a mislabelled provider. Only the fake/non-fake
+        # classification matters; any two non-fake names may be paired.
+        # Classification fails closed: a provider that cannot be identified is
+        # refused rather than silently treated as non-fake.
+        provider_name = getattr(provider, "name", None)
+        if not isinstance(provider_name, str) or not provider_name.strip():
+            raise WorkflowError(
+                "provider identity invalid: the runtime provider must expose a "
+                "non-empty 'name' string; fake and non-fake modes cannot be "
+                "checked without one"
+            )
+        provider_is_fake = provider_name.strip() == "fake"
+        config_is_fake = config.provider.name == "fake"
+        if config_is_fake != provider_is_fake:
+            raise WorkflowError(
+                "provider identity mismatch: config provider "
+                f"{config.provider.name!r} cannot be used with a runtime "
+                f"provider named {provider_name.strip()!r}; fake and non-fake "
+                "providers must not be mixed"
+            )
         self._config = config
         self._provider = provider
         self._store = store
@@ -256,6 +280,12 @@ class WorkflowEngine:
         context_files: Sequence[str] = (),
     ) -> Run:
         billing_enabled = self._config.provider.name != "fake"
+        if billing_enabled:
+            # Defence in depth. The CLI validates before it resolves a key or
+            # builds a client, but an engine assembled directly must apply the
+            # same live rules, so a zero or invalid price can never be billed
+            # as free. Nothing is persisted before this check passes.
+            validate_live_config(self._config)
         if billing_enabled and budget_usd is None:
             raise WorkflowError(
                 "live mode requires a budget; pass --budget so preflight can run"
