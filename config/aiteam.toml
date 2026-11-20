@@ -1,0 +1,19 @@
+# Live configuration. Example model identifiers only; the provider and the
+# real model IDs remain an open decision until M5.
+# Pricing entries are validated from M3 onward.
+
+[provider]
+name = "openai"
+
+[models]
+orchestrator = "gpt-4.1"
+developer = "gpt-4.1-mini"
+qa = "gpt-4.1-mini"
+
+[limits]
+max_tasks_per_plan = 3
+max_turns_per_session = 12
+max_llm_calls_per_task = 20
+max_attempts = 2
+command_timeout_seconds = 120
+max_tool_output_chars = 8000

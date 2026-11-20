@@ -1,0 +1,31 @@
+# Fake mode configuration used by tests and the M1 walking skeleton.
+# Fake model identifiers and zero prices, so no real model ID or real rate is
+# needed anywhere in the test suite.
+
+[provider]
+name = "fake"
+
+[models]
+orchestrator = "fake-orchestrator"
+developer = "fake-developer"
+qa = "fake-qa"
+
+[limits]
+max_tasks_per_plan = 3
+max_turns_per_session = 12
+max_llm_calls_per_task = 20
+max_attempts = 2
+command_timeout_seconds = 120
+max_tool_output_chars = 8000
+
+[pricing."fake-orchestrator"]
+input_per_mtok = 0.0
+output_per_mtok = 0.0
+
+[pricing."fake-developer"]
+input_per_mtok = 0.0
+output_per_mtok = 0.0
+
+[pricing."fake-qa"]
+input_per_mtok = 0.0
+output_per_mtok = 0.0

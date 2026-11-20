@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aiteam"
+version = "0.1.0"
+description = "Deterministic AI engineering team workflow engine (Phase 1)"
+requires-python = ">=3.12"
+# Runtime dependencies are deliberately empty at M1. The openai SDK is added
+# with the live adapter at M5, and pytest is a manual action in the ai-team env.
+
+[tool.setuptools.packages.find]
+include = ["aiteam*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["."]
