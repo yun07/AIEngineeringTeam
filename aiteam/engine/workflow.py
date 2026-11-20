@@ -15,8 +15,20 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from aiteam.agents.base import AgentSession, LimitExceeded
-from aiteam.agents.roles import forbidden_tools_for, get_role, model_for_role
+from aiteam.agents.roles import (
+    forbidden_tools_for,
+    get_role,
+    load_mandatory_prompt,
+    model_for_role,
+)
 from aiteam.config import Config
+from aiteam.cost.guard import BudgetError, BudgetGuard
+from aiteam.cost.manager import CostManager
+from aiteam.engine.context import (
+    ContextBundle,
+    ContextError,
+    load_context_files,
+)
 from aiteam.engine.evidence import VerdictError, parse_verdict, validate_verdict
 from aiteam.engine.handoff import (
     developer_bundle,
@@ -35,11 +47,16 @@ from aiteam.models import (
     TaskState,
 )
 from aiteam.providers.base import LLMProvider, ToolSpec
+from aiteam.secrets import SecretBoundary, SecretError
 from aiteam.state.store import StateStore
 from aiteam.tools.filesystem import FileTools, Workspace
 from aiteam.tools.shell import CommandRecord, CommandRunner, ShellTools
 
 MAX_ROUTING_STEPS = 100
+
+
+class WorkflowError(RuntimeError):
+    """Raised when a run cannot start or continue under the engine's rules."""
 
 
 class PlanError(ValueError):
@@ -73,7 +90,12 @@ def next_action(run: Run, tasks: Sequence[Task] | None = None) -> Action:
     return Action.FINALIZE
 
 
-def parse_plan(text: str, *, max_tasks: int) -> list[Task]:
+def parse_plan(
+    text: str,
+    *,
+    max_tasks: int,
+    allowed_context_ids: set[str] | None = None,
+) -> list[Task]:
     """Validate an Orchestrator reply and convert it into tasks."""
     payload = _load_json(text)
     if not isinstance(payload, dict):
@@ -137,12 +159,31 @@ def parse_plan(text: str, *, max_tasks: int) -> list[Task]:
         ):
             raise PlanError(f"task {task_id} constraints must be a list of strings")
 
+        raw_refs = raw_task.get("context_refs") or []
+        if not isinstance(raw_refs, list) or not all(
+            isinstance(item, str) and item.strip() for item in raw_refs
+        ):
+            raise PlanError(f"task {task_id} context_refs must be section ids")
+        context_refs = list(dict.fromkeys(item.strip() for item in raw_refs))
+        if context_refs:
+            allowed = allowed_context_ids or set()
+            if not allowed:
+                raise PlanError(
+                    f"task {task_id} references context but no context files were supplied"
+                )
+            unknown_refs = sorted(set(context_refs) - allowed)
+            if unknown_refs:
+                raise PlanError(
+                    f"task {task_id} references unknown context sections: {unknown_refs}"
+                )
+
         tasks.append(
             Task(
                 id=task_id,
                 description=description.strip(),
                 acceptance_criteria=criteria,
                 constraints=[item.strip() for item in raw_constraints],
+                context_refs=context_refs,
             )
         )
     return tasks
@@ -173,11 +214,23 @@ class WorkflowEngine:
         project_slug: str,
         approval_gate: ApprovalGate | None = None,
         command_runner: CommandRunner | None = None,
+        context_root: str | Path | None = None,
+        secret_boundary: SecretBoundary | None = None,
     ) -> None:
         self._config = config
         self._provider = provider
         self._store = store
+        self._secret_boundary = secret_boundary
+        if secret_boundary is not None:
+            self._store.redactor = secret_boundary.redact
         self._project_slug = project_slug
+        project_path = Path(project_root)
+        self._repo_root = (
+            Path(context_root).resolve()
+            if context_root is not None
+            else project_path.resolve().parents[1]
+        )
+        self._context: ContextBundle | None = None
         self._workspace = Workspace(project_root, write_deny_subpaths=("qa_tests",))
         self._qa_workspace = Workspace(project_root, write_allow_subpaths=("qa_tests",))
         self._file_tools = FileTools(self._workspace)
@@ -185,6 +238,8 @@ class WorkflowEngine:
         self._approval_gate = approval_gate or ApprovalGate()
         self._command_runner = command_runner
         self._command_records: list[CommandRecord] = []
+        self._cost_manager: CostManager | None = None
+        self._budget_guard: BudgetGuard | None = None
         self.run: Run | None = None
         self.sessions: list[AgentSession] = []
         self._steps = 0
@@ -193,7 +248,32 @@ class WorkflowEngine:
     def workspace_root(self) -> Path:
         return self._workspace.root
 
-    def start(self, request: str, *, budget_usd: float | None = None) -> Run:
+    def start(
+        self,
+        request: str,
+        *,
+        budget_usd: float | None = None,
+        context_files: Sequence[str] = (),
+    ) -> Run:
+        billing_enabled = self._config.provider.name != "fake"
+        if billing_enabled and budget_usd is None:
+            raise WorkflowError(
+                "live mode requires a budget; pass --budget so preflight can run"
+            )
+        if billing_enabled:
+            self._cost_manager = CostManager(
+                pricing=self._config.pricing,
+                budget_usd=budget_usd,
+                max_output_tokens=self._config.cost.max_output_tokens_per_call,
+                safety_margin_percent=self._config.cost.safety_margin_percent,
+                max_context_tokens=self._config.cost.max_context_tokens,
+            )
+        bundle = (
+            load_context_files(context_files, root=self._repo_root)
+            if context_files
+            else None
+        )
+        self._screen_for_secrets(request, bundle)
         run = Run(
             id=self._store.new_run_id(),
             project_slug=self._project_slug,
@@ -201,8 +281,23 @@ class WorkflowEngine:
             request=request,
             provider=self._config.provider.name,
             budget_usd=budget_usd,
+            context_manifest=bundle.summary() if bundle else [],
         )
         self._store.save(run)
+        if bundle is not None:
+            self._store.write_context_artifacts(
+                run.id, bundle.manifest(), bundle.copies()
+            )
+            self._store.append_event(
+                run.id,
+                "context_loaded",
+                {
+                    "files": bundle.summary(),
+                    "total_bytes": bundle.manifest()["total_bytes"],
+                    "section_ids": sorted(bundle.section_ids),
+                },
+            )
+        self._context = bundle
         self._store.append_event(
             run.id,
             "run_created",
@@ -210,9 +305,30 @@ class WorkflowEngine:
                 "project": self._project_slug,
                 "provider": self._config.provider.name,
                 "budget_usd": budget_usd,
+                "billing_enabled": billing_enabled,
             },
         )
         self.run = run
+        if self._cost_manager is not None:
+            manager = self._cost_manager
+            self._budget_guard = BudgetGuard(
+                manager=manager,
+                budget_usd=budget_usd,
+                store=self._store,
+                run_id=run.id,
+                event_sink=lambda kind, data: self._store.append_event(
+                    run.id, kind, data
+                ),
+            )
+            self._store.append_event(
+                run.id,
+                "cost_guard_started",
+                {
+                    "budget_usd": budget_usd,
+                    "max_output_tokens_per_call": manager.max_output_tokens,
+                    "safety_margin_percent": manager.safety_margin_percent,
+                },
+            )
         return run
 
     def execute(self, *, plan_only: bool = False) -> Run:
@@ -246,19 +362,33 @@ class WorkflowEngine:
             tools=(),
             handlers={},
             transcript_name="orchestrator.session.jsonl",
+            task_id="plan",
         )
         prompt = orchestrator_prompt(
             request=run.request,
             project_slug=self._project_slug,
             budget_usd=run.budget_usd,
             max_tasks=self._config.limits.max_tasks_per_plan,
+            context_inventory=(
+                self._context.inventory() if self._context else ""
+            ),
+            context_block=(
+                self._context.render_for_orchestrator() if self._context else ""
+            ),
+        )
+        allowed_context_ids = (
+            self._context.section_ids if self._context else set()
         )
 
         try:
             tasks = parse_plan(
                 session.send(prompt),
                 max_tasks=self._config.limits.max_tasks_per_plan,
+                allowed_context_ids=allowed_context_ids,
             )
+        except BudgetError as exc:
+            self._block(str(exc))
+            return
         except LimitExceeded as exc:
             self._block(f"{exc.limit} breached while planning")
             return
@@ -275,7 +405,11 @@ class WorkflowEngine:
                 tasks = parse_plan(
                     session.send(repair_prompt),
                     max_tasks=self._config.limits.max_tasks_per_plan,
+                    allowed_context_ids=allowed_context_ids,
                 )
+            except BudgetError as repair_budget:
+                self._block(str(repair_budget))
+                return
             except LimitExceeded as repair_limit:
                 self._block(f"{repair_limit.limit} breached while repairing the plan")
                 return
@@ -353,6 +487,7 @@ class WorkflowEngine:
             handlers=self._file_tools.handlers(),
             transcript_name=f"task-{index}.developer.a{task.attempt}.session.jsonl",
             max_llm_calls=remaining_calls,
+            task_id=task.id,
         )
 
         try:
@@ -361,8 +496,17 @@ class WorkflowEngine:
                     request=run.request,
                     task=task,
                     manifest=file_manifest(self._workspace.root),
+                    context_sections=self._task_context(task),
                 )
             )
+        except BudgetError as exc:
+            task.llm_calls += session.llm_calls
+            task.turns += session.turns
+            task.files_written = self._written_paths(session)
+            task.state = TaskState.BLOCKED
+            task.block_reason = str(exc)
+            self._block(task.block_reason)
+            return
         except LimitExceeded as exc:
             task.llm_calls += session.llm_calls
             task.turns += session.turns
@@ -454,6 +598,7 @@ class WorkflowEngine:
             transcript_name=f"task-{index}.qa.a{task.attempt}.session.jsonl",
             max_llm_calls=remaining_calls,
             session_id=session_id,
+            task_id=task.id,
         )
 
         try:
@@ -462,8 +607,17 @@ class WorkflowEngine:
                     request=run.request,
                     task=task,
                     manifest=file_manifest(self._workspace.root),
+                    context_sections=self._task_context(task),
                 )
             )
+        except BudgetError as exc:
+            task.llm_calls += session.llm_calls
+            task.turns += session.turns
+            task.state = TaskState.BLOCKED
+            task.block_reason = str(exc)
+            self._command_records.extend(shell_tools.records)
+            self._block(task.block_reason)
+            return
         except LimitExceeded as exc:
             task.llm_calls += session.llm_calls
             task.turns += session.turns
@@ -597,10 +751,39 @@ class WorkflowEngine:
     def _block(self, reason: str) -> None:
         run = self._require_run()
         run.state = RunState.BLOCKED
+        reason = self._redact(reason)
         run.block_reason = reason
         self._store.save(run)
         self._store.append_event(run.id, "run_blocked", {"reason": reason})
         self._write_report()
+
+    def _redact(self, text: str) -> str:
+        if self._secret_boundary is None:
+            return text
+        return self._secret_boundary.redact(text)
+
+    def _contains_secret(self, text: str) -> bool:
+        if self._secret_boundary is None:
+            return False
+        return self._secret_boundary.contains_any(text)
+
+    def _screen_for_secrets(
+        self, request: str, bundle: ContextBundle | None
+    ) -> None:
+        """Refuse a run before it exists if any known key is present."""
+        if self._secret_boundary is None:
+            return
+        if self._secret_boundary.contains_any(request):
+            raise SecretError(
+                "the user request contains the configured API key; run refused"
+            )
+        if bundle is not None:
+            for document in bundle.documents:
+                if self._secret_boundary.contains_any(document.text):
+                    raise SecretError(
+                        "a context file contains the configured API key; "
+                        "run refused"
+                    )
 
     def _new_session(
         self,
@@ -611,6 +794,7 @@ class WorkflowEngine:
         transcript_name: str,
         max_llm_calls: int | None = None,
         session_id: str | None = None,
+        task_id: str = "plan",
     ) -> AgentSession:
         run = self._require_run()
         role = get_role(role_name)
@@ -633,15 +817,38 @@ class WorkflowEngine:
                 f"role {role.name} is missing registered tools: {sorted(missing)}"
             )
 
+        model = model_for_role(self._config, role.name)
+        cost_scope = None
+        max_output_tokens = 0
+        if self._budget_guard is not None:
+            cost_scope = self._budget_guard.scope(
+                task_id=task_id, role=role.name, model=model
+            )
+            max_output_tokens = self._config.cost.max_output_tokens_per_call
+
         session = AgentSession(
             role=role.name,
-            model=model_for_role(self._config, role.name),
+            model=model,
             provider=self._provider,
-            system_prompt=role.load_prompt(),
+            system_prompt=(
+                f"{load_mandatory_prompt().strip()}\n\n{role.load_prompt()}"
+            ),
             transcript_path=self._store.transcript_path(run.id, transcript_name),
             session_id=session_id or uuid.uuid4().hex[:12],
             allowed_tools=frozenset(role.tools),
             max_tool_output_chars=self._config.limits.max_tool_output_chars,
+            cost_scope=cost_scope,
+            max_output_tokens=max_output_tokens,
+            redact_values=(
+                self._secret_boundary.redact
+                if self._secret_boundary is not None
+                else None
+            ),
+            contains_secret=(
+                self._secret_boundary.contains_any
+                if self._secret_boundary is not None
+                else None
+            ),
             tool_specs=tuple(spec_by_name[name] for name in role.tools),
             tool_handlers={name: handler_by_name[name] for name in role.tools},
             max_turns=self._config.limits.max_turns_per_session,
@@ -653,6 +860,11 @@ class WorkflowEngine:
         )
         self.sessions.append(session)
         return session
+
+    def _task_context(self, task: Task) -> str:
+        if self._context is None or not task.context_refs:
+            return ""
+        return self._context.render_sections(task.context_refs)
 
     @staticmethod
     def _written_paths(session: AgentSession) -> list[str]:
@@ -685,9 +897,8 @@ class WorkflowEngine:
         )
         self._block(f"provider_error: {self._safe_error(exc)} (while {stage})")
 
-    @staticmethod
-    def _safe_error(exc: Exception, *, include_type: bool = True) -> str:
-        message = " ".join(str(exc).split())
+    def _safe_error(self, exc: Exception, *, include_type: bool = True) -> str:
+        message = self._redact(" ".join(str(exc).split()))
         if len(message) > 200:
             message = message[:200] + "..."
         if not include_type:
@@ -779,8 +990,10 @@ class WorkflowEngine:
         else:
             lines.append("| - | - | - | - | - | - |")
 
+        lines.extend(self._context_report_lines(run))
         lines.extend(self._qa_report_lines(run))
         lines.extend(self._approval_report_lines(run))
+        lines.extend(self._cost_report_lines(run))
 
         lines.extend(
             [
@@ -800,6 +1013,76 @@ class WorkflowEngine:
             ]
         )
         return self._store.write_report(run.id, "\n".join(lines))
+
+    def _context_report_lines(self, run: Run) -> list[str]:
+        lines: list[str] = ["", "## Context", ""]
+        if not run.context_manifest:
+            lines.extend(["No context files were supplied for this run.", ""])
+            return lines
+
+        lines.extend(
+            ["| Source | SHA-256 | Bytes |", "|---|---|---|"]
+        )
+        for entry in run.context_manifest:
+            lines.append(
+                f"| {entry.get('name', '')} | {entry.get('sha256', '')} | "
+                f"{entry.get('bytes', '')} |"
+            )
+        lines.append("")
+        lines.append("| Task | Context refs |")
+        lines.append("|---|---|")
+        for task in run.tasks:
+            refs = ", ".join(task.context_refs) or "-"
+            lines.append(f"| {task.id} | {refs} |")
+        lines.append("")
+        return lines
+
+    def _cost_report_lines(self, run: Run) -> list[str]:
+        lines: list[str] = ["", "## Cost", ""]
+        manager = self._cost_manager
+        if manager is None:
+            lines.extend(["Fake mode: no billable usage or USD cost.", ""])
+            return lines
+
+        if manager.by_role:
+            lines.extend(
+                [
+                    "| Role | Calls | Input tokens | Output tokens | Actual USD |",
+                    "|---|---|---|---|---|",
+                ]
+            )
+            for role, usage in sorted(manager.by_role.items()):
+                lines.append(
+                    f"| {role} | {usage.calls} | {usage.input_tokens} | "
+                    f"{usage.output_tokens} | {usage.usd:.6f} |"
+                )
+            lines.append("")
+
+        lines.append(
+            f"- Estimated/Reserved cost (preflight): "
+            f"{manager.reserved_total_usd:.6f} USD"
+        )
+        lines.append(f"- Actual reported cost: {manager.spent_usd:.6f} USD")
+        if manager.budget_usd is None:
+            lines.append("- Configured budget: none")
+        else:
+            lines.append(f"- Configured budget: {manager.budget_usd:.6f} USD")
+        remaining = manager.remaining_usd()
+        if remaining is None:
+            lines.append(
+                "- Remaining budget: unknown (unresolved reservations or "
+                "unavailable usage)"
+            )
+        else:
+            lines.append(f"- Remaining budget: {remaining:.6f} USD")
+        if manager.overshoot:
+            lines.append("- Budget overshoot: YES (accounting recorded, run stopped)")
+        if manager.usage_unavailable_count:
+            lines.append(
+                f"- Usage unavailable: {manager.usage_unavailable_count} call(s)"
+            )
+        lines.extend(["", manager.uncertainty_note(), ""])
+        return lines
 
     def _qa_report_lines(self, run: Run) -> list[str]:
         lines: list[str] = ["", "## QA evidence", ""]

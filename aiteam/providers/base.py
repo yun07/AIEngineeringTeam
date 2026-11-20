@@ -49,7 +49,10 @@ class ChatMessage:
 class LLMResponse:
     text: str | None = None
     tool_calls: list[ToolCall] = field(default_factory=list)
-    usage: Usage = field(default_factory=Usage)
+    # ``None`` means the provider did not report usage. It must never be
+    # silently converted to zero: the live Cost Guard treats it as unresolved
+    # exposure and stops further calls.
+    usage: Usage | None = field(default_factory=Usage)
 
 
 class LLMProvider(Protocol):
@@ -63,5 +66,6 @@ class LLMProvider(Protocol):
         messages: Sequence[ChatMessage],
         tools: Sequence[ToolSpec],
         role: str = "",
+        max_output_tokens: int = 0,
     ) -> LLMResponse:
         """Return one assistant response for the given conversation."""

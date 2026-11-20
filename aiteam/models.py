@@ -171,11 +171,38 @@ class ApprovalRecord:
 
 
 @dataclass
+class UsageRecord:
+    """One provider call, priced from provider-reported usage."""
+
+    ts: str
+    run_id: str
+    task_id: str
+    role: str
+    model: str
+    input_tokens: int
+    output_tokens: int
+    usd: float
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "ts": self.ts,
+            "run_id": self.run_id,
+            "task_id": self.task_id,
+            "role": self.role,
+            "model": self.model,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
+            "usd": self.usd,
+        }
+
+
+@dataclass
 class Task:
     id: str
     description: str
     acceptance_criteria: list[AcceptanceCriterion] = field(default_factory=list)
     constraints: list[str] = field(default_factory=list)
+    context_refs: list[str] = field(default_factory=list)
     state: TaskState = TaskState.PENDING
     attempt: int = 1
     llm_calls: int = 0
@@ -193,6 +220,7 @@ class Task:
             "description": self.description,
             "acceptance_criteria": [c.to_dict() for c in self.acceptance_criteria],
             "constraints": list(self.constraints),
+            "context_refs": list(self.context_refs),
             "state": self.state.value,
             "attempt": self.attempt,
             "llm_calls": self.llm_calls,
@@ -215,6 +243,7 @@ class Task:
                 for item in data.get("acceptance_criteria", [])
             ],
             constraints=[str(item) for item in data.get("constraints", [])],
+            context_refs=[str(item) for item in data.get("context_refs", [])],
             state=TaskState(data.get("state", TaskState.PENDING.value)),
             attempt=int(data.get("attempt", 1)),
             llm_calls=int(data.get("llm_calls", 0)),
@@ -252,6 +281,7 @@ class Run:
     budget_usd: float | None = None
     created_at: str = field(default_factory=utc_now_iso)
     block_reason: str | None = None
+    context_manifest: list[dict[str, Any]] = field(default_factory=list)
     tasks: list[Task] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -265,6 +295,7 @@ class Run:
             "budget_usd": self.budget_usd,
             "created_at": self.created_at,
             "block_reason": self.block_reason,
+            "context_manifest": list(self.context_manifest),
             "tasks": [task.to_dict() for task in self.tasks],
         }
 
@@ -280,6 +311,7 @@ class Run:
             budget_usd=data.get("budget_usd"),
             created_at=str(data.get("created_at", utc_now_iso())),
             block_reason=data.get("block_reason"),
+            context_manifest=list(data.get("context_manifest", [])),
             tasks=[Task.from_dict(item) for item in data.get("tasks", [])],
         )
 

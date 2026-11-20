@@ -78,6 +78,7 @@ class FakeProvider:
         messages: Sequence[ChatMessage],
         tools: Sequence[ToolSpec],
         role: str = "",
+        max_output_tokens: int = 0,
     ) -> LLMResponse:
         queue = self._by_role.get(role)
         if queue is None:

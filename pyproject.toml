@@ -15,5 +15,8 @@ include = ["aiteam*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q -m \"not live\""
 pythonpath = ["."]
+markers = [
+    "live: real provider smoke tests that require an API key and network access",
+]

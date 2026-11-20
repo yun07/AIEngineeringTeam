@@ -1,9 +1,13 @@
 # Live configuration. Example model identifiers only; the provider and the
 # real model IDs remain an open decision until M5.
 # Pricing entries are validated from M3 onward.
+#
+# [cost] is mandatory in live mode. max_context_tokens has no default: the
+# operator must state the value for the chosen model.
 
 [provider]
 name = "openai"
+timeout_seconds = 60
 
 [models]
 orchestrator = "gpt-4.1"
@@ -17,3 +21,21 @@ max_llm_calls_per_task = 20
 max_attempts = 2
 command_timeout_seconds = 120
 max_tool_output_chars = 8000
+
+[cost]
+max_output_tokens_per_call = 1200
+safety_margin_percent = 10
+estimator = "tiktoken"
+# max_context_tokens has no default. Live mode refuses to start until you set
+# it explicitly for the chosen model, for example:
+# max_context_tokens = 120000
+
+# Live mode also requires a validated price for every model above. Prices are
+# intentionally not shipped as active values; fill them from the provider's
+# published price list before a live smoke run, for example:
+# [pricing."gpt-4.1"]
+# input_per_mtok = 0.00
+# output_per_mtok = 0.00
+# [pricing."gpt-4.1-mini"]
+# input_per_mtok = 0.00
+# output_per_mtok = 0.00

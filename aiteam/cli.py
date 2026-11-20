@@ -12,11 +12,15 @@ from aiteam.config import (
     FAKE_CONFIG_PATH,
     ConfigError,
     load_config,
+    validate_live_config,
 )
+from aiteam.engine.context import ContextError
 from aiteam.engine.policy import ApprovalGate
 from aiteam.engine.workflow import WorkflowEngine
 from aiteam.models import RunState
 from aiteam.providers.fake import FakeProvider, demo_by_role
+from aiteam.providers.openai_provider import ProviderError, create_openai_provider
+from aiteam.secrets import SecretBoundary, SecretError, resolve_api_key
 from aiteam.state.store import StateStore
 
 
@@ -55,6 +59,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--plan-only",
         action="store_true",
         help="stop after the plan is accepted",
+    )
+    run_parser.add_argument(
+        "--context-file",
+        action="append",
+        default=[],
+        help="markdown context file supplied by the user (repeatable, max 5)",
     )
     run_parser.add_argument(
         "--fake",
@@ -99,14 +109,41 @@ def main(argv: Sequence[str] | None = None) -> int:
             file=sys.stderr,
         )
         return 2
-    if not args.fake:
+    if not args.fake and config.provider.name == "fake":
         print(
-            "live provider mode arrives at M5. Use --fake for the walking skeleton.",
+            "configuration error: provider.name = \"fake\" requires --fake; "
+            "live mode refuses it",
             file=sys.stderr,
         )
         return 2
 
-    provider = FakeProvider(by_role=demo_by_role(config.models))
+    boundary: SecretBoundary | None = None
+    if args.fake:
+        provider = FakeProvider(by_role=demo_by_role(config.models))
+    else:
+        try:
+            # Validate first: no client, no key lookup, no request on failure.
+            validate_live_config(config)
+            if args.budget is None:
+                print(
+                    "configuration error: live mode requires --budget",
+                    file=sys.stderr,
+                )
+                return 2
+            api_key = resolve_api_key()
+            boundary = SecretBoundary(api_key)
+            provider = create_openai_provider(
+                config, api_key, boundary=boundary
+            )
+        except (ConfigError, SecretError, ProviderError) as exc:
+            message = boundary.redact(str(exc)) if boundary else str(exc)
+            print(f"configuration error: {message}", file=sys.stderr)
+            return 2
+        except Exception as exc:  # noqa: BLE001 - keep keys out of crash output
+            message = boundary.redact(str(exc)) if boundary else str(exc)
+            print(f"provider setup failed: {message}", file=sys.stderr)
+            return 2
+
     store = StateStore(root)
     project_root = root / "projects" / args.project
     engine = WorkflowEngine(
@@ -116,9 +153,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         project_root=project_root,
         project_slug=args.project,
         approval_gate=build_approval_gate(),
+        secret_boundary=boundary,
     )
 
-    run = engine.start(args.request, budget_usd=args.budget)
+    try:
+        run = engine.start(
+            args.request,
+            budget_usd=args.budget,
+            context_files=args.context_file,
+        )
+    except SecretError as exc:
+        print(f"secret error: {exc}", file=sys.stderr)
+        return 2
+    except ContextError as exc:
+        print(f"context error: {exc}", file=sys.stderr)
+        return 2
     run = engine.execute(plan_only=args.plan_only)
 
     report_path = store.run_dir(run.id) / "report.md"

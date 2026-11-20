@@ -12,6 +12,12 @@ from pathlib import Path
 from aiteam.config import Config
 
 PROMPTS_DIR = Path(__file__).with_name("prompts")
+MANDATORY_PROMPT_FILE = PROMPTS_DIR / "mandatory.md"
+
+
+def load_mandatory_prompt() -> str:
+    """Engine-owned invariants prepended to every role system prompt."""
+    return MANDATORY_PROMPT_FILE.read_text(encoding="utf-8")
 
 ORCHESTRATOR_TOOLS: tuple[str, ...] = ()
 DEVELOPER_TOOLS: tuple[str, ...] = ("read_file", "write_file", "list_files")

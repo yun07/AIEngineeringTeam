@@ -2,15 +2,23 @@
 
 from __future__ import annotations
 
+from collections import deque
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from aiteam.config import Config, Limits, ProviderSettings, RoleModels
+from aiteam.config import (
+    Config,
+    CostSettings,
+    Limits,
+    ProviderSettings,
+    RoleModels,
+)
 from aiteam.engine.policy import ApprovalGate
 from aiteam.engine.workflow import WorkflowEngine
 from aiteam.providers.base import LLMResponse, ToolCall, Usage
 from aiteam.providers.fake import (
     FakeProvider,
+    FakeScriptExhausted,
     extract_execution_id,
     json_response,
     text_response,
@@ -68,6 +76,96 @@ class ScriptedRunner:
             stdout="1 passed in 0.01s",
             stderr="",
         )
+
+
+SUPPORTED_TEST_MODEL = "gpt-4.1-mini"
+TEST_PRICING: dict[str, dict[str, float]] = {
+    SUPPORTED_TEST_MODEL: {"input_per_mtok": 0.4, "output_per_mtok": 1.6}
+}
+
+
+class StubProvider:
+    """Billable-shape test double with explicit, caller-controlled usage."""
+
+    name = "stub"
+
+    def __init__(
+        self,
+        responses: Mapping[str, Sequence[LLMResponse]],
+        *,
+        error: Exception | None = None,
+    ) -> None:
+        self._queues: dict[str, deque[LLMResponse]] = {
+            role: deque(script) for role, script in responses.items()
+        }
+        self.error = error
+        self.calls: list[dict[str, Any]] = []
+
+    def complete(
+        self,
+        *,
+        model: str,
+        system: str,
+        messages: Sequence[Any],
+        tools: Sequence[Any],
+        role: str = "",
+        max_output_tokens: int = 0,
+    ) -> LLMResponse:
+        self.calls.append(
+            {
+                "model": model,
+                "role": role,
+                "max_output_tokens": max_output_tokens,
+                "messages": list(messages),
+                "tools": list(tools),
+            }
+        )
+        if self.error is not None:
+            raise self.error
+        queue = self._queues.get(role)
+        if not queue:
+            raise FakeScriptExhausted(f"no stub response left for role {role!r}")
+        return queue.popleft()
+
+
+def make_billing_config(**limit_overrides: int) -> Config:
+    limits = Limits(**{**DEFAULT_LIMITS, **limit_overrides})
+    return Config(
+        provider=ProviderSettings(name="openai"),
+        models=RoleModels(
+            orchestrator=SUPPORTED_TEST_MODEL,
+            developer=SUPPORTED_TEST_MODEL,
+            qa=SUPPORTED_TEST_MODEL,
+        ),
+        limits=limits,
+        cost=CostSettings(
+            max_output_tokens_per_call=1200,
+            safety_margin_percent=10.0,
+            max_context_tokens=120000,
+            estimator="tiktoken",
+        ),
+        pricing=TEST_PRICING,
+    )
+
+
+def build_billing_engine(
+    tmp_path: Path,
+    *,
+    provider: Any,
+    **limit_overrides: int,
+):
+    config = make_billing_config(**limit_overrides)
+    store = StateStore(tmp_path / "repo")
+    engine = WorkflowEngine(
+        config=config,
+        provider=provider,
+        store=store,
+        project_root=tmp_path / "repo" / "projects" / "demo",
+        project_slug="demo",
+        approval_gate=approving_gate(),
+        command_runner=ScriptedRunner(),
+    )
+    return engine, store
 
 
 def approving_gate() -> ApprovalGate:
@@ -264,13 +362,18 @@ def usage(input_tokens: int = 10, output_tokens: int = 5) -> Usage:
 __all__ = [
     "DEFAULT_TEST_CONTENT",
     "SUCCESS_DEVELOPER",
+    "SUPPORTED_TEST_MODEL",
     "ScriptedRunner",
+    "StubProvider",
     "TEST_COMMAND",
+    "TEST_PRICING",
     "approving_gate",
+    "build_billing_engine",
     "build_engine",
     "denying_gate",
     "event_kinds",
     "json_response",
+    "make_billing_config",
     "make_config",
     "plan_payload",
     "qa_script",
