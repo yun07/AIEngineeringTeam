@@ -26,6 +26,30 @@
     - 測試結果
     - 尚未解決的問題
 
+## Git Workflow Rules
+
+所有 Git 操作由 Zoo Code 負責執行，不需要用戶手動複製 Git 指令。
+
+每次完成一個 Milestone 或一組完整功能後：
+
+1. 檢查 `git status`。
+2. 執行相關測試。
+3. 檢查 `git diff` 及 `git diff --check`。
+4. 用繁體中文向用戶摘要修改內容。
+5. 建議清晰的 Conventional Commit message。
+6. 等待用戶批准後才執行 `git add` 及 `git commit`。
+7. Commit 成功後，再向用戶確認是否執行 `git push`。
+8. Push 必須獲得用戶明確批准。
+
+禁止：
+
+- 未經批准自動 Commit。
+- 未經批准自動 Push。
+- 將 `.env`、API keys、passwords 或其他 secrets 加入 Git。
+- 使用 `git reset --hard`、`git clean -fd` 或強制 Push，除非用戶明確批准。
+
+如果 Git 指令失敗，先分析錯誤原因，不要自行修改 Git 設定或憑證。
+
 ## 文件角色速查
 
 | 文件 | 幾時用 |
