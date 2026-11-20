@@ -13,10 +13,26 @@ from aiteam.config import (
     ConfigError,
     load_config,
 )
+from aiteam.engine.policy import ApprovalGate
 from aiteam.engine.workflow import WorkflowEngine
 from aiteam.models import RunState
-from aiteam.providers.fake import FakeProvider, demo_by_model
+from aiteam.providers.fake import FakeProvider, demo_by_role
 from aiteam.state.store import StateStore
+
+
+def build_approval_gate() -> ApprovalGate:
+    """Interactive TTY approver. Non-interactive input always denies.
+
+    Only the exact lowercase ``y`` approves. Every other answer, an empty
+    answer, and an EOF all deny. Default is No.
+    """
+
+    def _approve(prompt: str) -> bool:
+        print(prompt, end="", flush=True)
+        answer = input().strip()
+        return answer == "y"
+
+    return ApprovalGate(approver=_approve, interactive=sys.stdin.isatty())
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -90,7 +106,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return 2
 
-    provider = FakeProvider(by_model=demo_by_model(config.models))
+    provider = FakeProvider(by_role=demo_by_role(config.models))
     store = StateStore(root)
     project_root = root / "projects" / args.project
     engine = WorkflowEngine(
@@ -99,6 +115,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         store=store,
         project_root=project_root,
         project_slug=args.project,
+        approval_gate=build_approval_gate(),
     )
 
     run = engine.start(args.request, budget_usd=args.budget)
@@ -110,6 +127,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if run.block_reason:
         print(f"blocked: {run.block_reason}")
     print(f"tasks: {len(run.tasks)}")
+    print(f"approvals recorded: {len(store.read_approvals(run.id))}")
     print(f"project: {project_root.as_posix()}")
     print(f"report: {report_path.as_posix()}")
     return 0 if run.state is RunState.COMPLETED else 1

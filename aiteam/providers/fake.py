@@ -1,15 +1,16 @@
 """Fake provider: scripted responses with simulated usage.
 
-Every limit is testable without a paid call because the scripted responses
-carry usage counts and can return tool calls forever.
+Scripts are keyed by role first, then model, so Developer and QA sessions can
+never consume each other's scripted responses even when they share a model.
 """
 
 from __future__ import annotations
 
 import json
+import re
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from aiteam.config import RoleModels
 from aiteam.providers.base import (
@@ -25,8 +26,25 @@ class FakeScriptExhausted(RuntimeError):
     """Raised when the fake provider has no scripted response left."""
 
 
+EXECUTION_ID_PATTERN = re.compile(r"execution_id=([0-9a-zA-Z]+)")
+
+
+def extract_execution_id(messages: Sequence[ChatMessage]) -> str:
+    """Return the last execution id the engine reported in a tool message."""
+    for message in reversed(list(messages)):
+        if message.role == "tool" and message.content:
+            found = EXECUTION_ID_PATTERN.search(message.content)
+            if found:
+                return found.group(1)
+    return ""
+
+
+ScriptedResponse = LLMResponse | Callable[[Sequence[ChatMessage]], LLMResponse]
+
+
 @dataclass
 class FakeCall:
+    role: str
     model: str
     system: str
     messages: list[ChatMessage]
@@ -38,13 +56,17 @@ class FakeProvider:
 
     def __init__(
         self,
-        responses: Sequence[LLMResponse] | None = None,
+        responses: Sequence[ScriptedResponse] | None = None,
         *,
-        by_model: Mapping[str, Iterable[LLMResponse]] | None = None,
+        by_model: Mapping[str, Iterable[ScriptedResponse]] | None = None,
+        by_role: Mapping[str, Iterable[ScriptedResponse]] | None = None,
     ) -> None:
-        self._flat: deque[LLMResponse] = deque(responses or [])
-        self._by_model: dict[str, deque[LLMResponse]] = {
+        self._flat: deque[ScriptedResponse] = deque(responses or [])
+        self._by_model: dict[str, deque[ScriptedResponse]] = {
             model: deque(script) for model, script in (by_model or {}).items()
+        }
+        self._by_role: dict[str, deque[ScriptedResponse]] = {
+            role: deque(script) for role, script in (by_role or {}).items()
         }
         self.calls: list[FakeCall] = []
 
@@ -55,13 +77,21 @@ class FakeProvider:
         system: str,
         messages: Sequence[ChatMessage],
         tools: Sequence[ToolSpec],
+        role: str = "",
     ) -> LLMResponse:
-        queue = self._by_model.get(model, self._flat)
+        queue = self._by_role.get(role)
+        if queue is None:
+            queue = self._by_model.get(model, self._flat)
         if not queue:
-            raise FakeScriptExhausted(f"no scripted response left for model {model!r}")
+            raise FakeScriptExhausted(
+                f"no scripted response left for role {role!r} model {model!r}"
+            )
         response = queue.popleft()
+        if callable(response):
+            response = response(messages)
         self.calls.append(
             FakeCall(
+                role=role,
                 model=model,
                 system=system,
                 messages=list(messages),
@@ -95,11 +125,12 @@ def tool_response(
     )
 
 
-def demo_by_model(models: RoleModels) -> dict[str, list[LLMResponse]]:
+def demo_by_role(models: RoleModels) -> dict[str, list[LLMResponse]]:
     """Deterministic scripted run used by `python -m aiteam run --fake`.
 
-    One task is planned, then the developer writes a single notes file. No code
-    is executed and no file outside projects/<slug>/ is touched.
+    Roles are kept apart: the Orchestrator plans, the Developer writes one
+    notes file, and QA writes one test file, requests the test command and
+    reports a verdict. Nothing is executed without human approval.
     """
     plan = {
         "tasks": [
@@ -113,7 +144,7 @@ def demo_by_model(models: RoleModels) -> dict[str, list[LLMResponse]]:
             }
         ]
     }
-    write = ToolCall(
+    developer_write = ToolCall(
         id="call_write_1",
         name="write_file",
         arguments={
@@ -126,10 +157,70 @@ def demo_by_model(models: RoleModels) -> dict[str, list[LLMResponse]]:
             ),
         },
     )
+    qa_write = ToolCall(
+        id="call_qa_write_1",
+        name="write_file",
+        arguments={
+            "path": "qa_tests/test_notes.py",
+            "content": (
+                "from pathlib import Path\n"
+                "\n"
+                "def test_notes_exists():\n"
+                "    assert Path('notes.md').is_file()\n"
+                "    assert Path('notes.md').read_text(encoding='utf-8').strip()\n"
+                "\n"
+                "def test_missing_file_is_rejected():\n"
+                "    assert not Path('definitely_missing.md').exists()\n"
+            ),
+        },
+    )
+    qa_run = ToolCall(
+        id="call_qa_run_1",
+        name="run_command",
+        arguments={"argv": ["python", "-m", "pytest", "qa_tests", "-q"]},
+    )
+    verdict = {
+        "verdict": "pass",
+        "summary": "Both checks passed on the recorded test run.",
+        "checks": [
+            {
+                "criterion": "C1",
+                "name": "notes.md exists and is not empty",
+                "kind": "positive",
+                "command": "python -m pytest qa_tests -q",
+                "exit_code": 0,
+                "evidence": "2 passed",
+                "test_file": "qa_tests/test_notes.py",
+            },
+            {
+                "criterion": "C1",
+                "name": "missing file stays absent",
+                "kind": "negative",
+                "command": "python -m pytest qa_tests -q",
+                "exit_code": 0,
+                "evidence": "negative check passed",
+                "test_file": "qa_tests/test_notes.py",
+            },
+        ],
+        "unverified_requirements": [],
+    }
+
+    def verdict_response(messages: Sequence[ChatMessage]) -> LLMResponse:
+        execution_id = extract_execution_id(messages)
+        payload = json.loads(json.dumps(verdict))
+        for check in payload["checks"]:
+            check["execution_id"] = execution_id
+        return json_response(payload)
+
     return {
-        models.orchestrator: [json_response(plan)],
-        models.developer: [
-            tool_response([write]),
+        "orchestrator": [json_response(plan)],
+        "developer": [
+            tool_response([developer_write]),
             text_response("Wrote notes.md. The task is complete."),
+        ],
+        "qa": [
+            tool_response([qa_write]),
+            tool_response([qa_run]),
+            verdict_response,
         ],
     }

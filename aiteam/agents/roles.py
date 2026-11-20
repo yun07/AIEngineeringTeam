@@ -15,9 +15,32 @@ PROMPTS_DIR = Path(__file__).with_name("prompts")
 
 ORCHESTRATOR_TOOLS: tuple[str, ...] = ()
 DEVELOPER_TOOLS: tuple[str, ...] = ("read_file", "write_file", "list_files")
+QA_TOOLS: tuple[str, ...] = (
+    "read_file",
+    "list_files",
+    "write_file",
+    "run_command",
+)
+
+# Tools that must never exist for any role: shell wrappers and interpreters.
+SHELL_TOOL_NAMES: tuple[str, ...] = (
+    "run_shell",
+    "shell",
+    "exec",
+    "cmd",
+    "powershell",
+)
 
 # Tool names that must never appear in the Developer or Orchestrator tool set.
-FORBIDDEN_ROLE_TOOLS: tuple[str, ...] = ("run_command", "run_shell", "shell", "exec")
+# QA is the only role allowed to request command execution, and only through
+# the engine's policy and approval gate.
+FORBIDDEN_ROLE_TOOLS: tuple[str, ...] = ("run_command",) + SHELL_TOOL_NAMES
+
+
+def forbidden_tools_for(role: RoleDefinition) -> tuple[str, ...]:
+    if role.name == "qa":
+        return SHELL_TOOL_NAMES
+    return FORBIDDEN_ROLE_TOOLS
 
 
 @dataclass(frozen=True)
@@ -40,8 +63,13 @@ DEVELOPER = RoleDefinition(
     prompt_file="developer.md",
     tools=DEVELOPER_TOOLS,
 )
+QA = RoleDefinition(
+    name="qa",
+    prompt_file="qa.md",
+    tools=QA_TOOLS,
+)
 
-ROLES = {role.name: role for role in (ORCHESTRATOR, DEVELOPER)}
+ROLES = {role.name: role for role in (ORCHESTRATOR, DEVELOPER, QA)}
 
 
 def get_role(name: str) -> RoleDefinition:

@@ -15,7 +15,13 @@ from aiteam.engine.workflow import (
 from aiteam.models import Action, Run, RunState, Task, TaskState
 from aiteam.providers.base import ToolCall, ToolSpec
 from aiteam.providers.fake import json_response, text_response, tool_response
-from tests.fakes import build_engine, event_kinds, plan_payload, write_call
+from tests.fakes import (
+    build_engine,
+    event_kinds,
+    plan_payload,
+    qa_script,
+    write_call,
+)
 
 SUCCESS_DEVELOPER_SCRIPT = [
     tool_response([write_call("notes.md", "hello\n")]),
@@ -23,7 +29,9 @@ SUCCESS_DEVELOPER_SCRIPT = [
 ]
 
 
-def _successful_run(tmp_path, *, tasks=1, developer_script=None, **limits):
+def _successful_run(
+    tmp_path, *, tasks=1, developer_script=None, qa_scripts=None, **limits
+):
     engine, store = build_engine(
         tmp_path,
         orchestrator_script=[json_response(plan_payload(tasks))],
@@ -31,6 +39,9 @@ def _successful_run(tmp_path, *, tasks=1, developer_script=None, **limits):
             list(developer_script)
             if developer_script is not None
             else SUCCESS_DEVELOPER_SCRIPT
+        ),
+        qa_script_responses=(
+            list(qa_scripts) if qa_scripts is not None else qa_script()
         ),
         **limits,
     )
@@ -101,6 +112,7 @@ def test_each_task_gets_its_own_developer_session(tmp_path):
             tool_response([write_call("two.md", "2\n")]),
             text_response("Wrote two.md."),
         ],
+        qa_scripts=qa_script() + qa_script(),
     )
 
     assert result.state is RunState.COMPLETED
@@ -188,6 +200,7 @@ def test_invalid_plan_is_repaired_once(tmp_path):
             json_response(plan_payload(1)),
         ],
         developer_script=SUCCESS_DEVELOPER_SCRIPT,
+        qa_script_responses=qa_script(),
     )
     run = engine.start("build a demo project")
     result = engine.execute()
@@ -336,6 +349,7 @@ def test_developer_cannot_reach_a_forbidden_tool_even_when_registered(
             ),
             text_response("Could not run a command."),
         ],
+        qa_script_responses=qa_script(),
     )
 
     base_specs = engine._file_tools.tool_specs()

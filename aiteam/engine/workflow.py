@@ -2,24 +2,29 @@
 
 Control flow lives here and nowhere else. next_action() is a pure function of
 run state, so every routing rule is testable offline with the fake provider.
-M1 covers the plan stage, the Developer write stage, execution limits and the
-run report. QA, approvals, retries and cost accounting arrive later.
+M2 covers the plan stage, the Developer write stage, QA execution behind human
+approval, engine-side evidence validation and the run report. Retries and cost
+accounting arrive later.
 """
 
 from __future__ import annotations
 
 import json
+import uuid
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from aiteam.agents.base import AgentSession, LimitExceeded
-from aiteam.agents.roles import FORBIDDEN_ROLE_TOOLS, get_role, model_for_role
+from aiteam.agents.roles import forbidden_tools_for, get_role, model_for_role
 from aiteam.config import Config
+from aiteam.engine.evidence import VerdictError, parse_verdict, validate_verdict
 from aiteam.engine.handoff import (
     developer_bundle,
     file_manifest,
     orchestrator_prompt,
+    qa_bundle,
 )
+from aiteam.engine.policy import ApprovalGate
 from aiteam.models import (
     TERMINAL_RUN_STATES,
     AcceptanceCriterion,
@@ -32,6 +37,7 @@ from aiteam.models import (
 from aiteam.providers.base import LLMProvider, ToolSpec
 from aiteam.state.store import StateStore
 from aiteam.tools.filesystem import FileTools, Workspace
+from aiteam.tools.shell import CommandRecord, CommandRunner, ShellTools
 
 MAX_ROUTING_STEPS = 100
 
@@ -55,7 +61,14 @@ def next_action(run: Run, tasks: Sequence[Task] | None = None) -> Action:
             task.state in (TaskState.DONE, TaskState.QA_PASSED) for task in task_list
         ):
             return Action.FINALIZE
-        return Action.RUN_DEVELOPER
+        if any(task.state is TaskState.PENDING for task in task_list):
+            return Action.RUN_DEVELOPER
+        if any(
+            task.state in (TaskState.DEV_RUNNING, TaskState.QA_RUNNING)
+            for task in task_list
+        ):
+            return Action.RUN_QA
+        return Action.FINALIZE
 
     return Action.FINALIZE
 
@@ -158,13 +171,20 @@ class WorkflowEngine:
         store: StateStore,
         project_root: str | Path,
         project_slug: str,
+        approval_gate: ApprovalGate | None = None,
+        command_runner: CommandRunner | None = None,
     ) -> None:
         self._config = config
         self._provider = provider
         self._store = store
         self._project_slug = project_slug
         self._workspace = Workspace(project_root, write_deny_subpaths=("qa_tests",))
+        self._qa_workspace = Workspace(project_root, write_allow_subpaths=("qa_tests",))
         self._file_tools = FileTools(self._workspace)
+        self._qa_file_tools = FileTools(self._qa_workspace)
+        self._approval_gate = approval_gate or ApprovalGate()
+        self._command_runner = command_runner
+        self._command_records: list[CommandRecord] = []
         self.run: Run | None = None
         self.sessions: list[AgentSession] = []
         self._steps = 0
@@ -209,6 +229,8 @@ class WorkflowEngine:
                     self._block("plan_only: execution skipped at the user's request")
             elif action is Action.RUN_DEVELOPER:
                 self._handle_developer()
+            elif action is Action.RUN_QA:
+                self._handle_qa()
             elif action is Action.FINALIZE:
                 self._finalize()
             else:
@@ -366,7 +388,8 @@ class WorkflowEngine:
         task.turns += session.turns
         task.files_written = self._written_paths(session)
         task.summary = summary.strip()
-        task.state = TaskState.DONE
+        # The task stays dev_running until QA has verified it. next_action()
+        # routes that state to the QA stage.
         self._store.save(run)
         self._store.append_event(
             run.id,
@@ -380,8 +403,188 @@ class WorkflowEngine:
             },
         )
 
+    def _handle_qa(self) -> None:
+        run = self._require_run()
+        task = next(
+            (
+                item
+                for item in run.tasks
+                if item.state in (TaskState.DEV_RUNNING, TaskState.QA_RUNNING)
+            ),
+            None,
+        )
+        if task is None:
+            return
+
+        task.state = TaskState.QA_RUNNING
+        self._store.save(run)
+        self._store.append_event(run.id, "task_qa_started", {"task": task.id})
+
+        remaining_calls = self._config.limits.max_llm_calls_per_task - task.llm_calls
+        if remaining_calls < 1:
+            task.state = TaskState.BLOCKED
+            task.block_reason = (
+                f"max_llm_calls_per_task={self._config.limits.max_llm_calls_per_task} "
+                f"reached before QA for task {task.id}"
+            )
+            self._block(task.block_reason)
+            return
+
+        role = get_role("qa")
+        index = run.tasks.index(task) + 1
+        session_id = uuid.uuid4().hex[:12]
+        shell_tools = ShellTools(
+            workspace_root=self._workspace.root,
+            run_id=run.id,
+            task_id=task.id,
+            session_id=session_id,
+            gate=self._approval_gate,
+            event_sink=lambda kind, data: self._store.append_event(run.id, kind, data),
+            store=self._store,
+            runner=self._command_runner,
+            purpose=f"run the QA test suite for task {task.id}",
+            max_output_chars=self._config.limits.max_tool_output_chars,
+            timeout_seconds=self._config.limits.command_timeout_seconds,
+            target_files=("qa_tests/",),
+        )
+        session = self._new_session(
+            role_name=role.name,
+            tools=self._qa_file_tools.tool_specs() + shell_tools.tool_specs(),
+            handlers={**self._qa_file_tools.handlers(), **shell_tools.handlers()},
+            transcript_name=f"task-{index}.qa.a{task.attempt}.session.jsonl",
+            max_llm_calls=remaining_calls,
+            session_id=session_id,
+        )
+
+        try:
+            verdict_text = session.send(
+                qa_bundle(
+                    request=run.request,
+                    task=task,
+                    manifest=file_manifest(self._workspace.root),
+                )
+            )
+        except LimitExceeded as exc:
+            task.llm_calls += session.llm_calls
+            task.turns += session.turns
+            task.state = TaskState.BLOCKED
+            task.block_reason = (
+                f"{exc.limit} breached while running QA for task {task.id}"
+            )
+            self._command_records.extend(shell_tools.records)
+            self._block(task.block_reason)
+            return
+        except Exception as exc:
+            task.llm_calls += session.llm_calls
+            task.turns += session.turns
+            task.state = TaskState.BLOCKED
+            task.block_reason = f"provider_error: {self._safe_error(exc)}"
+            self._command_records.extend(shell_tools.records)
+            self._provider_error(stage=f"qa task {task.id}", session=session, exc=exc)
+            return
+
+        task.qa_test_files = [
+            path
+            for path in self._written_paths(session)
+            if path.replace("\\", "/").startswith("qa_tests/")
+        ]
+        self._command_records.extend(shell_tools.records)
+
+        try:
+            verdict = parse_verdict(verdict_text)
+        except VerdictError as exc:
+            self._store.append_event(
+                run.id, "qa_verdict_invalid", {"task": task.id, "error": str(exc)}
+            )
+            try:
+                verdict = parse_verdict(
+                    session.send(
+                        f"Your verdict was rejected: {exc}. "
+                        "Return only the JSON verdict object."
+                    )
+                )
+            except LimitExceeded as repair_limit:
+                task.llm_calls += session.llm_calls
+                task.turns += session.turns
+                task.state = TaskState.BLOCKED
+                task.block_reason = (
+                    f"{repair_limit.limit} breached while repairing the QA verdict "
+                    f"for task {task.id}"
+                )
+                self._block(task.block_reason)
+                return
+            except Exception as repair_error:
+                task.llm_calls += session.llm_calls
+                task.turns += session.turns
+                task.state = TaskState.QA_FAILED
+                task.qa_failure_reason = f"verdict_invalid: {repair_error}"
+                self._store.save(run)
+                self._store.append_event(
+                    run.id,
+                    "task_qa_failed",
+                    {"task": task.id, "reason": task.qa_failure_reason},
+                )
+                self._block(f"qa_failed_no_retry_in_m2: {task.qa_failure_reason}")
+                return
+
+        task.llm_calls += session.llm_calls
+        task.turns += session.turns
+        task.qa_verdict = verdict
+
+        if shell_tools.denials:
+            denial = shell_tools.denials[0]
+            task.state = TaskState.BLOCKED
+            task.block_reason = denial.denied_reason or "approval_denied"
+            task.qa_failure_reason = (
+                f"approval_denied: {denial.command_line}"
+            )
+            self._store.save(run)
+            self._store.append_event(
+                run.id,
+                "task_blocked",
+                {"task": task.id, "reason": task.block_reason},
+            )
+            self._block(f"approval_denied: {denial.command_line}")
+            return
+
+        reasons = validate_verdict(
+            verdict=verdict,
+            task=task,
+            audit=shell_tools.records,
+            qa_test_files=task.qa_test_files,
+            project_root=self._workspace.root,
+        )
+        if reasons:
+            task.state = TaskState.QA_FAILED
+            task.qa_failure_reason = "; ".join(reasons)
+            self._store.save(run)
+            self._store.append_event(
+                run.id,
+                "task_qa_failed",
+                {"task": task.id, "reason": task.qa_failure_reason},
+            )
+            self._block(f"qa_failed_no_retry_in_m2: {task.qa_failure_reason}")
+            return
+
+        task.state = TaskState.QA_PASSED
+        task.qa_failure_reason = None
+        self._store.save(run)
+        self._store.append_event(
+            run.id,
+            "task_qa_passed",
+            {
+                "task": task.id,
+                "checks": len(verdict.checks),
+                "commands": len(shell_tools.records),
+                "session_id": session.session_id,
+            },
+        )
+
     def _finalize(self) -> None:
         run = self._require_run()
+        for task in run.tasks:
+            if task.state is TaskState.QA_PASSED:
+                task.state = TaskState.DONE
         run.state = RunState.COMPLETED
         run.block_reason = None
         self._store.save(run)
@@ -407,12 +610,13 @@ class WorkflowEngine:
         handlers: Mapping[str, Any],
         transcript_name: str,
         max_llm_calls: int | None = None,
+        session_id: str | None = None,
     ) -> AgentSession:
         run = self._require_run()
         role = get_role(role_name)
 
         # The role definition, not the caller, decides which tools exist.
-        forbidden = set(role.tools) & set(FORBIDDEN_ROLE_TOOLS)
+        forbidden = set(role.tools) & set(forbidden_tools_for(role))
         if forbidden:
             raise RuntimeError(
                 f"role {role.name} declares forbidden tools: {sorted(forbidden)}"
@@ -435,6 +639,7 @@ class WorkflowEngine:
             provider=self._provider,
             system_prompt=role.load_prompt(),
             transcript_path=self._store.transcript_path(run.id, transcript_name),
+            session_id=session_id or uuid.uuid4().hex[:12],
             allowed_tools=frozenset(role.tools),
             max_tool_output_chars=self._config.limits.max_tool_output_chars,
             tool_specs=tuple(spec_by_name[name] for name in role.tools),
@@ -574,6 +779,9 @@ class WorkflowEngine:
         else:
             lines.append("| - | - | - | - | - | - |")
 
+        lines.extend(self._qa_report_lines(run))
+        lines.extend(self._approval_report_lines(run))
+
         lines.extend(
             [
                 "",
@@ -586,12 +794,97 @@ class WorkflowEngine:
                 "",
                 "## Not in this milestone",
                 "",
-                "QA execution, approvals, retries, token accounting and USD cost "
-                "arrive in M2 to M4. This report contains no cost figures on purpose.",
+                "Retries, token accounting and USD cost arrive in M3 and M4. "
+                "This report contains no cost figures on purpose.",
                 "",
             ]
         )
         return self._store.write_report(run.id, "\n".join(lines))
+
+    def _qa_report_lines(self, run: Run) -> list[str]:
+        lines: list[str] = ["", "## QA evidence", ""]
+        qa_tasks = [
+            task
+            for task in run.tasks
+            if task.qa_verdict is not None or task.qa_failure_reason
+        ]
+        if not qa_tasks:
+            lines.extend(["No QA evidence recorded.", ""])
+        for task in qa_tasks:
+            verdict = task.qa_verdict
+            lines.append(f"### Task {task.id}")
+            lines.append("")
+            if verdict is not None:
+                lines.append(f"- QA verdict: `{verdict.verdict}`")
+                lines.append(f"- QA summary: {verdict.summary or '-'}")
+            rejected = bool(task.qa_failure_reason) or task.state in (
+                TaskState.QA_FAILED,
+                TaskState.BLOCKED,
+            )
+            if rejected:
+                lines.append("- Engine result: **rejected**")
+                reason = task.qa_failure_reason or task.block_reason
+                if reason:
+                    lines.append(f"- Engine reasons: {reason}")
+            else:
+                lines.append("- Engine result: accepted")
+            if verdict is not None and verdict.checks:
+                lines.extend(
+                    [
+                        "",
+                        "| Criterion | Check | Kind | Exit code | Test file |",
+                        "|---|---|---|---|---|",
+                    ]
+                )
+                for check in verdict.checks:
+                    lines.append(
+                        f"| {check.criterion} | {check.name} | {check.kind} | "
+                        f"{check.exit_code} | {check.test_file or '-'} |"
+                    )
+            lines.append("")
+
+        test_files = sorted(
+            {path for task in run.tasks for path in task.qa_test_files}
+        )
+        lines.extend(["## QA test files", ""])
+        if test_files:
+            lines.extend(f"- `{path}`" for path in test_files)
+        else:
+            lines.append("(none)")
+        lines.append("")
+        return lines
+
+    def _approval_report_lines(self, run: Run) -> list[str]:
+        lines: list[str] = ["", "## Approvals", ""]
+        approvals = self._store.read_approvals(run.id)
+        if approvals:
+            lines.extend(["| Command | Decision | Reason |", "|---|---|---|"])
+            for record in approvals:
+                lines.append(
+                    f"| `{record.get('command_line', '')}` | "
+                    f"{record.get('decision', '')} | {record.get('reason') or '-'} |"
+                )
+        else:
+            lines.append("No approval decisions recorded.")
+
+        lines.extend(["", "## Command executions", ""])
+        if self._command_records:
+            lines.extend(
+                [
+                    "| Command | Exit code | Timed out | Truncated |",
+                    "|---|---|---|---|",
+                ]
+            )
+            for record in self._command_records:
+                code = "timeout" if record.timed_out else str(record.exit_code)
+                lines.append(
+                    f"| `{record.command_line}` | {code} | {record.timed_out} | "
+                    f"{record.truncated} |"
+                )
+        else:
+            lines.append("No commands executed.")
+        lines.append("")
+        return lines
 
     def _require_run(self) -> Run:
         if self.run is None:

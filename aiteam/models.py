@@ -68,6 +68,108 @@ class AcceptanceCriterion:
         return cls(id=str(data["id"]), text=str(data["text"]))
 
 
+QA_CHECK_KINDS = frozenset({"positive", "negative"})
+
+
+@dataclass
+class QaCheck:
+    """One verification check reported by QA and validated by the engine.
+
+    ``execution_id`` is the engine-owned identifier of the command execution
+    this check refers to. QA can only echo it; it cannot create or edit the
+    audit record behind it.
+    """
+
+    criterion: str
+    name: str
+    kind: str
+    command: str
+    exit_code: int
+    evidence: str = ""
+    test_file: str | None = None
+    execution_id: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "criterion": self.criterion,
+            "name": self.name,
+            "kind": self.kind,
+            "command": self.command,
+            "exit_code": self.exit_code,
+            "evidence": self.evidence,
+            "test_file": self.test_file,
+            "execution_id": self.execution_id,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> QaCheck:
+        return cls(
+            criterion=str(data["criterion"]),
+            name=str(data.get("name", "")),
+            kind=str(data.get("kind", "")),
+            command=str(data.get("command", "")),
+            exit_code=int(data.get("exit_code", -1)),
+            evidence=str(data.get("evidence", "")),
+            test_file=data.get("test_file"),
+            execution_id=data.get("execution_id"),
+        )
+
+
+@dataclass
+class QaVerdict:
+    verdict: str
+    summary: str = ""
+    checks: list[QaCheck] = field(default_factory=list)
+    unverified_requirements: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "verdict": self.verdict,
+            "summary": self.summary,
+            "checks": [check.to_dict() for check in self.checks],
+            "unverified_requirements": list(self.unverified_requirements),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> QaVerdict:
+        return cls(
+            verdict=str(data.get("verdict", "")),
+            summary=str(data.get("summary", "")),
+            checks=[QaCheck.from_dict(item) for item in data.get("checks", [])],
+            unverified_requirements=[
+                str(item) for item in data.get("unverified_requirements", [])
+            ],
+        )
+
+
+@dataclass
+class ApprovalRecord:
+    """One human decision for one specific command execution."""
+
+    ts: str
+    run_id: str
+    task_id: str
+    session_id: str
+    command_line: str
+    cwd: str
+    purpose: str
+    decision: str
+    reason: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "ts": self.ts,
+            "run_id": self.run_id,
+            "task_id": self.task_id,
+            "session_id": self.session_id,
+            "command_line": self.command_line,
+            "cwd": self.cwd,
+            "purpose": self.purpose,
+            "decision": self.decision,
+            "reason": self.reason,
+        }
+
+
 @dataclass
 class Task:
     id: str
@@ -81,6 +183,9 @@ class Task:
     files_written: list[str] = field(default_factory=list)
     summary: str = ""
     block_reason: str | None = None
+    qa_verdict: QaVerdict | None = None
+    qa_test_files: list[str] = field(default_factory=list)
+    qa_failure_reason: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -95,6 +200,9 @@ class Task:
             "files_written": list(self.files_written),
             "summary": self.summary,
             "block_reason": self.block_reason,
+            "qa_verdict": self.qa_verdict.to_dict() if self.qa_verdict else None,
+            "qa_test_files": list(self.qa_test_files),
+            "qa_failure_reason": self.qa_failure_reason,
         }
 
     @classmethod
@@ -114,6 +222,13 @@ class Task:
             files_written=[str(item) for item in data.get("files_written", [])],
             summary=str(data.get("summary", "")),
             block_reason=data.get("block_reason"),
+            qa_verdict=(
+                QaVerdict.from_dict(data["qa_verdict"])
+                if data.get("qa_verdict")
+                else None
+            ),
+            qa_test_files=[str(item) for item in data.get("qa_test_files", [])],
+            qa_failure_reason=data.get("qa_failure_reason"),
         )
 
 

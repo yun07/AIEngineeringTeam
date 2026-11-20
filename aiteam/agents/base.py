@@ -104,6 +104,7 @@ class AgentSession:
             self.llm_calls += 1
             response = self.provider.complete(
                 model=self.model,
+                role=self.role,
                 system=self.system_prompt,
                 messages=tuple(self._messages),
                 tools=tuple(self.tool_specs),

@@ -3,13 +3,21 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Mapping, Sequence
 
 from aiteam.config import Config, Limits, ProviderSettings, RoleModels
+from aiteam.engine.policy import ApprovalGate
 from aiteam.engine.workflow import WorkflowEngine
 from aiteam.providers.base import LLMResponse, ToolCall, Usage
-from aiteam.providers.fake import FakeProvider
+from aiteam.providers.fake import (
+    FakeProvider,
+    extract_execution_id,
+    json_response,
+    text_response,
+    tool_response,
+)
 from aiteam.state.store import StateStore
+from aiteam.tools.shell import RunResult
 
 DEFAULT_LIMITS: dict[str, int] = {
     "max_tasks_per_plan": 3,
@@ -19,6 +27,55 @@ DEFAULT_LIMITS: dict[str, int] = {
     "command_timeout_seconds": 120,
     "max_tool_output_chars": 8000,
 }
+
+TEST_COMMAND = "python -m pytest qa_tests -q"
+DEFAULT_TEST_CONTENT = (
+    "def test_positive():\n"
+    "    assert True\n"
+    "\n"
+    "\n"
+    "def test_negative():\n"
+    "    assert not False\n"
+)
+
+
+class ScriptedRunner:
+    """Deterministic command runner for engine scenarios."""
+
+    def __init__(
+        self,
+        results: Sequence[RunResult] | None = None,
+        *,
+        default_exit_code: int = 0,
+    ) -> None:
+        self._results = list(results or [])
+        self._default_exit_code = default_exit_code
+        self.calls: list[dict[str, Any]] = []
+
+    def run(self, *, argv, cwd, env, timeout) -> RunResult:
+        self.calls.append(
+            {
+                "argv": list(argv),
+                "cwd": str(cwd),
+                "env": dict(env),
+                "timeout": timeout,
+            }
+        )
+        if self._results:
+            return self._results.pop(0)
+        return RunResult(
+            exit_code=self._default_exit_code,
+            stdout="1 passed in 0.01s",
+            stderr="",
+        )
+
+
+def approving_gate() -> ApprovalGate:
+    return ApprovalGate(approver=lambda prompt: True, interactive=True)
+
+
+def denying_gate() -> ApprovalGate:
+    return ApprovalGate(approver=lambda prompt: False, interactive=True)
 
 
 def make_config(**limit_overrides: int) -> Config:
@@ -58,18 +115,98 @@ def write_call(path: str, content: str = "hello\n", call_id: str = "call_1") -> 
     )
 
 
+def qa_script(
+    *,
+    checks: Sequence[Mapping[str, Any]] | None = None,
+    exit_code: int = 0,
+    test_file: str = "qa_tests/test_demo.py",
+    test_content: str = DEFAULT_TEST_CONTENT,
+    command: str = TEST_COMMAND,
+    verdict: str = "pass",
+    run_call_id: str = "qa_run_1",
+    write_call_id: str = "qa_write_1",
+    execution_override: str | None = None,
+) -> list[LLMResponse]:
+    """Build the three scripted QA turns: write tests, run, report verdict."""
+    if checks is None:
+        checks = (
+            {
+                "criterion": "C1",
+                "name": "positive check",
+                "kind": "positive",
+                "exit_code": exit_code,
+                "test_file": test_file,
+            },
+            {
+                "criterion": "C1",
+                "name": "negative check",
+                "kind": "negative",
+                "exit_code": exit_code,
+                "test_file": test_file,
+            },
+        )
+    base_payload = {
+        "verdict": verdict,
+        "summary": "recorded checks",
+        "checks": [
+            {"command": command, "evidence": "1 passed", **dict(check)}
+            for check in checks
+        ],
+        "unverified_requirements": [],
+    }
+
+    def verdict_response(messages) -> LLMResponse:
+        import json as _json
+
+        payload = _json.loads(_json.dumps(base_payload))
+        execution_id = (
+            execution_override
+            if execution_override is not None
+            else extract_execution_id(messages)
+        )
+        for check in payload["checks"]:
+            check["execution_id"] = execution_id
+        return json_response(payload)
+
+    return [
+        tool_response(
+            [
+                ToolCall(
+                    id=write_call_id,
+                    name="write_file",
+                    arguments={"path": test_file, "content": test_content},
+                )
+            ]
+        ),
+        tool_response(
+            [
+                ToolCall(
+                    id=run_call_id,
+                    name="run_command",
+                    arguments={"argv": command.split()},
+                )
+            ]
+        ),
+        verdict_response,
+    ]
+
+
 def build_engine(
     tmp_path: Path,
     *,
     orchestrator_script: Sequence[LLMResponse],
     developer_script: Sequence[LLMResponse] | None = None,
+    qa_script_responses: Sequence[LLMResponse] | None = None,
+    gate: ApprovalGate | None = None,
+    runner: Any | None = None,
     **limit_overrides: int,
 ) -> tuple[WorkflowEngine, StateStore]:
     config = make_config(**limit_overrides)
     provider = FakeProvider(
-        by_model={
-            config.models.orchestrator: list(orchestrator_script),
-            config.models.developer: list(developer_script or []),
+        by_role={
+            "orchestrator": list(orchestrator_script),
+            "developer": list(developer_script or []),
+            "qa": list(qa_script_responses or []),
         }
     )
     store = StateStore(tmp_path / "repo")
@@ -79,13 +216,67 @@ def build_engine(
         store=store,
         project_root=tmp_path / "repo" / "projects" / "demo",
         project_slug="demo",
+        approval_gate=gate or approving_gate(),
+        command_runner=runner or ScriptedRunner(),
     )
     return engine, store
+
+
+SUCCESS_DEVELOPER: list[LLMResponse] = [
+    tool_response([write_call("notes.md", "hello\n")]),
+    text_response("Wrote notes.md."),
+]
+
+
+def run_demo(
+    tmp_path: Path,
+    *,
+    qa_script_responses: Sequence[LLMResponse],
+    gate: ApprovalGate | None = None,
+    runner: Any | None = None,
+    plan: Mapping[str, Any] | None = None,
+    developer_script: Sequence[LLMResponse] | None = None,
+    **limit_overrides: int,
+):
+    """Run one full engine execution with scripted roles."""
+    engine, store = build_engine(
+        tmp_path,
+        orchestrator_script=[json_response(plan or plan_payload(1))],
+        developer_script=list(developer_script or SUCCESS_DEVELOPER),
+        qa_script_responses=qa_script_responses,
+        gate=gate,
+        runner=runner,
+        **limit_overrides,
+    )
+    run = engine.start("build a demo project")
+    result = engine.execute()
+    return engine, store, run, result
 
 
 def event_kinds(store: StateStore, run_id: str) -> list[str]:
     return [event["kind"] for event in store.read_events(run_id)]
 
 
-def usage(input_tokens: int = 10, output_tokens: int = 5) -> Iterable[Usage]:
-    return [Usage(input_tokens=input_tokens, output_tokens=output_tokens)]
+def usage(input_tokens: int = 10, output_tokens: int = 5) -> Usage:
+    return Usage(input_tokens=input_tokens, output_tokens=output_tokens)
+
+
+__all__ = [
+    "DEFAULT_TEST_CONTENT",
+    "SUCCESS_DEVELOPER",
+    "ScriptedRunner",
+    "TEST_COMMAND",
+    "approving_gate",
+    "build_engine",
+    "denying_gate",
+    "event_kinds",
+    "json_response",
+    "make_config",
+    "plan_payload",
+    "qa_script",
+    "run_demo",
+    "text_response",
+    "tool_response",
+    "usage",
+    "write_call",
+]

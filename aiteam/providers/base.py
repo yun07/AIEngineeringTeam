@@ -62,5 +62,6 @@ class LLMProvider(Protocol):
         system: str,
         messages: Sequence[ChatMessage],
         tools: Sequence[ToolSpec],
+        role: str = "",
     ) -> LLMResponse:
         """Return one assistant response for the given conversation."""

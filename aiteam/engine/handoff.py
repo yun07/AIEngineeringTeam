@@ -107,3 +107,34 @@ def developer_bundle(
         "Write the files needed for this task using the write_file tool, then "
         "reply with a short summary that lists the files you wrote."
     )
+
+
+def qa_bundle(
+    *,
+    request: str,
+    task: Task,
+    manifest: Sequence[dict[str, Any]],
+) -> str:
+    """Handoff for QA: request, criteria ids, manifest and conventions only."""
+    return (
+        "Overall user request:\n"
+        f"{request.strip()}\n\n"
+        f"Task to verify ({task.id}):\n"
+        f"{task.description}\n\n"
+        "Acceptance criteria you must cover. Every id below needs at least one\n"
+        "check, and at least one check must be marked negative:\n"
+        f"{_format_criteria(task)}\n\n"
+        "Current project files, with hashes for change detection:\n"
+        f"{_format_manifest(manifest)}\n\n"
+        "Testing conventions:\n"
+        "- pytest only, no other test framework.\n"
+        "- Write test files only under qa_tests/.\n"
+        "- Do not modify or create any other file.\n"
+        "- Request execution with the exact argument vector\n"
+        '  ["python", "-m", "pytest", "qa_tests", "-q"].\n'
+        "- Each execution needs its own human approval; a denial is reported,\n"
+        "  not worked around.\n"
+        "- Every run_command result prints `execution_id=...`. Echo that exact\n"
+        "  value in each check; the engine verifies it against its own audit.\n"
+        "- Reply with the verdict JSON described in your instructions.\n"
+    )

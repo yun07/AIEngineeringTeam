@@ -7,7 +7,12 @@ import re
 import pytest
 
 from aiteam.agents.base import AgentSession, LimitExceeded
-from aiteam.agents.roles import DEVELOPER_TOOLS, FORBIDDEN_ROLE_TOOLS, ORCHESTRATOR
+from aiteam.agents.roles import (
+    DEVELOPER_TOOLS,
+    FORBIDDEN_ROLE_TOOLS,
+    ORCHESTRATOR,
+    QA_TOOLS,
+)
 from aiteam.providers.base import ToolCall, Usage
 from aiteam.providers.fake import FakeProvider, text_response, tool_response
 from aiteam.tools.filesystem import FileTools, Workspace
@@ -49,6 +54,17 @@ def test_developer_role_has_no_shell_tool():
     assert set(DEVELOPER_TOOLS) == {"read_file", "write_file", "list_files"}
     assert set(DEVELOPER_TOOLS).isdisjoint(FORBIDDEN_ROLE_TOOLS)
     assert ORCHESTRATOR.tools == ()
+
+
+def test_qa_role_owns_the_only_command_tool():
+    assert set(QA_TOOLS) == {
+        "read_file",
+        "list_files",
+        "write_file",
+        "run_command",
+    }
+    for shell_name in ("run_shell", "shell", "exec", "cmd", "powershell"):
+        assert shell_name not in QA_TOOLS
 
 
 def test_sessions_do_not_share_messages_or_transcripts(tmp_path):

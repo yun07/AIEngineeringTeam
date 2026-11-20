@@ -15,6 +15,15 @@ from aiteam.providers.base import ToolSpec
 SECRET_NAMES = (".env",)
 
 
+def normalize_part(part: str) -> str:
+    """Normalise one path component for comparison.
+
+    Windows ignores trailing dots and spaces, so ``qa_tests.`` and ``qa_tests``
+    name the same directory. Comparison must not rely on the raw spelling.
+    """
+    return part.rstrip(" .").casefold()
+
+
 class PathDenied(PermissionError):
     """Raised when a requested path is outside the allowed workspace."""
 
@@ -25,10 +34,16 @@ class Workspace:
         root: str | Path,
         *,
         write_deny_subpaths: tuple[str, ...] = (),
+        write_allow_subpaths: tuple[str, ...] = (),
     ) -> None:
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
-        self.write_deny_subpaths = tuple(item.lower() for item in write_deny_subpaths)
+        self.write_deny_subpaths = tuple(
+            normalize_part(item) for item in write_deny_subpaths
+        )
+        self.write_allow_subpaths = tuple(
+            normalize_part(item) for item in write_allow_subpaths
+        )
 
     def resolve(self, relative: str) -> Path:
         if not isinstance(relative, str) or not relative.strip():
@@ -42,19 +57,30 @@ class Workspace:
             raise PathDenied(f"path escapes the workspace: {relative}")
 
         for part in resolved.relative_to(self.root).parts:
-            lowered = part.lower()
+            lowered = normalize_part(part)
             if lowered in SECRET_NAMES or lowered.startswith(".env"):
                 raise PathDenied(f"access to secret-like path is denied: {relative}")
         return resolved
 
     def resolve_for_write(self, relative: str) -> Path:
         resolved = self.resolve(relative)
-        parts = resolved.relative_to(self.root).parts
-        if parts and self.write_deny_subpaths:
-            if parts[0].lower() in self.write_deny_subpaths:
+        parts = tuple(
+            normalize_part(part) for part in resolved.relative_to(self.root).parts
+        )
+
+        if self.write_allow_subpaths:
+            if not parts or parts[0] not in self.write_allow_subpaths:
+                allowed = ", ".join(sorted(self.write_allow_subpaths))
                 raise PathDenied(
-                    f"writes under {parts[0]}/ are reserved for another role: {relative}"
+                    f"writes are only permitted under {allowed}/: {relative}"
                 )
+
+        if parts and self.write_deny_subpaths:
+            for part in parts:
+                if part in self.write_deny_subpaths:
+                    raise PathDenied(
+                        f"writes under {part}/ are reserved for another role: {relative}"
+                    )
         return resolved
 
 
