@@ -411,7 +411,7 @@ sequenceDiagram
 ```text
 c:/AIProjects/AIEngineeringTeam/
 ├─ AI_Engineering_Team.md          existing living spec, unchanged in Phase 1 plan
-├─ .gitignore                      exists, extend for state/, runs/, projects/
+├─ .gitignore                      exists, extended for state/ and runs/; projects/* ignored except projects/snake/
 ├─ .env.example                    key names only, no values
 ├─ README.md                       how to run, security posture, environment setup
 ├─ pyproject.toml                  metadata, dependencies, pytest config
@@ -463,7 +463,7 @@ c:/AIProjects/AIEngineeringTeam/
 │     ├─ test_approval_denied.py
 │     └─ test_approval_granted.py
 ├─ plans/
-├─ projects/                       generated work such as projects/snake, git ignored in Phase 1
+├─ projects/                       generated work such as projects/snake; only projects/snake/ is tracked, other slugs git ignored in Phase 1
 ├─ runs/                           per-run transcripts and report.md, git ignored
 └─ state/                          engine state and logs, git ignored
 ```
@@ -608,7 +608,7 @@ Guiding rule: no feature is built before the milestone that needs it. The first 
 
 ### M0 Environment and repository verification
 
-Confirm the `ai-team` conda environment: Python 3.12.16, pip, `openai`, `pytest`, `tkinter`. Confirm the existing Git repository, branch and clean tree. Extend `.gitignore` for `state/`, `runs/`, `projects/`. Add `.env.example`.
+Confirm the `ai-team` conda environment: Python 3.12.16, pip, `openai`, `pytest`, `tkinter`. Confirm the existing Git repository, branch and clean tree. Extend `.gitignore` for `state/` and `runs/`, ignore `projects/*` and re-include `projects/snake/` so the fixture source, its README and its QA tests stay in Git. Add `.env.example`.
 
 Exit criterion: a short environment report records each item as present or missing. Missing packages are reported as manual user actions. No installation is attempted.
 
@@ -746,7 +746,7 @@ Verified by QA's own tests, not by claims.
 | 11 | Provider strategy | Tool-calling capable models only. Strict JSON validation with one repair retry. | A provider without native tool calls cannot be used | Adding such a provider |
 | 12 | Pricing source | Static per-million-token table. Placeholder models, missing pricing entries and negative prices fail live mode before any call. | Reported USD drifts from real billing, or a live run starts with no valid price | Any billing-relevant decision |
 | 13 | Snake technology | Pure logic in `game.py`, optional tkinter shell in `app.py`, deterministic headless mode | tkinter may be absent; accepted because it is not required for acceptance | If a real UI is required as a gate |
-| 14 | Generated work location | `projects/<slug>/`, git ignored in Phase 1, tracked by file hashes | No version history for generated code | First time a rollback is needed |
+| 14 | Generated work location | `projects/<slug>/`; only `projects/snake/` is tracked in Phase 1, other slugs stay git ignored; runtime `state/` and `runs/` are always ignored | Generated code outside the Snake fixture has no version history | First time a rollback is needed |
 | 15 | Git strategy | Human-driven commits only. `git status` allowed as an informational command. | Generated work is not isolated or attributable | Phase 4 worktrees and branches |
 | 16 | Context growth | Turn caps, tool output truncation, handoff size caps, never passing transcripts | Agents starve for context and produce weaker work | Agents failing for missing information |
 | 17 | Developer tool restriction | Read, write and list only. No shell. | The Developer cannot reproduce a failure by running it; debugging shifts to QA evidence and the next attempt. | Repeated cases where the Developer cannot proceed without execution |
@@ -773,7 +773,7 @@ Verified by QA's own tests, not by claims.
 1. Real provider model identifiers for each role and their current pricing entries. Placeholders are rejected in live mode, so these must be settled before M5.
 2. Whether the OpenAI SDK must be installed into `ai-team`, and whether `pytest` and `tkinter` are present. This is a manual user action determined at M0.
 3. Run budget and model choice for the single live Snake run, keeping the first live run deliberately small.
-4. Whether `projects/` should remain git ignored after Phase 1. Recommendation: yes, until Git isolation exists.
+4. Whether project slugs other than the Snake fixture should stay git ignored after Phase 1. The Snake fixture is tracked in Phase 1. Recommendation: keep other slugs ignored until Git isolation exists.
 5. Initial live provider identity. Provider choice remains open, including a DeepSeek option; the adapter and pricing table isolate the engine from that choice.
 6. The three-role versus two-role comparison metrics are defined after the Snake run, using its recorded data. No code changes are implied.
 7. QA model choice per run is open. Phase 1 defaults to the same model and does not require a second provider.
