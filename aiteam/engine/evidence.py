@@ -121,7 +121,6 @@ def validate_verdict(
     audit_by_execution = {
         record.execution_id: record for record in audit if record.execution_id
     }
-    seen_references: set[tuple[str, str, str]] = set()
 
     for check in verdict.checks:
         if not check.command.strip():
@@ -134,12 +133,6 @@ def validate_verdict(
         if record is None:
             reasons.append(f"unknown_execution_id: {check.execution_id}")
             continue
-        reference = (check.execution_id, check.criterion, check.kind)
-        if reference in seen_references:
-            reasons.append(
-                f"duplicate_execution_reference: {check.execution_id}"
-            )
-        seen_references.add(reference)
         if normalize_command(check.command) != normalize_command(record.command_line):
             reasons.append(
                 "command_mismatch_for_execution: "

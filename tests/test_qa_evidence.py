@@ -222,13 +222,19 @@ def test_unknown_execution_id_is_rejected():
     assert any("unknown_execution_id: exec-404" in reason for reason in reasons)
 
 
-def test_duplicate_execution_reference_is_rejected():
+def test_one_execution_supports_multiple_checks_for_the_same_criterion_and_kind(
+    tmp_path,
+):
+    """A single approved run legitimately backs several checks of one criterion."""
+    qa_dir = tmp_path / "qa_tests"
+    qa_dir.mkdir()
+    (qa_dir / "test_demo.py").write_text("def test_x():\n    assert True\n", encoding="utf-8")
     verdict = QaVerdict(
         verdict="pass",
         checks=[
-            check("C1", "positive"),
-            check("C1", "positive"),
-            check("C2", "negative"),
+            check("C1", "positive", test_file="qa_tests/test_demo.py"),
+            check("C1", "positive", test_file="qa_tests/test_demo.py"),
+            check("C2", "negative", test_file="qa_tests/test_demo.py"),
         ],
     )
 
@@ -237,10 +243,40 @@ def test_duplicate_execution_reference_is_rejected():
         task=make_task(),
         audit=[make_record()],
         qa_test_files=["qa_tests/test_demo.py"],
-        project_root=None,
+        project_root=tmp_path,
     )
 
-    assert any("duplicate_execution_reference: exec-1" in reason for reason in reasons)
+    assert reasons == []
+
+
+def test_seven_check_one_execution_pattern_is_accepted(tmp_path):
+    """The M3 shape: seven checks, one execution, shared ids, accepted."""
+    qa_dir = tmp_path / "qa_tests"
+    qa_dir.mkdir()
+    (qa_dir / "test_demo.py").write_text("def test_x():\n    assert True\n", encoding="utf-8")
+    test_file = "qa_tests/test_demo.py"
+    verdict = QaVerdict(
+        verdict="pass",
+        checks=[
+            check("C1", "positive", test_file=test_file),
+            check("C1", "positive", test_file=test_file),
+            check("C1", "negative", test_file=test_file),
+            check("C2", "positive", test_file=test_file),
+            check("C2", "positive", test_file=test_file),
+            check("C2", "negative", test_file=test_file),
+            check("C2", "negative", test_file=test_file),
+        ],
+    )
+
+    reasons = validate_verdict(
+        verdict=verdict,
+        task=make_task(),
+        audit=[make_record()],
+        qa_test_files=[test_file],
+        project_root=tmp_path,
+    )
+
+    assert reasons == []
 
 
 def test_exit_code_must_match_the_audit():
