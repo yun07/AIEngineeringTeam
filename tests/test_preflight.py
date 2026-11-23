@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -52,7 +53,9 @@ def _make_repo(
     tmp_path: Path, *, branch: str = "review", docs: dict[str, str] | None = None
 ) -> Path:
     repo = tmp_path / "repo"
-    repo.mkdir()
+    repo.mkdir(parents=True)
+    (repo / "scripts").mkdir()
+    shutil.copy2(SCRIPT, repo / "scripts" / "preflight.py")
     _git(repo, "init", "-q", "-b", "main")
     _git(repo, "config", "user.email", "test@example.com")
     _git(repo, "config", "user.name", "Preflight Test")
@@ -69,9 +72,11 @@ def _make_repo(
     return repo
 
 
-def _run(repo: Path) -> subprocess.CompletedProcess[str]:
+def _run(
+    repo: Path, *, script: Path | None = None
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, str(SCRIPT)],
+        [sys.executable, str(script or (repo / "scripts" / "preflight.py"))],
         cwd=repo,
         text=True,
         capture_output=True,
@@ -209,6 +214,16 @@ def test_historical_quote_is_not_a_false_positive(tmp_path: Path) -> None:
 def test_non_repository_is_a_failure_not_a_pass(tmp_path: Path) -> None:
     empty = tmp_path / "empty"
     empty.mkdir()
+    (empty / "scripts").mkdir()
+    shutil.copy2(SCRIPT, empty / "scripts" / "preflight.py")
     result = _run(empty)
     assert result.returncode == 1
     assert "cannot read repository" in result.stdout
+
+
+def test_running_from_another_repository_fails(tmp_path: Path) -> None:
+    first = _make_repo(tmp_path / "one")
+    second = _make_repo(tmp_path / "two")
+    result = _run(first, script=second / "scripts" / "preflight.py")
+    assert result.returncode == 1
+    assert "wrong repository" in result.stdout

@@ -11,6 +11,7 @@ Exit code 0 means PASS; exit code 1 means FAIL with reasons.
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -63,6 +64,13 @@ def main() -> int:
         print("FAIL")
         print(f"- cannot read repository: {exc}")
         return 1
+
+    script_root = Path(__file__).resolve().parents[1]
+    if os.path.normcase(str(script_root)) != os.path.normcase(str(root.resolve())):
+        failures.append(
+            "wrong repository: run scripts/preflight.py from its own repository "
+            "or worktree"
+        )
 
     try:
         git_dir = Path(git("rev-parse", "--git-dir"))
