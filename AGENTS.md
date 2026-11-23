@@ -30,9 +30,12 @@
 
 所有 Git 操作由 Zoo Code 負責執行，不需要用戶手動複製 Git 指令。
 
-本節適用於**一般程式碼及 Milestone 工作**：Commit 及 Push 仍須逐次獲得用戶批准，原有規則維持不變。
+本節有兩套規則，適用範圍唔同：
 
-**例外：文件修改。** 文件修改遵守 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) §4.8 及下面 Document Change & Review Governance 一節，可在獨立 review branch 完成必要檢查後直接 Commit 及 Push，不需逐次取得批准；但任何情況下仍不得未經批准 Merge。
+- **一般程式碼及 Milestone 工作**：沿用下面「逐次批准」規則，Commit 及 Push 每次都須獲得用戶批准。
+- **文件修改**：遵守 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) §4.8 及本檔案 Document Change & Review Governance 一節。文件修改在獨立 review branch 完成必要檢查後，可直接 Commit 及 Push，**毋須逐次取得 Commit / Push 批准**。任何情況下仍不得未經批准 Merge 到 `main`。
+
+### 一般程式碼及 Milestone 工作：逐次批准
 
 每次完成一個 Milestone 或一組完整功能後：
 
@@ -45,12 +48,13 @@
 7. Commit 成功後，再向用戶確認是否執行 `git push`。
 8. Push 必須獲得用戶明確批准。
 
-禁止：
+禁止（適用於一般程式碼及 Milestone 工作；文件修改按 §4.8 例外處理，不在此限）：
 
-- 未經批准自動 Commit（文件修改按 §4.8 流程在 review branch Commit 不屬此限）。
-- 未經批准自動 Push（文件修改按 §4.8 流程 Push review branch 不屬此限；Push 到 `main` 或其他保護分支仍須批准）。
+- 未經批准自動 Commit。
+- 未經批准自動 Push。
 - 將 `.env`、API keys、passwords 或其他 secrets 加入 Git。
 - 使用 `git reset --hard`、`git clean -fd` 或強制 Push，除非用戶明確批准。
+- 未經用戶明確批准 Merge 到 `main` 或其他保護分支。
 
 如果 Git 指令失敗，先分析錯誤原因，不要自行修改 Git 設定或憑證。
 

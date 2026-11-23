@@ -287,9 +287,9 @@ Document changes follow a three-role separation. No role may substitute for anot
 
 | Role | Actor | Owns | Must not |
 |---|---|---|---|
-| **Worker** | Zoo Code | Executing document edits, running the required checks, and the Git operations on a review branch, including executing a merge that the User has approved | Approve a change; merge without explicit User approval; treat its own summary as review evidence |
+| **Worker / Merge Executor** | Zoo Code | Executing document edits, running the required checks, the Git operations on a review branch, and executing a merge only after the User explicitly approves that specific merge | Approve a change; merge without explicit User approval; treat its own summary as review evidence |
 | **Reviewer** | ChatGPT | Independently inspecting the actual files and the Git diff, for example on GitHub, and raising corrections | Rely on the Worker's summary instead of the repository; approve a merge; execute a merge |
-| **Approver** | User | Sole authority to approve a merge to `main`, to accept or reject the change, and to authorize the next stage of work. The User may execute the approved merge personally or delegate the execution to Zoo Code | — |
+| **Approver / Merge Approver** | User | Sole authority to approve a merge to `main`, to accept or reject the change, and to authorize the next stage of work. The User may execute the approved merge personally or delegate execution to Zoo Code | — |
 
 Mandatory workflow:
 
@@ -298,9 +298,9 @@ Mandatory workflow:
 3. The Reviewer independently inspects the actual documents and the Git diff, for example on GitHub. A summary from the Worker is not evidence.
 4. If the Reviewer finds problems, the Worker corrects them and resubmits for review. Review and correction repeat until the Reviewer has no material objection.
 5. Merge approval and merge execution are separate:
-   - The User is the sole Merge Approver. This approval authority does not mean the User must operate Git personally.
-   - Zoo Code executes the merge only after the User explicitly approves that specific merge.
-   - The Reviewer (ChatGPT) reviews only and never approves or executes a merge.
+   - The User is the sole Merge Approver. Approval authority does not mean the User must operate Git personally.
+   - Zoo Code is the Merge Executor and executes the merge only after the User explicitly approves that specific merge.
+   - The Reviewer (ChatGPT) reviews only; it never approves and never executes a merge.
 6. Approval to merge a document change does not authorize the next stage of work. Further work needs its own explicit approval.
 
 Protection rule: unapproved changes and pre-existing uncommitted changes must never be swept into a review branch or a merge. A review branch contains only the change under review, and the Worker states explicitly which files are in scope.
