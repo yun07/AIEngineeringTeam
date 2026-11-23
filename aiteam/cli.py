@@ -20,7 +20,12 @@ from aiteam.engine.workflow import WorkflowEngine
 from aiteam.models import RunState
 from aiteam.providers.fake import FakeProvider, demo_by_role
 from aiteam.providers.openai_provider import ProviderError, create_openai_provider
-from aiteam.secrets import SecretBoundary, SecretError, resolve_api_key
+from aiteam.secrets import (
+    SecretBoundary,
+    SecretError,
+    api_key_env_var,
+    resolve_api_key,
+)
 from aiteam.state.store import StateStore
 
 
@@ -130,7 +135,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                     file=sys.stderr,
                 )
                 return 2
-            api_key = resolve_api_key()
+            # Each provider reads its own variable; unknown providers already
+            # failed closed in validate_live_config().
+            api_key = resolve_api_key(env_var=api_key_env_var(config.provider.name))
             boundary = SecretBoundary(api_key)
             provider = create_openai_provider(
                 config, api_key, boundary=boundary

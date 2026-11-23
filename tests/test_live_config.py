@@ -82,10 +82,10 @@ def test_fake_mode_is_skipped_by_live_validation():
     validate_live_config(config)
 
 
-def test_provider_other_than_openai_is_refused(tmp_path):
+def test_unknown_live_provider_is_refused(tmp_path):
     config = load_config(_write(tmp_path, provider="anthropic"))
 
-    with pytest.raises(ConfigError, match="live provider must be 'openai'"):
+    with pytest.raises(ConfigError, match="live provider must be one of"):
         validate_live_config(config)
 
 

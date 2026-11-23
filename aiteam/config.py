@@ -18,6 +18,9 @@ DEFAULT_CONFIG_PATH = REPO_ROOT / "config" / "aiteam.toml"
 FAKE_CONFIG_PATH = REPO_ROOT / "tests" / "fixtures" / "aiteam.fake.toml"
 
 ROLE_NAMES = ("orchestrator", "developer", "qa")
+# Live provider names the engine knows how to validate. Anything else fails
+# closed rather than falling through to a permissive default.
+LIVE_PROVIDER_NAMES: tuple[str, ...] = ("openai", "deepseek")
 COST_KEYS = (
     "max_output_tokens_per_call",
     "safety_margin_percent",
@@ -72,6 +75,9 @@ class RoleModels:
 class ProviderSettings:
     name: str
     timeout_seconds: int = 60
+    # OpenAI-compatible endpoints (for example DeepSeek) need an explicit base
+    # URL. ``None`` keeps the SDK default endpoint, so OpenAI is unchanged.
+    base_url: str | None = None
 
 
 @dataclass(frozen=True)
@@ -113,10 +119,13 @@ def load_config(path: str | Path) -> Config:
     pricing = _parse_pricing(raw.get("pricing"))
     cost = _parse_cost(raw.get("cost"), provider_name=provider_name.strip())
     timeout_seconds = _parse_provider_timeout(provider_raw.get("timeout_seconds", 60))
+    base_url = _parse_provider_base_url(provider_raw.get("base_url"))
 
     return Config(
         provider=ProviderSettings(
-            name=provider_name.strip(), timeout_seconds=timeout_seconds
+            name=provider_name.strip(),
+            timeout_seconds=timeout_seconds,
+            base_url=base_url,
         ),
         models=RoleModels(**model_values),
         limits=limits,
@@ -124,6 +133,14 @@ def load_config(path: str | Path) -> Config:
         pricing=pricing,
         source=config_path,
     )
+
+
+def _parse_provider_base_url(raw: Any) -> str | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, str) or not raw.strip():
+        raise ConfigError("provider.base_url must be a non-empty string when set")
+    return raw.strip()
 
 
 def _parse_provider_timeout(raw: Any) -> int:
@@ -239,9 +256,18 @@ def validate_live_config(config: Config) -> None:
     """
     if config.provider.name == "fake":
         return
-    if config.provider.name != "openai":
+    if config.provider.name not in LIVE_PROVIDER_NAMES:
         raise ConfigError(
-            f"live provider must be 'openai', got {config.provider.name!r}"
+            f"live provider must be one of {LIVE_PROVIDER_NAMES}, "
+            f"got {config.provider.name!r}"
+        )
+    if config.provider.name == "deepseek" and not (
+        isinstance(config.provider.base_url, str)
+        and config.provider.base_url.strip()
+    ):
+        raise ConfigError(
+            "provider.base_url is required for provider 'deepseek'; the engine "
+            "will not guess an endpoint"
         )
     if (
         isinstance(config.provider.timeout_seconds, bool)

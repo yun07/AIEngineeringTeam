@@ -121,11 +121,15 @@ def _classify_exception(exc: BaseException) -> str:
     return "api_error"
 
 
-def create_openai_client(*, api_key: str, timeout_seconds: int) -> Any:
+def create_openai_client(
+    *, api_key: str, timeout_seconds: int, base_url: str | None = None
+) -> Any:
     """Create the SDK client with a lazy import.
 
     Import failures are returned as a sanitized provider error so a missing
     optional dependency never blocks fake mode and never prints a key.
+    ``base_url`` defaults to ``None``, which keeps the SDK's own default
+    endpoint, so the OpenAI path is unchanged.
     """
     try:
         import openai  # type: ignore[import-not-found]
@@ -135,21 +139,38 @@ def create_openai_client(*, api_key: str, timeout_seconds: int) -> Any:
             "openai package is not installed; install it manually before live mode",
         )
     else:
-        return openai.OpenAI(api_key=api_key, timeout=timeout_seconds)
+        return openai.OpenAI(
+            api_key=api_key, timeout=timeout_seconds, base_url=base_url
+        )
 
     # Raised outside the except block so __context__ stays empty.
     raise error from None
 
 
 class OpenAIProvider:
+    """Chat Completions adapter for OpenAI and OpenAI-compatible endpoints.
+
+    The request body differs per provider: OpenAI uses
+    ``max_completion_tokens`` while DeepSeek uses ``max_tokens`` plus an
+    explicit ``thinking`` flag. Only the request assembly branches; mapping,
+    error sanitizing and redaction are shared.
+    """
+
     name = "openai"
+    SUPPORTED_PROVIDER_NAMES: tuple[str, ...] = ("openai", "deepseek")
 
     def __init__(
         self,
         client: Any,
         *,
         secret_boundary: SecretBoundary,
+        provider_name: str = "openai",
     ) -> None:
+        if provider_name not in self.SUPPORTED_PROVIDER_NAMES:
+            raise ValueError(
+                f"unsupported provider {provider_name!r}; expected one of "
+                f"{self.SUPPORTED_PROVIDER_NAMES}"
+            )
         if not isinstance(secret_boundary, SecretBoundary):
             raise ValueError(
                 "OpenAIProvider requires a SecretBoundary; refusing to create "
@@ -157,6 +178,7 @@ class OpenAIProvider:
             )
         self._client = client
         self._boundary = secret_boundary
+        self.name = provider_name
 
     def complete(
         self,
@@ -218,11 +240,23 @@ class OpenAIProvider:
         for message in messages:
             payload_messages.append(self._message_payload(message))
 
-        request: dict[str, Any] = {
-            "model": model,
-            "messages": payload_messages,
-            "max_completion_tokens": max_output_tokens,
-        }
+        if self.name == "deepseek":
+            # DeepSeek's OpenAI-compatible endpoint takes ``max_tokens`` and an
+            # explicit thinking flag. The installed SDK has no typed kwarg for
+            # the flag, so it travels through ``extra_body``; the serialized
+            # request body still carries ``thinking``.
+            request: dict[str, Any] = {
+                "model": model,
+                "messages": payload_messages,
+                "max_tokens": max_output_tokens,
+                "extra_body": {"thinking": {"type": "disabled"}},
+            }
+        else:
+            request = {
+                "model": model,
+                "messages": payload_messages,
+                "max_completion_tokens": max_output_tokens,
+            }
         if tools:
             request["tools"] = [
                 {
@@ -363,5 +397,8 @@ def create_openai_provider(
         client = create_openai_client(
             api_key=api_key,
             timeout_seconds=config.provider.timeout_seconds,
+            base_url=config.provider.base_url,
         )
-    return OpenAIProvider(client, secret_boundary=boundary)
+    return OpenAIProvider(
+        client, secret_boundary=boundary, provider_name=config.provider.name
+    )

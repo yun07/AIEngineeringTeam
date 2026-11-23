@@ -71,7 +71,7 @@ def test_live_mode_requires_budget_before_key_lookup(tmp_path, monkeypatch, caps
     path = _write_live_config(tmp_path)
     called = {"resolve": False, "factory": False}
 
-    def fail_resolve():
+    def fail_resolve(*, env_var="OPENAI_API_KEY"):
         called["resolve"] = True
         raise AssertionError("key lookup must not happen without a budget")
 
@@ -95,7 +95,7 @@ def test_live_mode_missing_key_exits_without_creating_a_client(
     path = _write_live_config(tmp_path)
     called = {"factory": False}
 
-    def missing_key():
+    def missing_key(*, env_var="OPENAI_API_KEY"):
         raise SecretError("OPENAI_API_KEY is not set; live mode refuses to start")
 
     def fail_factory(*args, **kwargs):
@@ -120,7 +120,7 @@ def test_live_mode_missing_pricing_exits_before_key_lookup(
     path = _write_live_config(tmp_path, pricing=False)
     called = {"resolve": False, "factory": False}
 
-    def fail_resolve():
+    def fail_resolve(*, env_var="OPENAI_API_KEY"):
         called["resolve"] = True
         raise AssertionError("pricing must be validated before key lookup")
 
@@ -150,7 +150,7 @@ def test_live_mode_zero_price_exits_before_key_lookup(
     )
     called = {"resolve": False, "factory": False}
 
-    def fail_resolve():
+    def fail_resolve(*, env_var="OPENAI_API_KEY"):
         called["resolve"] = True
         raise AssertionError("a zero price must be rejected before key lookup")
 
@@ -174,7 +174,7 @@ def test_live_mode_unsupported_model_exits_before_key_lookup(
     path = _write_live_config(tmp_path, model="gpt-3.5-turbo")
     called = {"resolve": False}
 
-    def fail_resolve():
+    def fail_resolve(*, env_var="OPENAI_API_KEY"):
         called["resolve"] = True
         raise AssertionError("model validation must precede key lookup")
 
@@ -192,7 +192,11 @@ def test_provider_setup_error_is_redacted_in_cli_output(
 ):
     path = _write_live_config(tmp_path)
 
-    monkeypatch.setattr(cli, "resolve_api_key", lambda: DUMMY_KEY)
+    monkeypatch.setattr(
+        cli,
+        "resolve_api_key",
+        lambda *, env_var="OPENAI_API_KEY", **kwargs: DUMMY_KEY,
+    )
 
     def fail_factory(*args, **kwargs):
         raise ProviderError("api_error", f"provider rejected {DUMMY_KEY}")

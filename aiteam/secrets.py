@@ -14,6 +14,11 @@ from typing import Mapping
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ENV_VAR = "OPENAI_API_KEY"
+# Each live provider reads its key from its own variable; nothing is shared.
+PROVIDER_ENV_VARS: dict[str, str] = {
+    "openai": "OPENAI_API_KEY",
+    "deepseek": "DEEPSEEK_API_KEY",
+}
 REDACTED = "[REDACTED]"
 
 
@@ -69,6 +74,19 @@ def _read_dotenv(path: Path, root: Path) -> dict[str, str]:
     if not safe_path.is_file():
         return {}
     return _parse_dotenv(safe_path.read_text(encoding="utf-8"))
+
+
+def api_key_env_var(provider_name: str) -> str:
+    """Return the environment variable that holds the key for a provider.
+
+    Unknown providers fail closed instead of falling back to a shared name.
+    """
+    try:
+        return PROVIDER_ENV_VARS[provider_name]
+    except KeyError as exc:
+        raise SecretError(
+            f"no API key variable is defined for provider {provider_name!r}"
+        ) from exc
 
 
 def resolve_api_key(

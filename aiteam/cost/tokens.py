@@ -14,8 +14,13 @@ from typing import Any, Sequence
 # Only explicitly listed models may be priced and estimated. A successful
 # ``encoding_for_model`` call is not treated as proof that a model is valid.
 SUPPORTED_MODELS: frozenset[str] = frozenset(
-    {"gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-4o-mini"}
+    {"gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-4o-mini", "deepseek-flash"}
 )
+
+# Models tiktoken cannot map by name get an explicit encoding. ``cl100k_base``
+# is used for DeepSeek as a local estimation proxy only: it is a neighbouring
+# vocabulary, not the provider's own tokenizer, so counts are approximate.
+MODEL_ENCODINGS: dict[str, str] = {"deepseek-flash": "cl100k_base"}
 
 # Conservative framing overhead, not billed-token knowledge.
 MESSAGE_OVERHEAD_TOKENS = 4
@@ -44,6 +49,15 @@ def encoder_for_model(model: str) -> Any:
             f"{sorted(SUPPORTED_MODELS)}"
         )
     tiktoken = _tiktoken_module()
+    explicit = MODEL_ENCODINGS.get(model)
+    if explicit is not None:
+        try:
+            return tiktoken.get_encoding(explicit)
+        except (KeyError, ValueError) as exc:
+            raise TokenEstimationError(
+                f"tiktoken has no encoding named {explicit!r} "
+                f"configured for model {model!r}"
+            ) from exc
     try:
         return tiktoken.encoding_for_model(model)
     except KeyError as exc:

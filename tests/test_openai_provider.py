@@ -320,7 +320,7 @@ def test_factory_refuses_invalid_live_config():
         make_billing_config(), provider=ProviderSettings(name="other")
     )
 
-    with pytest.raises(ConfigError, match="live provider must be 'openai'"):
+    with pytest.raises(ConfigError, match="live provider must be one of"):
         create_openai_provider(
             config,
             "dummy-key",

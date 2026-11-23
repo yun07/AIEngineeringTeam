@@ -1,18 +1,20 @@
-# Live configuration. Example model identifiers only; the provider and the
-# real model IDs remain an open decision until M5.
-# Pricing entries are validated from M3 onward.
+# Live configuration.
+#
+# The provider is DeepSeek, reached through the OpenAI-compatible SDK adapter.
+# The endpoint is stated explicitly because the engine refuses to guess one.
 #
 # [cost] is mandatory in live mode. max_context_tokens has no default: the
 # operator must state the value for the chosen model.
 
 [provider]
-name = "openai"
+name = "deepseek"
 timeout_seconds = 60
+base_url = "https://api.deepseek.com"
 
 [models]
-orchestrator = "gpt-4.1"
-developer = "gpt-4.1-mini"
-qa = "gpt-4.1-mini"
+orchestrator = "deepseek-flash"
+developer = "deepseek-flash"
+qa = "deepseek-flash"
 
 [limits]
 max_tasks_per_plan = 3
@@ -26,16 +28,12 @@ max_tool_output_chars = 8000
 max_output_tokens_per_call = 1200
 safety_margin_percent = 10
 estimator = "tiktoken"
-# max_context_tokens has no default. Live mode refuses to start until you set
-# it explicitly for the chosen model, for example:
-# max_context_tokens = 120000
+# Operator-confirmed context window for the selected model.
+max_context_tokens = 32000
 
-# Live mode also requires a validated price for every model above. Prices are
-# intentionally not shipped as active values; fill them from the provider's
-# published price list before a live smoke run, for example:
-# [pricing."gpt-4.1"]
-# input_per_mtok = 0.00
-# output_per_mtok = 0.00
-# [pricing."gpt-4.1-mini"]
-# input_per_mtok = 0.00
-# output_per_mtok = 0.00
+# Prices are operator-supplied conservative estimates in USD per million
+# tokens, using the provider's published peak / cache-miss rates. Local token
+# estimation is approximate, so the reservation is a ceiling, not a quote.
+[pricing."deepseek-flash"]
+input_per_mtok = 0.30
+output_per_mtok = 1.20
