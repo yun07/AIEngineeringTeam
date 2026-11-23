@@ -112,8 +112,8 @@ Rules:
 
 Bootstrap order for every new session:
 
-1. Read this protocol's Part 1 configuration, or receive the configuration per session.
-2. Read `AGENTS.md`, the project working-rules entry point: read discipline, Git rules and document-change governance.
+1. Read `AGENTS.md` first. When the Human supplies only the `AGENTS.md` link, that link is the session entry point.
+2. Follow `AGENTS.md` to read this protocol's Part 1 configuration and bootstrap instructions, or receive the configuration per session.
 3. Read `README.md` for the project overview and current status summary.
 4. Read the primary entry document `AI_Engineering_Team.md` in full.
 5. Select Layer 2 documents by relevance to the current task.
@@ -406,7 +406,7 @@ Reason:
 #### D. New Session Starter Command
 
 ```text
-Read UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md and follow its steps to start the Alignment Test.
+Read AGENTS.md first, then follow its Mandatory Session Bootstrap: read UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md and follow its steps to start the Alignment Test.
 
 Project: <PROJECT_NAME>
 Primary entry document: <PATH>
