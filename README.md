@@ -65,7 +65,7 @@ M4 retry／escalation 未開始，亦未獲 Human 授權；M5、M6 依賴 M4；M
 
 ### 6.1 改動點樣驗收
 
-- 文件改動：獨立 review branch + `git diff --check`、`git status --short`、`git diff --stat origin/main`；commit 後再用 `git diff --stat origin/main...HEAD` 核對範圍；ChatGPT 直接讀 GitHub branch/diff。
+- 文件改動：獨立 review branch + `python scripts/preflight.py`（preflight validation，唔係 Git hook）；commit 後再用 `git diff --stat origin/main...HEAD` 核對範圍；ChatGPT 直接讀 GitHub branch/diff。
 - Code 改動：另加 `python -m pytest`，報告實際 exit code 同通過/失敗數；UI 改動附 screenshot 或 recording。
 - 只接受實際 diff、test results、logs 等證據；Zoo 自我摘要唔係證據。
 - Human 保留唯一 merge 批准權；merge 批准不代表批准下一個 milestone。

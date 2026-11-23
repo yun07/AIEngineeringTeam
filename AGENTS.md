@@ -75,31 +75,29 @@
 3. 保留 working tree 內其他未提交改動，不得 stage、覆蓋、reset 或帶入 merge。
 4. Review branch 一經提交審查，不得重寫歷史；有修正就加新 commit。
 
-### 3. 必須執行的確定性檢查
+### 3. Preflight validation（提交前）
 
-文件改動（全部要 pass）：
+Preflight 係 Zoo 喺 commit 前執行嘅檢查，唔係 Git hook。今次未安裝 hook，亦未設定 CI；如需自動觸發，要另行授權。
 
-```text
-git status --short
-git diff --check
-git diff --stat origin/main
-git grep -n -E "^\*\*Status:\*\*.*[Nn]o implementation( has)? started" -- AGENTS.md README.md AI_Engineering_Team.md UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md plans/phase1-architecture-plan.md
-git grep -n -i -E "the human will (paste|upload) the primary" -- AGENTS.md README.md AI_Engineering_Team.md UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md plans/phase1-architecture-plan.md
-```
-
-- 兩條 grep 必須冇輸出；`git grep` 冇 match 時 exit code 1 屬正常。命令刻意用 regex 寫法，避免檢查指令自我命中。
-- 呢組命令日後可直接放入 CI 或 hook；今次只改文件，未新增 CI 設定。
-- Commit 後再用 `git diff --stat origin/main...HEAD` 核對 commit 範圍同報告一致。
-- 如改到 Protocol Part 1 或 Charter 狀態，另要核對 milestone 狀態一致，同 bootstrap 次序只保留一個版本。
-
-Code 改動另加：
+交付前只跑一個 command：
 
 ```text
-python -m pytest
+python scripts/preflight.py
 ```
 
-- 必須報告實際指令、exit code、通過/失敗數；唔可以只寫「tests pass」。
-- UI 相關改動要附 screenshot 或 recording；純 headless 唔需要。
+在 `ai-team` conda 環境執行（先 `conda activate ai-team`）。
+
+它會檢查：
+
+- 目前 branch、HEAD、`origin/main` 同 merge/rebase 狀態；
+- `git diff --check`；
+- 相對 `origin/main` 嘅修改檔案清單；
+- 5 份 active docs 嘅過時 Status header、舊 paste 指令、Protocol Part 1 placeholder；
+- Protocol／AGENTS bootstrap 入口次序。
+
+PASS 只輸出簡短摘要；FAIL 會逐項列出原因，唔需要另外貼多條 git 命令。Commit 後用 `git diff --stat origin/main...HEAD` 核對 commit 範圍。
+
+Code 改動另加 `python -m pytest`，報告實際指令、exit code、通過/失敗數；UI 改動附 screenshot 或 recording。
 
 ### 4. 證據包（Evidence package）
 
