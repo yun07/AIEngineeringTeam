@@ -30,14 +30,15 @@
 
 所有 Git 操作由 Zoo Code 負責執行，不需要用戶手動複製 Git 指令。
 
-本節有兩套規則，適用範圍唔同：
+本節有兩套規則，適用範圍唔同，先睇清楚再執行：
 
-- **一般程式碼及 Milestone 工作**：沿用下面「逐次批准」規則，Commit 及 Push 每次都須獲得用戶批准。
-- **文件修改**：遵守 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) §4.8 及本檔案 Document Change & Review Governance 一節。文件修改在獨立 review branch 完成必要檢查後，可直接 Commit 及 Push，**毋須逐次取得 Commit / Push 批准**。任何情況下仍不得未經批准 Merge 到 `main`。
+- **一般程式碼、功能及 Milestone 工作**：遵守下面「逐次 Commit / Push 批准」規則。
+- **文件修改（Document Change & Review Governance）**：屬明確例外。Zoo Code 可在獨立 review branch 完成必要檢查後直接 Commit 及 Push，無須逐次取得批准。
+- **禁止未經批准 Commit / Push 的規則**：只適用於一般程式碼及 Milestone 工作，不適用於上述文件修改流程。任何情況下，未經 User 明確批准仍不得 Merge 到 `main` 或其他保護分支。
 
-### 一般程式碼及 Milestone 工作：逐次批准
+文件修改的完整流程見 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) §4.8 及本檔案 Document Change & Review Governance 一節。
 
-以下步驟**只適用於一般程式碼及 Milestone 工作，不適用於文件修改**。文件修改按 §4.8 在獨立 review branch 完成檢查後直接 Commit 及 Push，毋須逐次批准。
+### 一般程式碼、功能及 Milestone 工作：逐次批准
 
 每次完成一個 Milestone 或一組完整功能後：
 
@@ -46,11 +47,11 @@
 3. 檢查 `git diff` 及 `git diff --check`。
 4. 用繁體中文向用戶摘要修改內容。
 5. 建議清晰的 Conventional Commit message。
-6. 等待用戶批准後才執行 `git add` 及 `git commit`（文件修改除外，見 §4.8）。
-7. Commit 成功後，再向用戶確認是否執行 `git push`（文件修改除外，見 §4.8）。
-8. Push 必須獲得用戶明確批准（文件修改除外，見 §4.8）。
+6. 等待用戶批准後才執行 `git add` 及 `git commit`。
+7. Commit 成功後，再向用戶確認是否執行 `git push`。
+8. Push 必須獲得用戶明確批准。
 
-禁止（適用於一般程式碼及 Milestone 工作；文件修改按 §4.8 例外處理，不在此限）：
+禁止（只適用於一般程式碼、功能及 Milestone 工作；不適用於 Document Change & Review Governance 的文件修改流程）：
 
 - 未經批准自動 Commit。
 - 未經批准自動 Push。
