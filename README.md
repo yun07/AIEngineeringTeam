@@ -4,7 +4,11 @@
 
 ## 1. 呢個系統做咩
 
-你講一個目標，例如「寫一個 Snake 遊戲」。系統會拆成任務，交俾 Developer 實作，再由獨立 QA 測試，最後由 Workflow Engine 決定收貨、重試或者停手問你。AI 負責思考同動手，但流程、權限、預算同「收唔收貨」都由程式控制，最終決定權喺你手上。
+你講一個目標，例如「寫一個 Snake 遊戲」。系統會拆成任務，交俾 Developer 實作，再由獨立 QA 測試，最後由 Workflow Engine 決定收貨或者停手報告。AI 負責思考同動手，但流程、權限、預算同「收唔收貨」都由程式控制，最終決定權喺你手上。
+
+QA 未通過時，目前會停止並報告；Retry / Escalation 屬 M4 planned work。
+
+架構採用 Hybrid：核心決策同流程自己寫，provider SDK 等 commodity 部分可以直接採用；Phase 1 唔使用 agent framework。
 
 ## 2. 四個角色
 
@@ -29,8 +33,8 @@ flowchart TD
     E --> F[QA 自己寫測試並驗證]
     F --> G[Engine 核對證據]
     G -->|通過| H[報告同交付]
-    G -->|失敗| I[有限次重試]
-    I --> D
+    G -->|失敗| I[停止並報告<br/>Retry / Escalation — Planned M4]
+    I -.-> D
 ```
 
 重點：Developer 同 QA 唔會直接對話。Engine 只會交一份有範圍嘅交接資料俾下一個角色，唔會成段對話倒過去。
@@ -39,6 +43,7 @@ flowchart TD
 
 - **逐次批准**：每次執行 AI 寫嘅程式，你都要答 `y` 或 `n`。空白等於 No，冇批次批准，非互動執行一律當拒絕。
 - **單一權威**：Workflow Engine 係唯一有權改流程、批核、預算同驗證標準嘅組件。任何 AI 角色都唔可以放寬自己嘅限制。
+- **Hybrid 原則**：核心決策、流程同收貨權由自家 Python Workflow Engine 持有；provider SDK 等 commodity 元件可以替換，但冇決策權。Phase 1 唔用 agent framework，將來任何 framework 或 execution runtime 都要另立 ADR 同有證據支持。
 - **密鑰隔離**：只有 Engine 可以讀 API key；AI 角色、交接資料、紀錄同子程序都唔會見到。
 - **唔自動安裝**：缺少套件會通知你手動處理，Phase 1 冇安裝路徑。
 - **成本上限**：有 token 同美元上限，超支會停，唔會無止境重試。
@@ -52,18 +57,21 @@ flowchart TD
 
 ## 6. 現況同下一步
 
-**現況**：架構同 Phase 1 藍圖已完成，未開始寫程式。
+**現況**：M0–M3 implementation closeout 已完成，FakeProvider 同 DeepSeek live provider 都行得通。DeepSeek Live E2E diagnostic 已成功（`projects/diagnostic`，7 次 API call，actual USD 0.004748，證據由 Engine 接受，冇 uncertain reservation），但呢個只係 `hello.txt` diagnostic，唔係 Snake Game 驗收，亦唔代表 M5 formal milestone acceptance 已完成。
 
-**下一步**：M0 檢查 `ai-team` 環境（Python、pip、openai、pytest、tkinter）同 Git 狀態，整理 `.gitignore` 同 `.env.example`。跟住 M1 用 FakeProvider 做第一條「行得通嘅最小版本」：出計劃、寫檔案、執行上限、出報告。
+M4 retry／escalation 未實作（圖中 retry 分支屬 M4 目標）；Snake 規格（M6）、Snake live E2E（M7）同 human QA spot check 仍然 outstanding。Phase 1 **未 acceptance**。
+
+**下一步**：先完成 M4 retry／escalation；之後完成 M5 live-provider formal acceptance，同時寫 M6 Snake 規格。兩者完成後進行 M7 live Snake run 同 human QA test file spot check，最後 M8 更新進度同 backlog。
 
 ## 7. 文件邊份最權威
 
 | 文件 | 幾時睇 |
 |---|---|
 | [`AI_Engineering_Team.md`](AI_Engineering_Team.md) | 最高權威，講願景同原則。任何衝突以佢為準。 |
-| [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) | 落手做 Phase 1 時睇嘅實作藍圖。 |
-| [`plans/oss-architecture-research.md`](plans/oss-architecture-research.md) | 想知點解唔用現成框架時睇。 |
-| [`plans/architecture-decision-review.md`](plans/architecture-decision-review.md) | 想查 Build、Adopt、Hybrid 嘅決策理由時睇。 |
+| [`plans/adr-001-hybrid-architecture.md`](plans/adr-001-hybrid-architecture.md) | 已接受嘅 Hybrid 架構決定。架構問題以佢為準，但仍低於 Charter。 |
+| [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) | Phase 1 實作藍圖，低於 Charter 同 ADR-001。 |
+| [`plans/operations-decisions.md`](plans/operations-decisions.md) | 操作層決定，例如 Zoo Code orchestration 問題，唔係架構權威。 |
+| [`plans/oss-architecture-research.md`](plans/oss-architecture-research.md)、[`plans/architecture-decision-review.md`](plans/architecture-decision-review.md)、[`plans/m0-environment-report.md`](plans/m0-environment-report.md) | 歷史研究、決策理由同環境紀錄，只作背景，唔係現行規範。 |
 
 ## 8. 三個常用詞
 

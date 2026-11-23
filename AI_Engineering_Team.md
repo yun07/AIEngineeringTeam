@@ -356,50 +356,65 @@ Verification status:
 | IDE | VS Code | Verified |
 | Coding assistant | Zoo Code | Verified |
 | Main project directory | `C:\AIProjects\AIEngineeringTeam` | Verified |
-| Python | 3.12.16 | Verified in `ai-team` |
+| Python | 3.12.16 | Verified in `ai-team` (2026-11-23) |
 | Python environment | Conda: `ai-team` | Verified |
 | Second Python environment | Conda: `local-agent` | Previously confirmed |
 | Python distribution | Miniconda | Previously confirmed |
-| pip | Available in `ai-team` | Verified |
-| Version control | Git | Verified |
-| OpenAI SDK | Installed only in `local-agent` | Not yet confirmed in `ai-team` |
-| pytest | Not yet verified | Not yet confirmed in `ai-team` |
-| tkinter | Not yet verified | Not yet confirmed in `ai-team` |
-| Git repository in this workspace | Exists, with an initial commit | Verified |
+| pip | Available in `ai-team` | Verified in M0 |
+| Version control | Git | Verified; branch `main`, HEAD `2433660` |
+| OpenAI SDK | 3.57.0 installed in `ai-team` | Verified 2026-11-23 |
+| tiktoken | 0.14.0 installed in `ai-team` | Verified 2026-11-23 |
+| pytest | 9.2.0 installed in `ai-team` | Verified 2026-11-23; full offline suite 294 passed, 5 skipped |
+| tkinter | Tk 8.6 present | Verified in M0; not required for headless acceptance |
+| Git repository in this workspace | Branch `main` at `2433660`, synced with `origin/main` | Verified 2026-11-23 |
 
 Zoo Code is currently installed and being used in VS Code. The choice of coding assistant remains revisable.
 
-The OpenAI SDK is the client currently assumed by the Phase 1 plan. The live provider and model identifiers remain open decisions, and the provider adapter must stay replaceable.
+The live provider is DeepSeek through the OpenAI-compatible SDK adapter, with model `deepseek-flash` and an explicit endpoint in `config/aiteam.toml`. The provider adapter remains replaceable. Phase 1 uses no Agent Framework, as recorded in [`plans/adr-001-hybrid-architecture.md`](plans/adr-001-hybrid-architecture.md).
 
 `C:\AIProjects\UnrealAIEngineering` is a separate Unreal Engine project. It is not part of this AI Engineering Team workspace.
 
 ### Current Stage
 
-The project is at the architecture and foundation planning stage.
+The approved architecture is Hybrid: this project builds the decisions, while provider SDKs and commodity components may be adopted. The Python Workflow Engine remains the sole authority over workflow state, execution, permissions, approvals, budgets, retries, evidence validation and final acceptance. The local workspace remains the current implementation, and no generic Workspace Protocol is introduced without a real second implementation.
 
-The canonical principles, the Phase 1 architecture plan and its milestones are documented. No implementation code has been written yet.
+Implementation status:
 
-The Phase 1 blueprint is kept in `plans/phase1-architecture-plan.md` and is subordinate to this charter.
+- M0 to M3 implementation closeout is complete: environment verification, the FakeProvider workflow skeleton, QA execution with per-execution approval and engine-side evidence validation, cost accounting and budget enforcement, context injection, the live provider, and the Evidence Validator correction.
+- The DeepSeek Live E2E diagnostic succeeded on `projects/diagnostic` (run `20261123T110208Z-97bc01`): the task completed, the engine accepted the QA evidence, 7 API calls were recorded, and actual cost was USD 0.004748 with no outstanding or uncertain reservation.
+- That diagnostic created a `hello.txt` file. It is not the Snake Game acceptance run.
+- M4 retry and escalation are not implemented. A QA failure currently blocks the run; the engine records this as `qa_failed_no_retry_in_m2`.
+- The DeepSeek diagnostic demonstrates live-provider behaviour, but M5 is not formally accepted. The Phase 1 plan checklist remains the canonical milestone record; M5 closeout is not recorded.
+- Outstanding work: the M6 Snake specification, the M7 Snake live end-to-end run, the human QA test file spot check, and the M8 progress and backlog closeout.
+- M5 formal live-provider milestone acceptance and closeout.
+- Phase 1 is not accepted. Acceptance requires the Snake run and the recorded human spot check defined in the Phase 1 plan.
 
-The immediate objective is to build a working basic system, not to implement every future feature.
+The Phase 1 blueprint is kept in `plans/phase1-architecture-plan.md` and is subordinate to this charter and to ADR-001.
+
+The immediate objective is to finish the outstanding Snake acceptance work, not to implement every future feature.
 
 ---
 
 ## 7. Open Decisions
 
-The following areas remain flexible and should be evaluated as the project develops:
+### Decided and no longer open
 
-- Which AI model providers to use for the first live run, and which model to assign to each role. DeepSeek is one candidate; the Workflow Engine must not depend on any specific provider.
-- Which coding assistant and agent execution framework to adopt.
-- How to create and manage independent agent sessions.
-- How agents should communicate and exchange task information.
-- How much autonomy each agent should receive.
-- How to balance model cost, speed and quality.
-- How to provide mobile and voice control.
-- Which additional specialist agents are worth creating.
-- When to introduce the Independent Consultant / Reviewer, and whether it reports to the human, the Orchestrator, or both.
+- Hybrid architecture: build the decisions, adopt the mechanics; the Python Workflow Engine keeps sole authority (ADR-001).
+- No Agent Framework in Phase 1. Any future framework or execution runtime requires a separate evidence-based decision.
+- The local workspace remains the implementation. No generic Workspace Protocol is added without a real second implementation.
+- The live provider is DeepSeek through the OpenAI-compatible adapter, using `deepseek-flash`; provider, model and pricing live in `config/aiteam.toml`.
+- Independent per-role sessions and scoped handoff bundles are implemented, and every generated-code execution needs its own human approval.
+- Existing choices are not automatically refactored to match recommendations in the Architecture Decision Review.
+
+### Still open
+
+- Whether to assign a different model, or add a second provider, per role; and how to compare cost, speed and quality.
+- When, if ever, to adopt an agent framework or an external execution substrate, subject to evidence and a new ADR.
+- Whether and when to add stronger isolation such as Docker, WSL2, an OpenHands-class runtime or Git worktrees.
+- Mobile and voice control, including remote approval.
+- Which additional specialist agents are worth creating, and when to introduce the Independent Consultant / Reviewer and to whom it reports.
 - Which measures define a genuine improvement for controlled self-improvement, and how rollback decisions are governed.
-- How human approval should govern changes to policies, prompts and budgets as the system gains autonomy.
+- How human approval should govern future changes to policies, prompts and budgets as the system gains autonomy.
 
 New technologies and better approaches can be considered at any stage.
 
