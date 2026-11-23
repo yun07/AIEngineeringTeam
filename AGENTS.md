@@ -9,6 +9,27 @@
 2. 英文技術詞彙、程式碼、識別碼、檔名、指令同 API 名稱可以保留英文。
 3. 本規則不要求將 source code、technical specifications 或 project documentation 翻譯成粵語。
 
+## Mandatory Session Bootstrap（新 Session）
+
+1. 當 Human 只提供 `AGENTS.md` 嘅公開 GitHub 連結，必須將該連結視為本 Project 嘅入口點，並自動啟動 Session Bootstrap 同 Alignment 流程。
+2. 必須由同一個 repository 同 branch context 自動定位並讀取 `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`。
+3. 必須依 Protocol 嘅強制 bootstrap 閱讀次序：
+   - `AGENTS.md`
+   - `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` 嘅 configuration 及 bootstrap 指示
+   - `README.md`
+   - `AI_Engineering_Team.md`
+   - 按當前 task 選讀相關 Layer 2 文件
+4. ChatGPT 必須直接讀取公開可存取嘅 repository 文件。文件已可存取時，不得要求 Human 貼上或上載。
+5. 如果無法讀取所需文件，必須指出實際缺失嘅文件名稱及存取限制，不得靜默跳過或假設內容。
+6. Bootstrap 完成後，必須報告精簡 alignment status，涵蓋：
+   - 作為證據嘅 repository、branch 同 commit
+   - 已成功讀取嘅文件，以及任何缺失文件
+   - 當前 project / milestone / task 狀態
+   - 已確認決策及未解決、需要 Human 決定嘅事項
+   - Work authorization 狀態
+7. Bootstrap 同 Alignment 屬只讀程序，不代表授權 implementation、code execution、file modification、commit、merge 或 M4。
+8. 與 Human 溝通一律使用繁體中文（粵語）；英文技術詞彙、code、identifiers、filenames、commands、API names 可以保留英文。
+
 ## Token-efficient Context Management
 
 1. 每次新 Task 開始時，不要重新閱讀所有 Project Documents。先睇當前 Task 相關嘅程式碼、測試同設定。
