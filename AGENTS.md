@@ -32,7 +32,7 @@
 
 ## Token-efficient Context Management
 
-1. 每次新 Task 開始時，不要重新閱讀所有 Project Documents。先睇當前 Task 相關嘅程式碼、測試同設定。
+1. 新 Session 先完成 Protocol §0.3 bootstrap。同一 session 內開始新 Task 時，不要重新閱讀所有 Project Documents；先睇當前 Task 相關嘅程式碼、測試同設定。
 2. 本檔案只放工作指引；完整技術規格、架構細節同決策紀錄唔應該搬入嚟。
 3. `README.md` 只用嚟了解 Project 概況；一般 Coding Task 不需要重讀整份 README。
 4. `plans/phase1-architecture-plan.md` 只讀與當前 Task 有關嘅章節，不要每次讀完整文件。
@@ -53,54 +53,82 @@
     - 測試結果
     - 尚未解決的問題
 
-## Git Workflow Rules
+## Development Workflow（Human + ChatGPT + Zoo Code）
 
-所有 Git 操作由 Zoo Code 負責執行，不需要用戶手動複製 Git 指令。
+權威來源：文件修改治理以 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) §4.8 為準；alignment 流程以 [`UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`](UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md) 為準。本節只定義日常操作，唔重複完整規則。流程總覽、改善前後對照同限制見 [`README.md`](README.md) §6.2–6.4。
 
-本節有兩套規則，適用範圍唔同，先睇清楚再執行：
+### 1. 改動分類與授權
 
-- **一般程式碼、功能及 Milestone 工作**：遵守下面「逐次 Commit / Push 批准」規則。
-- **文件修改（Document Change & Review Governance）**：屬明確例外。Zoo Code 可在獨立 review branch 完成必要檢查後直接 Commit 及 Push，無須逐次取得批准。
-- **禁止未經批准 Commit / Push 的規則**：只適用於一般程式碼及 Milestone 工作，不適用於上述文件修改流程。任何情況下，未經 User 明確批准仍不得 Merge 到 `main` 或其他保護分支。
+| 類別 | 例子 | Review branch | Commit / Push | Merge |
+|---|---|---|---|---|
+| Documentation | AGENTS、README、Protocol、Charter、plan | 必須 | 完成檢查後可直接 commit/push，不需逐次批准 | 只可由 Human 批准 |
+| Code / Milestone | Python engine、tests、config | 必須 | 每步須 Human 明確批准 | 只可由 Human 批准 |
 
-文件修改的完整流程見 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) §4.8 及本檔案 Document Change & Review Governance 一節。
+- 批准文件修改不等於批准 code、測試、commit、push、merge 或下一個 milestone。
+- 任何情況下不得直接改 `main`、force push、`reset --hard`，或 clean 未批准改動。
+- 不得將 `.env`、API keys、passwords 或其他 secrets 加入 Git。
 
-### 一般程式碼、功能及 Milestone 工作：逐次批准
+### 2. Branch 與 scope
 
-每次完成一個 Milestone 或一組完整功能後：
+1. 以最新 `origin/main` 建立獨立 review branch（可用獨立 worktree）。
+2. 一個 branch 只做一個 scope；commit 只包含該 scope 檔案。
+3. 保留 working tree 內其他未提交改動，不得 stage、覆蓋、reset 或帶入 merge。
+4. Review branch 一經提交審查，不得重寫歷史；有修正就加新 commit。
 
-1. 檢查 `git status`。
-2. 執行相關測試。
-3. 檢查 `git diff` 及 `git diff --check`。
-4. 用繁體中文向用戶摘要修改內容。
-5. 建議清晰的 Conventional Commit message。
-6. 等待用戶批准後才執行 `git add` 及 `git commit`。
-7. Commit 成功後，再向用戶確認是否執行 `git push`。
-8. Push 必須獲得用戶明確批准。
+### 3. Preflight validation（提交前）
 
-禁止（只適用於一般程式碼、功能及 Milestone 工作；不適用於 Document Change & Review Governance 的文件修改流程）：
+Preflight 係 Zoo 喺 commit 前執行嘅檢查，唔係 Git hook。今次未安裝 hook，亦未設定 CI；如需自動觸發，要另行授權。
 
-- 未經批准自動 Commit。
-- 未經批准自動 Push。
-- 將 `.env`、API keys、passwords 或其他 secrets 加入 Git。
-- 使用 `git reset --hard`、`git clean -fd` 或強制 Push，除非用戶明確批准。
-- 未經用戶明確批准 Merge 到 `main` 或其他保護分支。
+交付前只跑一個 command：
 
-如果 Git 指令失敗，先分析錯誤原因，不要自行修改 Git 設定或憑證。
+```text
+python scripts/preflight.py
+```
 
-## Document Change & Review Governance
+在 `ai-team` conda 環境執行（先 `conda activate ai-team`）。
 
-規則來源：[`AI_Engineering_Team.md`](AI_Engineering_Team.md) §4.8 為唯一權威；本節只係執行提示。
+它會檢查：
 
-角色：Zoo Code = Worker / Merge Executor（改文件、跑檢查、Git 操作，並在 User 明確批准後執行 Merge）；ChatGPT = Reviewer（直接檢查 GitHub 實際文件及 diff，不執行 Merge）；User = Approver / 唯一 Merge Approver（批准接受、Merge 及下一階段工作）。
+- 目前 branch、HEAD、`origin/main` 同 merge/rebase 狀態；
+- `git diff --check`；
+- 相對 `origin/main` 嘅修改檔案清單；
+- 5 份 active docs 嘅過時 Status header、舊 paste 指令、Protocol Part 1 placeholder；
+- Protocol／AGENTS bootstrap 入口次序。
 
-1. 每次文件修改都在獨立 review branch 進行，不得直接改 `main`。
-2. 完成後先跑必要檢查（最少 `git diff --check`），再直接 commit 及 push review branch。此步驟屬文件修改既定流程，不需額外逐次批准；Merge 仍須 User 明確批准。
-3. 交 ChatGPT 獨立審查；不得要求對方只信 Zoo Code 摘要。有問題由 Zoo Code 修正，再交審查。
-4. User 係唯一 Merge Approver；只有 User 明確批准後，Zoo Code（Merge Executor）才可執行 Merge 到 `main`。Merge 批准不代表批准下一階段工作。
-5. 不得把未批准的修改或既有未提交改動帶入 review branch 或 Merge。Commit 只包含本次 scope 內的文件。
-6. 如果有與本次 scope 無關的未提交改動，必須保持原狀，並在報告中明確確認未被觸碰。
-7. 完成後只回報：review branch 名、commit hash、修改文件名稱、`git diff --check` 結果、`git status --short`、未觸碰範圍確認。
+PASS 只輸出簡短摘要；FAIL 會逐項列出原因，唔需要另外貼多條 git 命令。Commit 後用 `git diff --stat origin/main...HEAD` 核對 commit 範圍。
+
+Code 改動另加 `python -m pytest`，報告實際指令、exit code、通過/失敗數；UI 改動附 screenshot 或 recording。
+
+### 4. 證據包（Evidence package）
+
+Review 只接受可驗證證據：
+
+- `git diff`（Reviewer 直接讀 GitHub branch/diff）
+- 檢查指令同實際輸出
+- 測試結果（code）或 screenshot/log（UI）
+- 未解決問題清單
+
+Worker 回報只需：branch、commit hash、files、checks、open issues。唔需要重貼完整 diff 或長篇報告。
+
+### 5. 獨立審查（Independent Review）
+
+- ChatGPT 直接讀 GitHub review branch 嘅實際文件同 diff；Zoo 嘅摘要唔係證據。
+- Reviewer 要核對：scope 有冇超出授權、文件有冇矛盾、未批准建議有冇被寫成已批准規則、測試/證據是否對應。
+- 有問題由 Zoo 修正並加 commit；Reviewer 唔執行 merge。
+- 同一 scope 只做必要 review rounds；每次修正要有新證據，唔好重複全文審查。
+
+### 6. Human Approval
+
+- Human 係唯一 Merge Approver；只有明確批准後才可 merge。
+- Merge 批准只覆蓋該次 merge，不代表批准下一個 milestone、M4 或 implementation。
+- Human approval 永不因自動化、CI 或 review 通過而省略。
+
+### 7. 效率規則
+
+- 同一 session 內不要重讀未改動文件；不要重複貼上同一 diff 或報告。
+- 不要為同一 scope 建立多個重複 branch 或重複 commit。
+- 冇新證據時不要重試或重新生成同一報告；失敗就報告原因同下一步。
+- Zoo Code orchestration 嘅重複報告/context 浪費按 OD-001 處理，唔係 Workflow Engine 問題。
 
 ## 文件角色速查
 
@@ -114,9 +142,6 @@
 
 ## 建議讀取次序
 
-1. 當前 Task 相關嘅程式碼、測試、設定檔
-2. `AGENTS.md`
-3. `plans/phase1-architecture-plan.md` 相關章節
-4. 有需要才查 `AI_Engineering_Team.md`
-
-不要為了「熟習成個 Project」而一次過讀完所有文件。
+- 新 Session：依 Protocol §0.3 bootstrap（`AGENTS.md` → Protocol → `README.md` → `AI_Engineering_Team.md` → Layer 2）。
+- 同一 session 內的新 Task：先讀當前 Task 相關嘅程式碼、測試、設定；需要時才查 plan 相關章節或 Charter。
+- 不要為了「熟習成個 Project」而一次過讀完所有文件，亦不要重讀未改動文件。
