@@ -21,7 +21,7 @@ If a rule here conflicts with the project's own governing documents, the project
 > Every `<...>` placeholder must be replaced or marked `NOT CONFIGURED`; a remaining placeholder is itself a configuration defect.
 > A session may instead receive its configuration per session from the Human. The participant must record the configuration source as `FILE` or `HUMAN-SUPPLIED`.
 > Never invent a path or a project fact. Paths are relative to the project root unless written as absolute.
-> Values below were verified against the repository on 2026-11-23. M4 is the next required prerequisite; M4 implementation is not authorized and has not started. Revision 6 C3 remains `OPEN — HUMAN DECISION REQUIRED`.
+> Values below were verified against the repository on 2026-11-23. Current milestone: Phase 1. Next required prerequisite: M4. Current task: M4 retry and escalation. Implementation has not started and is NOT AUTHORIZED. Revision 6 C3 remains `OPEN — HUMAN DECISION REQUIRED`.
 
 | Field | Value |
 |---|---|
