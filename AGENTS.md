@@ -50,6 +50,20 @@
 
 如果 Git 指令失敗，先分析錯誤原因，不要自行修改 Git 設定或憑證。
 
+## Document Change & Review Governance
+
+規則來源：[`AI_Engineering_Team.md`](AI_Engineering_Team.md) §4.8 為唯一權威；本節只係執行提示。
+
+角色：Zoo Code = Worker（改文件、跑檢查、Git 操作）；ChatGPT = Reviewer（直接檢查 GitHub 實際文件及 diff）；User = Approver（批准接受、Merge 及下一階段工作）。
+
+1. 每次文件修改都在獨立 review branch 進行，不得直接改 `main`。
+2. 完成後先跑必要檢查（最少 `git diff --check`），再 commit 及 push review branch。
+3. 交 ChatGPT 獨立審查；不得要求對方只信 Zoo Code 摘要。有問題由 Zoo Code 修正，再交審查。
+4. 只有 User 明確批准後才可 Merge 到 `main`；Merge 批准不代表批准下一階段工作。
+5. 不得把未批准的修改或既有未提交改動帶入 review branch 或 Merge。Commit 只包含本次 scope 內的文件。
+6. 如果有與本次 scope 無關的未提交改動，必須保持原狀，並在報告中明確確認未被觸碰。
+7. 完成後只回報：review branch 名、commit hash、修改文件名稱、`git diff --check` 結果、`git status --short`、未觸碰範圍確認。
+
 ## 文件角色速查
 
 | 文件 | 幾時用 |
