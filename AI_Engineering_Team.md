@@ -2,9 +2,9 @@
 
 **Project Context & Living Specification**
 
-Last updated: 19 November 2026
+Last updated: 23 November 2026
 
-**Status:** Canonical charter, revision 2. The Phase 1 plan is aligned with this charter; no implementation has started.
+**Status:** Canonical charter, proposed revision 3 (documentation clarity pass — `PROPOSAL — HUMAN APPROVAL REQUIRED`). Phase 1 is in progress: M0 closeout is recorded, M1–M3 implementation is present with formal closeout `UNVERIFIED`, M4 is not implemented, and Phase 1 is not accepted.
 
 ## 1. Project Vision
 
@@ -396,12 +396,12 @@ Verification status:
 | Second Python environment | Conda: `local-agent` | Previously confirmed |
 | Python distribution | Miniconda | Previously confirmed |
 | pip | Available in `ai-team` | Verified in M0 |
-| Version control | Git | Verified; branch `main`, HEAD `2433660` |
+| Version control | Git | Verified 2026-11-23; branch `main`, HEAD `b78eaed` (the previously recorded `2433660` is obsolete) |
 | OpenAI SDK | 3.57.0 installed in `ai-team` | Verified 2026-11-23 |
 | tiktoken | 0.14.0 installed in `ai-team` | Verified 2026-11-23 |
 | pytest | 9.2.0 installed in `ai-team` | Verified 2026-11-23; full offline suite 294 passed, 5 skipped |
 | tkinter | Tk 8.6 present | Verified in M0; not required for headless acceptance |
-| Git repository in this workspace | Branch `main` at `2433660`, synced with `origin/main` | Verified 2026-11-23 |
+| Git repository in this workspace | Branch `main` at `b78eaed`, synced with `origin/main` and the public remote | Verified 2026-11-23 |
 
 Zoo Code is currently installed and being used in VS Code. The choice of coding assistant remains revisable.
 
@@ -413,20 +413,54 @@ The live provider is DeepSeek through the OpenAI-compatible SDK adapter, with mo
 
 The approved architecture is Hybrid: this project builds the decisions, while provider SDKs and commodity components may be adopted. The Python Workflow Engine remains the sole authority over workflow state, execution, permissions, approvals, budgets, retries, evidence validation and final acceptance. The local workspace remains the current implementation, and no generic Workspace Protocol is introduced without a real second implementation.
 
-Implementation status:
+#### Milestone status (M0–M8)
 
-- M0 to M3 implementation closeout is complete: environment verification, the FakeProvider workflow skeleton, QA execution with per-execution approval and engine-side evidence validation, cost accounting and budget enforcement, context injection, the live provider, and the Evidence Validator correction.
-- The DeepSeek Live E2E diagnostic succeeded on `projects/diagnostic` (run `20261123T110208Z-97bc01`): the task completed, the engine accepted the QA evidence, 7 API calls were recorded, and actual cost was USD 0.004748 with no outstanding or uncertain reservation.
-- That diagnostic created a `hello.txt` file. It is not the Snake Game acceptance run.
+The Phase 1 plan is the canonical milestone record. Three completion states are kept separate: implementation present is not formal closeout, and formal closeout is not Human acceptance.
+
+| Milestone | Implementation | Formal closeout | Human acceptance | Evidence |
+|---|---|---|---|---|
+| M0 Environment and repository verification | Completed | Recorded — report PASS | Not separately recorded | `plans/m0-environment-report.md` |
+| M1 FakeProvider walking skeleton | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` | source and tests exist; no closeout record |
+| M2 QA execution, evidence and approval | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` | source and scenario tests exist; no closeout record |
+| M3 Cost accounting and budget enforcement | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` | cost modules and tests exist; no closeout record |
+| M4 Retry and escalation | Not implemented | Not started | Not started | engine blocks with `qa_failed_no_retry_in_m2` |
+| M5 Live provider validation | Diagnostic only | Not recorded | Not recorded | run `20261123T110208Z-97bc01`; formal acceptance explicitly not recorded |
+| M6 Snake specification | Not started | Not started | Not started | no `projects/snake` artefact |
+| M7 Snake live end-to-end run | Not started | Not started | Not started | — |
+| M8 Documentation and progress | Not started | Not started | Not started | — |
+
+Status notes:
+
+- The DeepSeek Live E2E diagnostic succeeded on `projects/diagnostic` (run `20261123T110208Z-97bc01`): the task completed, the engine accepted the QA evidence, 7 API calls were recorded, and actual cost was USD 0.004748 with no outstanding or uncertain reservation. It created a `hello.txt` file and is not the Snake Game acceptance run.
+- An earlier revision of this section described M0–M3 as implementation closeout complete. Under the three-state separation above that wording overstated the evidence for M1–M3: implementation is present, but no M1–M3 closeout artefacts exist in the repository. This correction is `PROPOSAL — HUMAN APPROVAL REQUIRED`.
 - M4 retry and escalation are not implemented. A QA failure currently blocks the run; the engine records this as `qa_failed_no_retry_in_m2`.
-- The DeepSeek diagnostic demonstrates live-provider behaviour, but M5 is not formally accepted. The Phase 1 plan checklist remains the canonical milestone record; M5 closeout is not recorded.
-- Outstanding work: the M6 Snake specification, the M7 Snake live end-to-end run, the human QA test file spot check, and the M8 progress and backlog closeout.
-- M5 formal live-provider milestone acceptance and closeout.
 - Phase 1 is not accepted. Acceptance requires the Snake run and the recorded human spot check defined in the Phase 1 plan.
 
-The Phase 1 blueprint is kept in `plans/phase1-architecture-plan.md` and is subordinate to this charter and to ADR-001.
+#### Milestone dependencies
 
-The immediate objective is to finish the outstanding Snake acceptance work, not to implement every future feature.
+- M0 → M1 → M2 → M3 → M4 are sequential.
+- M5 and M6 may proceed in parallel only once M4 exists.
+- M7 requires M5 and M6.
+- M8 runs only after M7 is complete.
+
+These dependencies are recorded in `plans/phase1-architecture-plan.md` and restated here for visibility; they are not a new decision.
+
+#### Outstanding work
+
+- M4 retry, failure feedback and escalation.
+- M5 formal live-provider milestone acceptance and closeout.
+- M6 Snake specification with criterion IDs and a negative test.
+- M7 Snake live end-to-end run and the human QA test-file spot check.
+- M8 progress and backlog closeout.
+
+#### Current position and next required milestone
+
+- [FACT] Current position: Phase 1, implementation present through the M3 scope, M4 not started, M5 diagnostic only, Phase 1 not accepted.
+- [FACT] The plan's dependency order makes M4 the prerequisite for M5 and M6.
+- [FACT] The previous text named finishing the Snake acceptance work as the immediate objective while also recording that M4 is not implemented. Those two statements conflict.
+- `OPEN — HUMAN DECISION REQUIRED`: the next required milestone is not decided in the documents. The Human must choose and record one of: implement M4, record M5 formal acceptance, or start M6. This charter does not choose for the Human.
+
+The Phase 1 blueprint is kept in `plans/phase1-architecture-plan.md` and is subordinate to this charter and to ADR-001.
 
 ---
 
@@ -440,6 +474,7 @@ The immediate objective is to finish the outstanding Snake acceptance work, not 
 - The live provider is DeepSeek through the OpenAI-compatible adapter, using `deepseek-flash`; provider, model and pricing live in `config/aiteam.toml`.
 - Independent per-role sessions and scoped handoff bundles are implemented, and every generated-code execution needs its own human approval.
 - Existing choices are not automatically refactored to match recommendations in the Architecture Decision Review.
+- Zoo Code orchestration issues are recorded as OD-001 in `plans/operations-decisions.md` and are not Python Workflow Engine defects.
 
 ### Still open
 

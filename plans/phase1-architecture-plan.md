@@ -2,8 +2,8 @@
 
 **Project:** Generic AI Engineering Team
 **Scope:** Phase 1 = minimal but complete end-to-end system
-**Status:** Implementation baseline agreed. No implementation started.
-**Revision:** 5 — Developer tools reduced to read, write and list; QA evidence mapped to criteria; negative test required; human QA spot check added
+**Status:** Implementation baseline agreed. Phase 1 in progress: M0 closeout recorded; M1–M3 implementation present with formal closeout `UNVERIFIED`; M4 not started; M5 diagnostic only; M6–M8 not started; Phase 1 not accepted.
+**Revision:** 5 approved text retained. Proposed revision 7 (documentation clarity and consistency) — `PROPOSAL — HUMAN APPROVAL REQUIRED`. Revision 6 exists only as uncommitted working-tree text and is not incorporated here; it is assessed in Appendix A.
 **Companion documents:** [`AI_Engineering_Team.md`](../AI_Engineering_Team.md)
 **Archived reference:** `plans/oss-architecture-research.md` and `plans/architecture-decision-review.md` are frozen. Do not update them.
 
@@ -52,6 +52,14 @@ Changes in revision 5:
 6. The Orchestrator is retained. A three-role versus two-role comparison is planned after the Snake run, using recorded results.
 7. QA is not required to use a different model in Phase 1. Per-role model configuration remains available.
 8. Progress documents are updated only at milestone boundaries. The research and decision review documents are archived.
+
+Changes proposed in revision 7 (documentation clarity, `PROPOSAL — HUMAN APPROVAL REQUIRED`):
+
+1. The header status reflects verified repository evidence instead of "No implementation started".
+2. A milestone contract table adds Objective, Scope, Dependencies, Completion Criteria, Required Evidence and Human Acceptance for M0–M8.
+3. Dependencies M4 → M5/M6 → M7 → M8 are stated explicitly.
+4. The checklist records evidence-based status and no longer implies that implementation equals formal closeout.
+5. Revision 6 (uncommitted C1–C7 text) is assessed in Appendix A and is not promoted to an approved rule.
 
 ---
 
@@ -640,9 +648,11 @@ Add only: `qa_failed` routing, failure feedback in the Developer bundle, attempt
 
 Exit criterion: the retry-then-pass and retry-exhausted scenarios pass as separate runs.
 
+Current status: not started. The engine blocks a QA failure with `qa_failed_no_retry_in_m2`; no retry scenario exists in `tests/scenarios/`.
+
 ### M5 Live provider validation
 
-Add only: wiring for the currently assumed OpenAI adapter, or the selected provider's adapter, with a tiny budget and one small task. Keys come from the environment or `.env`, read only by the engine. Every QA execution is approved separately. QA may use the same model as the Developer; per-role model configuration remains available but is not required.
+Add only: wiring for the selected provider's adapter (currently DeepSeek through the OpenAI-compatible SDK adapter, as recorded in the charter and `config/aiteam.toml`), with a tiny budget and one small task. Keys come from the environment or `.env`, read only by the engine. Every QA execution is approved separately. QA may use the same model as the Developer; per-role model configuration remains available but is not required.
 
 Exit criterion: live mode refuses to start with placeholder models or invalid pricing, usage and cost are recorded, redaction is verified in the transcript and log, and the per-execution QA approval prompt is observed.
 
@@ -662,7 +672,7 @@ Exit criterion: the live criteria in section F are satisfied, `runs/<run_id>/rep
 
 Update `AI_Engineering_Team.md` progress and environment tables, and the plan checklist, only after M7 is complete. Write `plans/phase1-backlog.md` with the deferred items in section G. Do not update the archived research or decision review documents.
 
-M0 through M4 are sequential. M5 and M6 may proceed in parallel once M4 exists.
+M0 through M4 are sequential. M5 and M6 may proceed in parallel only once M4 exists. M7 requires both M5 and M6. M8 runs only after M7 is complete and accepted.
 
 ### After Phase 1 — architecture comparison
 
@@ -782,12 +792,44 @@ Verified by QA's own tests, not by claims.
 
 ## Phase 1 Implementation Checklist
 
-- [ ] M0 Verify `ai-team` environment and repository, extend `.gitignore`, add `.env.example`, record missing packages as manual actions
-- [ ] M1 Build the FakeProvider walking skeleton: models, minimal config, snapshot store, agent session, plan and Developer write stages with read, write and list tools only, execution limits and report
-- [ ] M2 Add QA-only execution with scrubbed environment, per-execution CONFIRM approval prompts, `qa_tests/` restriction, criterion coverage, negative check validation and denial handling
-- [ ] M3 Add cost accounting: usage records, token accounting, USD pricing, budget enforcement and live-mode configuration validation
-- [ ] M4 Add retry, failure feedback and escalation
-- [ ] M5 Validate the live provider adapter on one small task with a tiny budget, rejected placeholders and per-execution QA approvals
-- [ ] M6 Write the Snake specification with criterion IDs and a QA test plan that includes a negative test
-- [ ] M7 Run the live Snake end-to-end success case, verify acceptance criteria and complete the human QA test file spot check
-- [ ] M8 Update progress documentation only after M7, record the three-role versus two-role comparison plan and the deferred backlog
+Status legend: `[x]` = completion criteria evidenced; `[ ]` = not evidenced. The status text is authoritative; a tick never implies formal closeout or Human acceptance by itself.
+
+- [x] M0 Verify `ai-team` environment and repository, extend `.gitignore`, add `.env.example`, record missing packages as manual actions — completed; `plans/m0-environment-report.md` records PASS
+- [ ] M1 Build the FakeProvider walking skeleton: models, minimal config, snapshot store, agent session, plan and Developer write stages with read, write and list tools only, execution limits and report — implementation present; formal closeout `UNVERIFIED`
+- [ ] M2 Add QA-only execution with scrubbed environment, per-execution CONFIRM approval prompts, `qa_tests/` restriction, criterion coverage, negative check validation and denial handling — implementation present; formal closeout `UNVERIFIED`
+- [ ] M3 Add cost accounting: usage records, token accounting, USD pricing, budget enforcement and live-mode configuration validation — implementation present; formal closeout `UNVERIFIED`
+- [ ] M4 Add retry, failure feedback and escalation — not started
+- [ ] M5 Validate the live provider adapter on one small task with a tiny budget, rejected placeholders and per-execution QA approvals — diagnostic executed; formal acceptance and closeout not recorded
+- [ ] M6 Write the Snake specification with criterion IDs and a QA test plan that includes a negative test — not started
+- [ ] M7 Run the live Snake end-to-end success case, verify acceptance criteria and complete the human QA test file spot check — not started
+- [ ] M8 Update progress documentation only after M7, record the three-role versus two-role comparison plan and the deferred backlog — not started
+
+### Milestone contract table
+
+This table states the same requirements already defined in sections E–F. It adds no new requirement; it makes the existing contract explicit.
+
+| Milestone | Objective | Scope | Dependencies | Completion criteria | Required evidence | Human acceptance |
+|---|---|---|---|---|---|---|
+| M0 | Verify the environment and repository | Environment checks, `.gitignore`, `.env.example` | None | Every item recorded present or missing; no installation attempted | `plans/m0-environment-report.md` | Report accepted; no separate sign-off recorded |
+| M1 | FakeProvider vertical slice | Models, config, store, agent session, plan, Developer write, limits, report | M0 | One fake run creates tasks, writes a file, writes a report, limits asserted | Test run and report | Not recorded (`UNVERIFIED`) |
+| M2 | QA execution and evidence | QA shell tool, approval prompts, `qa_tests/` restriction, coverage and negative-check validation | M1 | Five M2 scenarios pass; policy denials proven | Scenario tests and approvals log | Not recorded (`UNVERIFIED`) |
+| M3 | Cost and budget | Usage records, pricing, budget stop, live-mode config validation | M2 | Budget-stop scenario passes; invalid pricing rejected | Tests, `usage.jsonl`, report | Not recorded (`UNVERIFIED`) |
+| M4 | Retry and escalation | `qa_failed` routing, failure feedback, attempt counting, escalation | M3 | Retry-then-pass and retry-exhausted pass as separate runs | Scenario tests | Not started |
+| M5 | Live provider validation | Adapter wiring, tiny budget, per-execution approval | M4 | Placeholder models and invalid pricing refused; usage and cost recorded; redaction verified; approval prompt observed | Run artefacts and report | Not recorded; formal acceptance outstanding |
+| M6 | Snake specification | Requirement, criterion IDs, headless mode, QA test plan with a negative test | M4 (may run in parallel with M5) | Every criterion ID maps to at least one planned check; negative case identifiable | Specification document | Human review of the specification |
+| M7 | Snake live end-to-end run | Happy path on the live provider plus human spot check | M5 and M6 | Section F criteria satisfied; report published | `runs/<run_id>/report.md` and recorded spot check | Required — Phase 1 acceptance depends on it |
+| M8 | Documentation and progress | Charter and plan updates, `plans/phase1-backlog.md` | M7 | Progress recorded; backlog written; archived documents untouched | Updated documents | Not started |
+
+### Appendix A — Revision 6 assessment (unapproved working-tree text)
+
+Revision 6 is not committed and is not part of this review branch. The rows below quote the committed wording the proposal would change, summarise the proposal, and record an assessment. No revision 6 item becomes a rule here.
+
+| ID | Original committed wording | Revision 6 proposal (uncommitted) | Assessment | Recommendation | Approval status |
+|---|---|---|---|---|---|
+| C1 | Limits table: `max_attempts = 2`; M4: "attempt counting and `escalated` when attempts are exhausted." | `max_attempts` is total attempts, not retries; `task.attempt` starts at 1 and increments only when a retry starts. | Clear and testable; removes ambiguity about the meaning of the number. | Adopt as clarification if approved. | `PROPOSAL — HUMAN APPROVAL REQUIRED` |
+| C2 | M4: "`qa_failed` routing"; risk table #10: "Only QA verdicts and hard Developer errors consume attempts." | Only an engine-confirmed `QA_FAILED` may trigger a retry; denial, budget, limit, provider and infrastructure errors do not consume attempts. | Consistent with risk #10 for QA failures and with the terminal stops in A.8/A.9; it narrows the trigger. | Adopt as clarification if approved. | `PROPOSAL — HUMAN APPROVAL REQUIRED` |
+| C3 | Risk table #10: "Only QA verdicts and hard Developer errors consume attempts." | M4 excludes hard Developer errors from retry scope until a deterministic signal exists. | **Conflicts** with the committed risk-table wording, which includes hard Developer errors. The conflict cannot be resolved by the Worker. | Keep the committed wording until the Human decides; do not promote C3. | `OPEN — HUMAN DECISION REQUIRED` |
+| C4 | Handoff table B.2: Developer bundle includes "previous QA failed checks"; QA bundle includes "previous QA verdict". | Retried sessions receive bounded engine-produced failure feedback (failed checks, criteria, engine reasons; previous QA verdict), never full transcripts. | Compatible with B.2; makes the bound explicit. | Adopt as clarification if approved. | `PROPOSAL — HUMAN APPROVAL REQUIRED` |
+| C5 | Limits table: `max_llm_calls_per_task = 20`; no reset rule stated. | `task.llm_calls` remains cumulative across attempts and is not reset by a retry. | Compatible; closes an accounting ambiguity. | Adopt as clarification if approved. | `PROPOSAL — HUMAN APPROVAL REQUIRED` |
+| C6 | Risk table #10: "Infrastructure errors consume budget, not attempts." | Engine internal errors do not retry; the workflow stops, preserves evidence and waits for human review. | Compatible with the committed wording. | Adopt as clarification if approved. | `PROPOSAL — HUMAN APPROVAL REQUIRED` |
+| C7 | Not applicable — procedural note. | The revision adds documentation only and does not update the checklist or status. | Accurate as a scope statement; this review branch keeps revision 6 unapproved and separate. | No action. | `PROPOSAL — HUMAN APPROVAL REQUIRED` |
