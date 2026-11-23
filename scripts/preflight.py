@@ -83,10 +83,14 @@ def main() -> int:
     if base is None:
         failures.append("origin/main not found; fetch it before running preflight")
 
-    diff_check = run("diff", "--check")
-    if diff_check.returncode != 0:
-        detail = (diff_check.stdout or diff_check.stderr).strip()
-        failures.append("git diff --check failed" + (f": {detail}" if detail else ""))
+    for args, label in (
+        (("diff", "--check"), "git diff --check"),
+        (("diff", "--cached", "--check"), "git diff --cached --check"),
+    ):
+        result = run(*args)
+        if result.returncode != 0:
+            detail = (result.stdout or result.stderr).strip()
+            failures.append(f"{label} failed" + (f": {detail}" if detail else ""))
 
     if branch == "main":
         failures.append("current branch is main; use a review branch")
@@ -116,7 +120,11 @@ def main() -> int:
         if not path.is_file():
             failures.append(f"missing document: {relative}")
             continue
-        text = path.read_text(encoding="utf-8", errors="replace")
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
+            failures.append(f"{relative}: cannot read document: {exc}")
+            continue
         if STALE_STATUS.search(text):
             failures.append(f"{relative}: stale Status header")
         if PASTE_INSTRUCTION.search(text):
@@ -124,7 +132,11 @@ def main() -> int:
 
     protocol = root / "UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md"
     if protocol.is_file():
-        text = protocol.read_text(encoding="utf-8", errors="replace")
+        try:
+            text = protocol.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
+            failures.append(f"UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md: cannot read: {exc}")
+            text = ""
         part1 = text.split("## Part 1", 1)[-1].split("## Part 2", 1)[0]
         for line in part1.splitlines():
             if line.startswith("|") and PLACEHOLDER.search(line):
@@ -142,9 +154,12 @@ def main() -> int:
 
     agents = root / "AGENTS.md"
     if agents.is_file():
-        if "Mandatory Session Bootstrap" not in agents.read_text(
-            encoding="utf-8", errors="replace"
-        ):
+        try:
+            agents_text = agents.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
+            failures.append(f"AGENTS.md: cannot read: {exc}")
+            agents_text = ""
+        if agents_text and "Mandatory Session Bootstrap" not in agents_text:
             failures.append("AGENTS.md is missing the Mandatory Session Bootstrap section")
 
     print("Preflight validation (not a Git hook)")
