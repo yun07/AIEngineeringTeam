@@ -37,6 +37,8 @@
 
 ### 一般程式碼及 Milestone 工作：逐次批准
 
+以下步驟**只適用於一般程式碼及 Milestone 工作，不適用於文件修改**。文件修改按 §4.8 在獨立 review branch 完成檢查後直接 Commit 及 Push，毋須逐次批准。
+
 每次完成一個 Milestone 或一組完整功能後：
 
 1. 檢查 `git status`。
@@ -44,9 +46,9 @@
 3. 檢查 `git diff` 及 `git diff --check`。
 4. 用繁體中文向用戶摘要修改內容。
 5. 建議清晰的 Conventional Commit message。
-6. 等待用戶批准後才執行 `git add` 及 `git commit`。
-7. Commit 成功後，再向用戶確認是否執行 `git push`。
-8. Push 必須獲得用戶明確批准。
+6. 等待用戶批准後才執行 `git add` 及 `git commit`（文件修改除外，見 §4.8）。
+7. Commit 成功後，再向用戶確認是否執行 `git push`（文件修改除外，見 §4.8）。
+8. Push 必須獲得用戶明確批准（文件修改除外，見 §4.8）。
 
 禁止（適用於一般程式碼及 Milestone 工作；文件修改按 §4.8 例外處理，不在此限）：
 
@@ -62,12 +64,12 @@
 
 規則來源：[`AI_Engineering_Team.md`](AI_Engineering_Team.md) §4.8 為唯一權威；本節只係執行提示。
 
-角色：Zoo Code = Worker（改文件、跑檢查、Git 操作）；ChatGPT = Reviewer（直接檢查 GitHub 實際文件及 diff）；User = Approver（批准接受、Merge 及下一階段工作）。
+角色：Zoo Code = Worker / Merge Executor（改文件、跑檢查、Git 操作，並在 User 明確批准後執行 Merge）；ChatGPT = Reviewer（直接檢查 GitHub 實際文件及 diff，不執行 Merge）；User = Approver / 唯一 Merge Approver（批准接受、Merge 及下一階段工作）。
 
 1. 每次文件修改都在獨立 review branch 進行，不得直接改 `main`。
 2. 完成後先跑必要檢查（最少 `git diff --check`），再直接 commit 及 push review branch。此步驟屬文件修改既定流程，不需額外逐次批准；Merge 仍須 User 明確批准。
 3. 交 ChatGPT 獨立審查；不得要求對方只信 Zoo Code 摘要。有問題由 Zoo Code 修正，再交審查。
-4. 只有 User 明確批准後才可 Merge 到 `main`；Merge 批准不代表批准下一階段工作。
+4. User 係唯一 Merge Approver；只有 User 明確批准後，Zoo Code（Merge Executor）才可執行 Merge 到 `main`。Merge 批准不代表批准下一階段工作。
 5. 不得把未批准的修改或既有未提交改動帶入 review branch 或 Merge。Commit 只包含本次 scope 內的文件。
 6. 如果有與本次 scope 無關的未提交改動，必須保持原狀，並在報告中明確確認未被觸碰。
 7. 完成後只回報：review branch 名、commit hash、修改文件名稱、`git diff --check` 結果、`git status --short`、未觸碰範圍確認。
