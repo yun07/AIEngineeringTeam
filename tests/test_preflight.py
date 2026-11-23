@@ -14,11 +14,11 @@ SCRIPT = REPO_ROOT / "scripts" / "preflight.py"
 
 PROTOCOL = """# Protocol
 
-## Part 1 — Project Configuration
+## Part 1 — Project Configuration Schema
 
-| Field | Value |
+| Field | Purpose |
 |---|---|
-| Project name | Temp project |
+| Project name | Human-readable identity |
 
 ## Part 2 — Universal Protocol
 
@@ -26,9 +26,20 @@ Read `AGENTS.md` first.
 Read AGENTS.md first, then follow its Mandatory Session Bootstrap.
 """
 
+README_DOC = """# README
+
+## Project Configuration
+
+| Field | Value |
+|---|---|
+| Primary entry document | `AI_Engineering_Team.md` |
+| Configured language | Cantonese |
+| Preflight command | `python scripts/preflight.py` |
+"""
+
 DEFAULT_DOCS = {
     "AGENTS.md": "# AGENTS\n\n## Mandatory Session Bootstrap\n",
-    "README.md": "# README\n",
+    "README.md": README_DOC,
     "AI_Engineering_Team.md": "# Charter\n",
     "UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md": PROTOCOL,
     "plans/phase1-architecture-plan.md": "# Plan\n",
@@ -66,7 +77,8 @@ def _make_repo(
     _git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
     if branch != "main":
         _git(repo, "checkout", "-q", "-b", branch)
-        _write(repo, "README.md", "# README\n\nreview change\n")
+        existing = (repo / "README.md").read_text(encoding="utf-8")
+        _write(repo, "README.md", existing + "\nreview change\n")
         _git(repo, "add", "README.md")
         _git(repo, "commit", "-q", "-m", "review change")
     return repo
@@ -101,7 +113,7 @@ def test_main_branch_fails(tmp_path: Path) -> None:
 
 def test_modified_staged_and_untracked_files_are_reported(tmp_path: Path) -> None:
     repo = _make_repo(tmp_path)
-    _write(repo, "README.md", "# README\n\nmodified working tree\n")
+    _write(repo, "README.md", README_DOC + "\nmodified working tree\n")
     _write(repo, "staged.txt", "staged\n")
     _git(repo, "add", "staged.txt")
     _write(repo, "untracked.txt", "untracked\n")
@@ -137,7 +149,7 @@ def test_missing_origin_main_fails(tmp_path: Path) -> None:
 
 def test_unstaged_whitespace_error_fails(tmp_path: Path) -> None:
     repo = _make_repo(tmp_path)
-    _write(repo, "README.md", "# README\n\ntrailing spaces   \n")
+    _write(repo, "README.md", README_DOC + "\ntrailing spaces   \n")
     result = _run(repo)
     assert result.returncode == 1
     assert "git diff --check failed" in result.stdout
@@ -145,7 +157,7 @@ def test_unstaged_whitespace_error_fails(tmp_path: Path) -> None:
 
 def test_staged_whitespace_error_fails(tmp_path: Path) -> None:
     repo = _make_repo(tmp_path)
-    _write(repo, "README.md", "# README\n\nstaged trailing spaces   \n")
+    _write(repo, "README.md", README_DOC + "\nstaged trailing spaces   \n")
     _git(repo, "add", "README.md")
     result = _run(repo)
     assert result.returncode == 1
@@ -157,7 +169,7 @@ def test_stale_status_header_fails(tmp_path: Path) -> None:
     _write(
         repo,
         "README.md",
-        "# README\n\n**Status:** Canonical, no implementation has started.\n",
+        README_DOC + "\n**Status:** Canonical, no implementation has started.\n",
     )
     result = _run(repo)
     assert result.returncode == 1
@@ -190,7 +202,7 @@ def test_missing_agents_bootstrap_section_fails(tmp_path: Path) -> None:
 def test_unfilled_part1_placeholder_fails(tmp_path: Path) -> None:
     docs = dict(DEFAULT_DOCS)
     docs["UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md"] = PROTOCOL.replace(
-        "| Project name | Temp project |",
+        "| Project name | Human-readable identity |",
         "| Project name | `<PROJECT_NAME>` |",
     )
     repo = _make_repo(tmp_path, docs=docs)
@@ -227,3 +239,24 @@ def test_running_from_another_repository_fails(tmp_path: Path) -> None:
     result = _run(first, script=second / "scripts" / "preflight.py")
     assert result.returncode == 1
     assert "wrong repository" in result.stdout
+
+
+def test_missing_readme_project_configuration_fails(tmp_path: Path) -> None:
+    docs = dict(DEFAULT_DOCS)
+    docs["README.md"] = "# README\n"
+    repo = _make_repo(tmp_path, docs=docs)
+    result = _run(repo)
+    assert result.returncode == 1
+    assert "missing Project Configuration field" in result.stdout
+
+
+def test_protocol_part1_project_values_fail(tmp_path: Path) -> None:
+    docs = dict(DEFAULT_DOCS)
+    docs["UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md"] = PROTOCOL.replace(
+        "| Project name | Human-readable identity |",
+        "| Project name | AI Engineering Team |",
+    )
+    repo = _make_repo(tmp_path, docs=docs)
+    result = _run(repo)
+    assert result.returncode == 1
+    assert "protocol Part 1 contains project-specific values" in result.stdout

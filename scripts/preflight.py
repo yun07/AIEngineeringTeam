@@ -24,6 +24,13 @@ ACTIVE_DOCS = (
     "UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md",
     "plans/phase1-architecture-plan.md",
 )
+README_CONFIG_FIELDS = (
+    "Project Configuration",
+    "Primary entry document",
+    "Configured language",
+    "Preflight command",
+)
+PROTOCOL_PROJECT_VALUES = ("AI Engineering Team", "c:/AIProjects", "b78eaed")
 STALE_STATUS = re.compile(
     r"^\*\*Status:\*\*.*no implementation(?: has)? started",
     re.IGNORECASE | re.MULTILINE,
@@ -138,6 +145,17 @@ def main() -> int:
         if PASTE_INSTRUCTION.search(text):
             failures.append(f"{relative}: stale Human paste/upload instruction")
 
+    readme = root / "README.md"
+    if readme.is_file():
+        try:
+            readme_text = readme.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
+            failures.append(f"README.md: cannot read: {exc}")
+            readme_text = ""
+        for field in README_CONFIG_FIELDS:
+            if readme_text and field not in readme_text:
+                failures.append(f"README.md: missing Project Configuration field: {field}")
+
     protocol = root / "UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md"
     if protocol.is_file():
         try:
@@ -146,6 +164,12 @@ def main() -> int:
             failures.append(f"UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md: cannot read: {exc}")
             text = ""
         part1 = text.split("## Part 1", 1)[-1].split("## Part 2", 1)[0]
+        for value in PROTOCOL_PROJECT_VALUES:
+            if value in part1:
+                failures.append(
+                    "protocol Part 1 contains project-specific values; move them to README"
+                )
+                break
         for line in part1.splitlines():
             if line.startswith("|") and PLACEHOLDER.search(line):
                 failures.append(

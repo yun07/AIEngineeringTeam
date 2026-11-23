@@ -10,6 +10,38 @@ QA 未通過時，目前會停止並報告；Retry / Escalation 屬 M4 planned w
 
 架構採用 Hybrid：核心決策同流程自己寫，provider SDK 等 commodity 部分可以直接採用；Phase 1 唔使用 agent framework。
 
+### 1.1 專案設定（Project Configuration）
+
+呢個表係 Protocol Part 1 所需嘅 project values；Protocol 只保留 schema，唔會重複呢啲值。
+
+| Field | Value |
+|---|---|
+| Project name | AI Engineering Team |
+| Project root | `c:/AIProjects/AIEngineeringTeam` |
+| Primary entry document | `AI_Engineering_Team.md` |
+| Working-rules entry point | `AGENTS.md` |
+| Architecture / design documents | `plans/phase1-architecture-plan.md`, `plans/adr-001-hybrid-architecture.md` |
+| Decision records | `plans/adr-001-hybrid-architecture.md`, `plans/operations-decisions.md` |
+| Status / progress documents | `AI_Engineering_Team.md`, `README.md` |
+| Technical specifications | `plans/phase1-architecture-plan.md` |
+| Tests / evidence / logs | `tests/`, `runs/`, `projects/` |
+| Git repository | `https://github.com/yun07/AIEngineeringTeam` |
+| Baseline branch | `main`; review branches are based on the latest `origin/main` |
+| Current milestone / phase | Phase 1 — M4 is the next required prerequisite; implementation not authorized |
+| Current task | M4 retry and escalation — not started |
+| Configured language | Cantonese, Traditional Chinese |
+| Environment | Conda `ai-team`, Python 3.12.16 |
+| Preflight command | `python scripts/preflight.py` |
+| Document authority order | `AI_Engineering_Team.md` > `plans/adr-001-hybrid-architecture.md` > `plans/phase1-architecture-plan.md` > `plans/operations-decisions.md` |
+| Project-specific restrictions | Read-only during alignment; Phase 1 forbids package installation; no agent framework; every generated-code execution needs its own approval; only the engine reads secrets; document changes use a review branch and need Human merge approval |
+| Project limitations | Git hook and CI are not installed; preflight is manual; local `main` may be behind `origin/main` while the working tree is protected |
+
+### 1.2 新 Session 入口
+
+1. Human 提供 `AGENTS.md` link 作為入口。
+2. 依 Protocol §0.3：`AGENTS.md` → Protocol → README（本 Project Configuration）→ `AI_Engineering_Team.md` → Layer 2。
+3. 如果欄位缺失，標 `NOT CONFIGURED`；不要猜測 paths 或 project facts。
+
 ## 2. 四個角色
 
 | 角色 | 負責 | 唔會做 |
@@ -65,41 +97,19 @@ M4 retry／escalation 未開始，亦未獲 Human 授權；M5、M6 依賴 M4；M
 
 ### 6.1 改動點樣驗收
 
-- 文件改動：獨立 review branch + `python scripts/preflight.py`（preflight validation，唔係 Git hook）；commit 後再用 `git diff --stat origin/main...HEAD` 核對範圍；ChatGPT 直接讀 GitHub branch/diff。
-- Code 改動：另加 `python -m pytest`，報告實際 exit code 同通過/失敗數；UI 改動附 screenshot 或 recording。
-- 只接受實際 diff、test results、logs 等證據；Zoo 自我摘要唔係證據。
-- Human 保留唯一 merge 批准權；merge 批准不代表批准下一個 milestone。
+- 文件改動：獨立 review branch + `python scripts/preflight.py`（preflight validation，唔係 Git hook）；commit 後再用 `git diff --stat origin/main...HEAD` 核對範圍。
+- Code 改動：另加 `python -m pytest`，報告實際 exit code 同通過/失敗數。
+- 詳細 evidence、獨立 review 同 Human approval 規則見 [`AGENTS.md`](AGENTS.md)；本節只保留 project 指令。
 
-### 6.2 改善前後對照
+### 6.2 協作流程
 
-| 項目 | 改善前 | 改善後 |
-|---|---|---|
-| Session Bootstrap | 新 session 要人手貼多份文件，入口唔清楚 | 以 `AGENTS.md` link 做入口，ChatGPT 直接讀公開 GitHub 文件；次序由 Protocol §0.3 定義 |
-| Task Instruction | 規則分散喺多份文件，重複又靠 prompt 提醒 | `AGENTS.md` 嘅 Development Workflow 做單一操作入口，權威仍指向 Charter §4.8 同 Protocol |
-| Zoo Execution | 要逐條複製 git 命令，偶爾喺錯 repo 執行 | 獨立 review branch/worktree；只用 `python scripts/preflight.py` 一個 command；script 會拒絕跨 repo 執行 |
-| Preflight Checks | 人手檢查，叫「pre-commit」但實際冇 hook | 單一 preflight：branch、diff、scope、文件一致性、PASS/FAIL 原因；明確唔係 Git hook |
-| Evidence Handoff | 長篇自我報告，Reviewer 靠摘要 | 只交 branch、commit、files、checks、open issues；Reviewer 直接讀實際 diff 同測試結果 |
-| ChatGPT Review | 可能依賴 Zoo 摘要，Human 要做中間人 | ChatGPT 優先直接讀 GitHub branch/diff；讀唔到時 Zoo 必須提供完整 Git Patch；Zoo 摘要不能代替實際 Diff |
-| Human Approval | 流程複雜，授權界線唔清楚 | Human 保留唯一 merge 批准權；merge 批准不等於批准下一個 milestone |
+通用 bootstrap、workflow、evidence、review 同 approval 規則已集中在 [`AGENTS.md`](AGENTS.md) 同 [`UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`](UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md)。README 只保留 project 設定、狀態同限制，避免重複。
 
-### 6.3 最終協作流程
+### 6.3 限制（如實區分）
 
-```text
-Human Request → ChatGPT Design → Zoo Execution → Preflight
-→ Evidence Handoff → ChatGPT Review → Human Approval
-```
-
-- **Human**：講清楚目標同授權範圍；批准 merge 及下一階段；唔需要 copy & paste 文件。
-- **ChatGPT**：設計方案；優先直接讀可取得嘅 GitHub branch/diff，讀唔到時由 Zoo 提供完整 Git Patch 作獨立 review；Zoo 自我摘要不能代替實際 Diff；唔執行 merge。
-- **Zoo Code**：喺 review branch/worktree 執行；跑 preflight；交出證據；只針對 review 問題加修正 commit；冇 merge 權。
-- 發現問題時：Review → 修正 commit → preflight → 再 review，唔需要重做整個流程。
-- M4 仍未獲授權；呢套流程只覆蓋協作開發，唔會啟動 engine implementation。
-
-### 6.4 限制（如實區分）
-
-- **已實現**：`scripts/preflight.py`、15 個 regression tests、review branch evidence handoff、AGENTS/README/Protocol 流程整理。
+- **已實現**：`scripts/preflight.py`、17 個 regression tests、review branch evidence handoff。
 - **尚未實現**：Git pre-commit hook、CI 自動觸發、GitHub branch protection 自動檢查。Preflight 要人手執行，而且必須喺自己 repo/worktree 執行。
-- **未來可選（未批准）**：CI required checks、hook 安裝、額外 metrics；呢啲唔代表已批准或立即需要。
+- **未來可選（未批准）**：CI required checks、hook 安裝、額外 metrics。
 
 ## 7. 文件邊份最權威
 
