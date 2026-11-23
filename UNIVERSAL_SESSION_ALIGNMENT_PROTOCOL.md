@@ -21,7 +21,7 @@ If a rule here conflicts with the project's own governing documents, the project
 > Every `<...>` placeholder must be replaced or marked `NOT CONFIGURED`; a remaining placeholder is itself a configuration defect.
 > A session may instead receive its configuration per session from the Human. The participant must record the configuration source as `FILE` or `HUMAN-SUPPLIED`.
 > Never invent a path or a project fact. Paths are relative to the project root unless written as absolute.
-> Values below were verified against the repository on 2026-11-23. Milestone and task are deliberately not configured because the next step is `OPEN — HUMAN DECISION REQUIRED`.
+> Values below were verified against the repository on 2026-11-23. M4 is the next required prerequisite; M4 implementation is not authorized and has not started. Revision 6 C3 remains `OPEN — HUMAN DECISION REQUIRED`.
 
 | Field | Value |
 |---|---|
@@ -35,7 +35,7 @@ If a rule here conflicts with the project's own governing documents, the project
 | Technical specifications | `plans/phase1-architecture-plan.md` |
 | Tests / evidence / logs | `tests/`, `runs/`, `projects/` |
 | Git repository (URL or local path) | `https://github.com/yun07/AIEngineeringTeam` |
-| Current branch | `main` at `b78eaed` (verified 2026-11-23); alignment and document work use a review branch or worktree |
+| Canonical main baseline | `main` at `b78eaed` (verified 2026-11-23); alignment and document work use a review branch or worktree |
 | Current milestone / phase | Phase 1 — M4 is the next required prerequisite; implementation awaits separate Human authorization |
 | Current task | M4 retry and escalation — not started; authorization not granted |
 | Document authority order (optional) | `AI_Engineering_Team.md` > `plans/adr-001-hybrid-architecture.md` > `plans/phase1-architecture-plan.md` > `plans/operations-decisions.md` |
