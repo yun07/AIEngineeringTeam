@@ -142,6 +142,7 @@ Rules:
 1. A session states its mode before acting.
 2. Entering Documentation or Development mode is never inherited from Alignment.
 3. Merge is always a separate grant and is never implied by commit or push.
+4. Operational checks, the evidence package and the review handoff for Documentation and Development are defined once in `AGENTS.md` §Development Workflow; this protocol does not duplicate them.
 
 ### 1. Access capabilities
 
