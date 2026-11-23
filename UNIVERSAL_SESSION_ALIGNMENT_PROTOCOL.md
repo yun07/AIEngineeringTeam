@@ -67,6 +67,7 @@ Configuration rules:
 8. **Missing sources are reported, never invented.** State `MISSING` or `UNVERIFIED` instead of filling gaps.
 9. **Every factual claim cites evidence**: document path plus section, heading or line range.
 10. **Never claim to have read something** that was not provided or accessible.
+11. **Communication language.** All conversational responses, status updates, questions, explanations, handoffs and reports directed to the Human use Cantonese in Traditional Chinese. English technical terms, code, identifiers, file names, commands and API names may remain in English. This rule does not require translating source code, technical specifications or project documents.
 
 ### 0.1 Authorization boundary (independent grants)
 

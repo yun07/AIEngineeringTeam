@@ -3,6 +3,12 @@
 本檔案係每次工作嘅簡短指引，唔係技術規格，亦唔應該包含完整架構或決策內容。
 目標：減少不必要嘅 Input Tokens，同時保留足夠資訊，確保實作品質同架構一致性。
 
+## Communication Language
+
+1. ChatGPT 同 Zoo Code 對 Human 嘅所有對話回覆、狀態更新、提問、解釋、handoff 同報告，一律使用繁體中文（粵語）。
+2. 英文技術詞彙、程式碼、識別碼、檔名、指令同 API 名稱可以保留英文。
+3. 本規則不要求將 source code、technical specifications 或 project documentation 翻譯成粵語。
+
 ## Token-efficient Context Management
 
 1. 每次新 Task 開始時，不要重新閱讀所有 Project Documents。先睇當前 Task 相關嘅程式碼、測試同設定。
