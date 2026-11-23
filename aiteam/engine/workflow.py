@@ -913,18 +913,20 @@ class WorkflowEngine:
         KeyboardInterrupt and SystemExit keep propagating.
         """
         run = self._require_run()
-        self._store.append_event(
-            run.id,
-            "provider_error",
-            {
-                "stage": stage,
-                "error_type": type(exc).__name__,
-                "message": self._safe_error(exc, include_type=False),
-                "session_id": session.session_id,
-                "llm_calls": session.llm_calls,
-                "turns": session.turns,
-            },
-        )
+        data: dict[str, Any] = {
+            "stage": stage,
+            "error_type": type(exc).__name__,
+            "message": self._safe_error(exc, include_type=False),
+            "session_id": session.session_id,
+            "llm_calls": session.llm_calls,
+            "turns": session.turns,
+        }
+        # Structured, already redacted provider fields, when the adapter could
+        # extract them. The store redacts this payload again on write.
+        provider_details = getattr(exc, "provider_details", None)
+        if isinstance(provider_details, dict) and provider_details:
+            data["provider_details"] = provider_details
+        self._store.append_event(run.id, "provider_error", data)
         self._block(f"provider_error: {self._safe_error(exc)} (while {stage})")
 
     def _safe_error(self, exc: Exception, *, include_type: bool = True) -> str:

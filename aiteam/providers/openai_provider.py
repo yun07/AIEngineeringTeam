@@ -9,7 +9,7 @@ a configured secret.
 from __future__ import annotations
 
 import json
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from aiteam.config import Config, validate_live_config
 from aiteam.providers.base import (
@@ -22,8 +22,18 @@ from aiteam.providers.base import (
 from aiteam.secrets import SecretBoundary
 
 
+# Bounded so a provider cannot flood the audit log with a long message.
+DETAIL_TEXT_LIMIT = 200
+
+
 class ProviderError(RuntimeError):
-    """Sanitized provider failure safe to log or persist."""
+    """Sanitized provider failure safe to log or persist.
+
+    ``provider_details`` holds a few bounded, already redacted primitives taken
+    from the SDK error (status code, request id, provider error type / code /
+    message). The raw body, headers, request objects, the SDK exception and its
+    traceback are never kept.
+    """
 
     def __init__(
         self,
@@ -31,13 +41,68 @@ class ProviderError(RuntimeError):
         message: str,
         *,
         status_code: Any | None = None,
+        provider_details: Mapping[str, Any] | None = None,
     ) -> None:
         super().__init__(message)
         self.kind = kind
         self.status_code = status_code
+        self.provider_details: dict[str, Any] = (
+            dict(provider_details) if provider_details else {}
+        )
 
     def __str__(self) -> str:
         return str(self.args[0]) if self.args else self.kind
+
+
+def _bounded(text: str) -> str:
+    """Collapse whitespace and cap the length of one persisted field."""
+    collapsed = " ".join(str(text).split())
+    if len(collapsed) > DETAIL_TEXT_LIMIT:
+        return collapsed[:DETAIL_TEXT_LIMIT] + "..."
+    return collapsed
+
+
+def _extract_provider_details(
+    exc: BaseException, boundary: SecretBoundary
+) -> dict[str, Any]:
+    """Extract a few structured fields from an SDK status error.
+
+    Only primitives leave this function, each already passed through
+    ``SecretBoundary.redact()`` and length-bounded. The raw body, headers and
+    the exception itself are never returned. Any failure returns at most the
+    numeric status code, so the caller keeps its generic safe message.
+    """
+    details: dict[str, Any] = {}
+    try:
+        status_code = getattr(exc, "status_code", None)
+        if isinstance(status_code, int) and not isinstance(status_code, bool):
+            details["status_code"] = status_code
+
+        request_id = getattr(exc, "request_id", None)
+        if isinstance(request_id, str) and request_id.strip():
+            details["request_id"] = _bounded(boundary.redact(request_id))
+
+        body = getattr(exc, "body", None)
+        error_object: Any = None
+        if isinstance(body, Mapping):
+            candidate = body.get("error")
+            error_object = candidate if isinstance(candidate, Mapping) else body
+
+        if isinstance(error_object, Mapping):
+            for field in ("type", "code", "message"):
+                raw = error_object.get(field)
+                if isinstance(raw, bool) or not isinstance(raw, (str, int)):
+                    continue
+                text = _bounded(str(raw))
+                if text:
+                    details[f"error_{field}"] = _bounded(boundary.redact(text))
+    except Exception:  # noqa: BLE001 - diagnostics must never mask the error
+        return {
+            key: value
+            for key, value in details.items()
+            if key == "status_code"
+        }
+    return details
 
 
 def _classify_exception(exc: BaseException) -> str:
@@ -124,6 +189,7 @@ class OpenAIProvider:
             # chained or referenced after this block.
             kind = _classify_exception(exc)
             status_code = getattr(exc, "status_code", None)
+            details = _extract_provider_details(exc, self._boundary)
             safe_message = self._redact(str(exc))
         else:
             return self._map_response(response)
@@ -131,7 +197,10 @@ class OpenAIProvider:
         # Raising outside the except block leaves sys.exc_info() empty, so the
         # new exception has no implicit __context__.
         raise ProviderError(
-            kind, safe_message, status_code=status_code
+            kind,
+            safe_message,
+            status_code=status_code,
+            provider_details=details,
         ) from None
 
     def _build_request(
