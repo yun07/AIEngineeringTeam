@@ -418,7 +418,7 @@ Rules for this session:
 - Produce your Alignment Report before seeing any other participant's report.
 ```
 
-For chat-based assistants add: "The human will paste the primary entry document. State clearly which documents you have and which you do not."
+For chat-based assistants with REMOTE DOCUMENT ACCESS: read the primary entry document directly from the configured public repository. Ask the Human to paste or upload it only when the required source is genuinely inaccessible.
 
 #### E. Session Initialization Completion Checklist
 
