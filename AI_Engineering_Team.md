@@ -287,9 +287,9 @@ Document changes follow a three-role separation. No role may substitute for anot
 
 | Role | Actor | Owns | Must not |
 |---|---|---|---|
-| **Worker** | Zoo Code | Executing document edits, running the required checks, and performing the Git operations on a review branch | Approve or merge its own work; treat its own summary as review evidence |
-| **Reviewer** | ChatGPT | Independently inspecting the actual files and the Git diff, for example on GitHub, and raising corrections | Rely on the Worker's summary instead of the repository; merge |
-| **Approver** | User | Accepting or rejecting the change, merging to `main`, and authorizing the next stage of work | — |
+| **Worker** | Zoo Code | Executing document edits, running the required checks, and the Git operations on a review branch, including performing a merge only after the User explicitly approves it | Approve a change; merge without explicit User approval; treat its own summary as review evidence |
+| **Reviewer** | ChatGPT | Independently inspecting the actual files and the Git diff, for example on GitHub, and raising corrections | Rely on the Worker's summary instead of the repository; perform a merge |
+| **Approver** | User | Final authority to accept or reject the change, to approve a merge to `main`, and to authorize the next stage of work | — |
 
 Mandatory workflow:
 
@@ -297,7 +297,10 @@ Mandatory workflow:
 2. When the change is complete, the Worker runs the required checks, commits the change and pushes the review branch.
 3. The Reviewer independently inspects the actual documents and the Git diff, for example on GitHub. A summary from the Worker is not evidence.
 4. If the Reviewer finds problems, the Worker corrects them and resubmits for review. Review and correction repeat until the Reviewer has no material objection.
-5. Only the Approver may merge the review branch into `main`, and only after explicit approval.
+5. Merge authority:
+   - The User holds the final decision to merge a review branch into `main`, and may perform the merge directly.
+   - Zoo Code may perform the merge only after the User explicitly approves that specific merge.
+   - The Reviewer (ChatGPT) does not perform merges.
 6. Approval to merge a document change does not authorize the next stage of work. Further work needs its own explicit approval.
 
 Protection rule: unapproved changes and pre-existing uncommitted changes must never be swept into a review branch or a merge. A review branch contains only the change under review, and the Worker states explicitly which files are in scope.

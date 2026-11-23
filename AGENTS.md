@@ -30,6 +30,8 @@
 
 所有 Git 操作由 Zoo Code 負責執行，不需要用戶手動複製 Git 指令。
 
+本節適用於**一般程式碼及 Milestone 工作**：Commit 及 Push 仍須逐次獲得用戶批准。**文件修改**另按 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) §4.8 及下面 Document Change & Review Governance 一節處理，完成檢查後可直接 Commit 及 Push 到 review branch，無需逐次批准；但任何情況下仍不得未經批准 Merge。
+
 每次完成一個 Milestone 或一組完整功能後：
 
 1. 檢查 `git status`。
@@ -57,7 +59,7 @@
 角色：Zoo Code = Worker（改文件、跑檢查、Git 操作）；ChatGPT = Reviewer（直接檢查 GitHub 實際文件及 diff）；User = Approver（批准接受、Merge 及下一階段工作）。
 
 1. 每次文件修改都在獨立 review branch 進行，不得直接改 `main`。
-2. 完成後先跑必要檢查（最少 `git diff --check`），再 commit 及 push review branch。
+2. 完成後先跑必要檢查（最少 `git diff --check`），再直接 commit 及 push review branch。此步驟屬文件修改既定流程，不需額外逐次批准；Merge 仍須 User 明確批准。
 3. 交 ChatGPT 獨立審查；不得要求對方只信 Zoo Code 摘要。有問題由 Zoo Code 修正，再交審查。
 4. 只有 User 明確批准後才可 Merge 到 `main`；Merge 批准不代表批准下一階段工作。
 5. 不得把未批准的修改或既有未提交改動帶入 review branch 或 Merge。Commit 只包含本次 scope 內的文件。
