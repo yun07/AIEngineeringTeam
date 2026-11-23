@@ -55,7 +55,7 @@
 
 ## Development Workflow（Human + ChatGPT + Zoo Code）
 
-權威來源：文件修改治理以 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) §4.8 為準；alignment 流程以 [`UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`](UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md) 為準。本節只定義日常操作，唔重複完整規則。
+權威來源：文件修改治理以 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) §4.8 為準；alignment 流程以 [`UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`](UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md) 為準。本節只定義日常操作，唔重複完整規則。流程總覽、改善前後對照同限制見 [`README.md`](README.md) §6.2–6.4。
 
 ### 1. 改動分類與授權
 
