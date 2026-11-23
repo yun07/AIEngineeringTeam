@@ -79,7 +79,7 @@ M4 retry／escalation 未開始，亦未獲 Human 授權；M5、M6 依賴 M4；M
 | Zoo Execution | 要逐條複製 git 命令，偶爾喺錯 repo 執行 | 獨立 review branch/worktree；只用 `python scripts/preflight.py` 一個 command；script 會拒絕跨 repo 執行 |
 | Preflight Checks | 人手檢查，叫「pre-commit」但實際冇 hook | 單一 preflight：branch、diff、scope、文件一致性、PASS/FAIL 原因；明確唔係 Git hook |
 | Evidence Handoff | 長篇自我報告，Reviewer 靠摘要 | 只交 branch、commit、files、checks、open issues；Reviewer 直接讀實際 diff 同測試結果 |
-| ChatGPT Review | 可能依賴 Zoo 摘要，Human 要做中間人 | ChatGPT 直接讀 GitHub branch/diff；有問題只要求針對性修正 commit |
+| ChatGPT Review | 可能依賴 Zoo 摘要，Human 要做中間人 | ChatGPT 優先直接讀 GitHub branch/diff；讀唔到時 Zoo 必須提供完整 Git Patch；Zoo 摘要不能代替實際 Diff |
 | Human Approval | 流程複雜，授權界線唔清楚 | Human 保留唯一 merge 批准權；merge 批准不等於批准下一個 milestone |
 
 ### 6.3 最終協作流程
@@ -90,7 +90,7 @@ Human Request → ChatGPT Design → Zoo Execution → Preflight
 ```
 
 - **Human**：講清楚目標同授權範圍；批准 merge 及下一階段；唔需要 copy & paste 文件。
-- **ChatGPT**：設計方案；獨立 review 實際 Git diff、測試同 preflight 結果；唔執行 merge。
+- **ChatGPT**：設計方案；優先直接讀可取得嘅 GitHub branch/diff，讀唔到時由 Zoo 提供完整 Git Patch 作獨立 review；Zoo 自我摘要不能代替實際 Diff；唔執行 merge。
 - **Zoo Code**：喺 review branch/worktree 執行；跑 preflight；交出證據；只針對 review 問題加修正 commit；冇 merge 權。
 - 發現問題時：Review → 修正 commit → preflight → 再 review，唔需要重做整個流程。
 - M4 仍未獲授權；呢套流程只覆蓋協作開發，唔會啟動 engine implementation。
