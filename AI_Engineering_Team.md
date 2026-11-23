@@ -458,7 +458,8 @@ These dependencies are recorded in `plans/phase1-architecture-plan.md` and resta
 - [FACT] Current position: Phase 1, implementation present through the M3 scope, M4 not started, M5 diagnostic only, Phase 1 not accepted.
 - [FACT] The plan's dependency order makes M4 the prerequisite for M5 and M6.
 - [FACT] The previous text named finishing the Snake acceptance work as the immediate objective while also recording that M4 is not implemented. Those two statements conflict.
-- `OPEN — HUMAN DECISION REQUIRED`: the next required milestone is not decided in the documents. The Human must choose and record one of: implement M4, record M5 formal acceptance, or start M6. This charter does not choose for the Human.
+- `M4 is the next required prerequisite`: under the documented dependency sequence, M5 and M6 require M4. M5 and M6 are therefore not valid immediate next steps unless the Human explicitly approves a change to that dependency sequence.
+- `OPEN — HUMAN AUTHORIZATION REQUIRED`: M4 implementation still requires separate explicit Human authorization. This charter records the prerequisite; it does not authorise the work.
 
 The Phase 1 blueprint is kept in `plans/phase1-architecture-plan.md` and is subordinate to this charter and to ADR-001.
 

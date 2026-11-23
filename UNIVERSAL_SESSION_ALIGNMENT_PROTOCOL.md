@@ -36,8 +36,8 @@ If a rule here conflicts with the project's own governing documents, the project
 | Tests / evidence / logs | `tests/`, `runs/`, `projects/` |
 | Git repository (URL or local path) | `https://github.com/yun07/AIEngineeringTeam` |
 | Current branch | `main` at `b78eaed` (verified 2026-11-23); alignment and document work use a review branch or worktree |
-| Current milestone / phase | Phase 1 — `NOT CONFIGURED — HUMAN DECISION REQUIRED` (whether M4 or M5/M6 comes next) |
-| Current task | `NOT CONFIGURED — HUMAN DECISION REQUIRED` |
+| Current milestone / phase | Phase 1 — M4 is the next required prerequisite; implementation awaits separate Human authorization |
+| Current task | M4 retry and escalation — not started; authorization not granted |
 | Document authority order (optional) | `AI_Engineering_Team.md` > `plans/adr-001-hybrid-architecture.md` > `plans/phase1-architecture-plan.md` > `plans/operations-decisions.md` |
 | Project-specific restrictions | Read-only during alignment; Phase 1 forbids package installation; no agent framework; every generated-code execution needs its own approval; only the engine reads secrets; document changes use a review branch and need Human merge approval |
 
@@ -119,6 +119,8 @@ Bootstrap order for every new session:
 
 If `AGENTS.md` or `README.md` is unavailable, mark it `MISSING` and continue with the available sources. Never invent their content.
 
+This mandatory bootstrap order takes precedence over the general task-specific retrieval order in `AGENTS.md`. After bootstrap, apply the token-efficient retrieval rules in `AGENTS.md` and §2 of this protocol; ordinary tasks must not read the entire repository.
+
 Document discovery:
 
 1. When a participant has repository access, whether `FULL REPOSITORY` or `REMOTE DOCUMENT ACCESS`, it locates the configured documents and the task-relevant documents itself. The Human is not required to re-paste documents that are already accessible.
@@ -171,7 +173,7 @@ Evidence sources are not interchangeable. Every report must say which sources it
 
 Reading public documents never equals a full repository check. Reading a document never equals verifying the implementation state.
 
-If a chat-based assistant is used, the human must paste or attach the primary entry document and any supporting files needed. The assistant must say so rather than assume access.
+When a participant has `REMOTE DOCUMENT ACCESS` to the public repository or an authorised connector, it reads the accessible documents, pushed review branches and diffs directly. It does not ask the Human to paste or attach documents that are already accessible. The Human supplies files only when the required source is genuinely inaccessible. The participant must state which sources it has and which it does not.
 
 ### 2. Token-efficient retrieval model
 
