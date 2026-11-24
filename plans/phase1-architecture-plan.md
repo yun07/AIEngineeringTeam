@@ -838,6 +838,15 @@ This appendix consolidates the Revision 6 clarifications into one narrow M4 desi
 - consumption = an attempt counts toward the retry cap;
 - increment = `task.attempt` increases by one only when a retry starts.
 
+Consumption by failure type, consistent with the approved C2/C3 wording:
+
+- engine-confirmed `QA_FAILED`: consumes the attempt and may trigger a retry;
+- deterministically classified hard Developer error: consumes the attempt but does not trigger an automatic retry in M4;
+- unclassified Developer-stage exception: does not consume an attempt;
+- approval denial, `BudgetError` and `LimitExceeded`: do not consume an attempt.
+
+Consumption and increment are independent: consuming an attempt does not itself increment `task.attempt`; the counter increments only when a retry actually starts. These are the only consumption rules recorded here; no additional consumption rule is introduced.
+
 Approved C2/C3 wording already states these semantics. That approval applies only as part of C2/C3; C1 itself remains a proposed baseline default.
 
 #### M4.2 Retry eligibility and Developer-stage failures (C2, C3 — approved)
@@ -864,7 +873,7 @@ A retried Developer session receives a bounded failure feedback bundle produced 
 
 **Status:** `PROPOSED BASELINE DEFAULT — HUMAN APPROVAL REQUIRED`
 
-An engine internal error does not trigger a retry. The workflow stops, the error and the relevant evidence are preserved, and the failure is left for human review.
+An engine internal error does not trigger an automatic retry and does not trigger ordinary QA-failure escalation. Existing engine error handling is preserved, together with the relevant evidence. M4 introduces no new workflow state or transition for engine internal errors; the failure is left for human review through the existing handling.
 
 #### M4.6 Baseline documentation scope (C7 — proposed)
 
