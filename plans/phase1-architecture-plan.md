@@ -3,7 +3,7 @@
 **Project:** Generic AI Engineering Team
 **Scope:** Phase 1 = minimal but complete end-to-end system
 **Status:** Implementation baseline agreed. Phase 1 in progress: M0 closeout recorded; M1–M3 implementation present with formal closeout `UNVERIFIED`; M4 not started; M5 diagnostic only; M6–M8 not started; Phase 1 not accepted.
-**Revision:** 5 approved text retained. Proposed revision 7 (documentation clarity and consistency) — `PROPOSAL — HUMAN APPROVAL REQUIRED`. Revision 6 exists only as uncommitted working-tree text and is not incorporated here; it is assessed in Appendix A.
+**Revision:** 5 approved text retained. Proposed revision 7 (documentation clarity and consistency) — `PROPOSAL — HUMAN APPROVAL REQUIRED`. Revision 6 clarifications C1–C7 are consolidated in Appendix A: C2 and C3 are approved rules; C1 and C4–C7 remain proposed baseline defaults.
 **Companion documents:** [`AI_Engineering_Team.md`](../AI_Engineering_Team.md)
 **Archived reference:** `plans/oss-architecture-research.md` and `plans/architecture-decision-review.md` are frozen. Do not update them.
 
@@ -59,7 +59,7 @@ Changes proposed in revision 7 (documentation clarity, `PROPOSAL — HUMAN APPRO
 2. A milestone contract table adds Objective, Scope, Dependencies, Completion Criteria, Required Evidence and Human Acceptance for M0–M8.
 3. Dependencies M4 → M5/M6 → M7 → M8 are stated explicitly.
 4. The checklist records evidence-based status and no longer implies that implementation equals formal closeout.
-5. Revision 6 (uncommitted C1–C7 text) is assessed in Appendix A and is not promoted to an approved rule.
+5. Revision 6 C1–C7 are consolidated in Appendix A; C2 and C3 are approved rules, while C1 and C4–C7 remain proposed baseline defaults.
 
 ---
 
@@ -222,6 +222,8 @@ stateDiagram-v2
 ```
 
 Approvals are handled synchronously inside the tool call, so there is no `awaiting_approval` state and no resume machinery. A denial moves the task directly to `blocked`, which is the honest outcome for a non-interactive run.
+
+A Developer-stage exception that is not `BudgetError` or `LimitExceeded` uses the existing `dev_running → blocked` transition. It is recorded as `developer_stage_failure_unclassified: <safe error>`; this is stage attribution only and does not assert Developer-code fault or a ProviderError cause. No new state or transition is introduced.
 
 The engine is a loop over a pure function `next_action(run, tasks) -> Action`, plus deterministic handlers. Purity makes every routing rule testable offline with a fake provider.
 
@@ -646,6 +648,8 @@ Exit criterion: the budget-stop scenario passes and the report shows tokens and 
 
 Add only: `qa_failed` routing, failure feedback in the Developer bundle, attempt counting and `escalated` when attempts are exhausted.
 
+M4 retry and failure semantics are consolidated in **Appendix A — M4 Design Baseline (C1–C7)**. C2 and C3 are approved rules; C1 and C4–C7 are proposed baseline defaults. This section records scope only and adds no runtime behaviour by itself.
+
 Exit criterion: the retry-then-pass and retry-exhausted scenarios pass as separate runs.
 
 Current status: not started. The engine blocks a QA failure with `qa_failed_no_retry_in_m2`; no retry scenario exists in `tests/scenarios/`.
@@ -752,7 +756,7 @@ Verified by QA's own tests, not by claims.
 | 7 | State persistence | Authoritative `index.json` plus append-only audit logs. No replay. | Snapshot corruption loses state; audit log is not a recovery mechanism | Concurrency or recovery requirements appear |
 | 8 | Approval resumability | Synchronous prompts, no persisted pending approvals, no resume command | An interrupted run must be restarted | Unattended or long-running operation |
 | 9 | Plan size | `max_tasks_per_plan = 3`, enforced and tested | Over-decomposition would raise cost and QA complexity | Larger projects need more tasks |
-| 10 | Retry semantics | Only QA verdicts and hard Developer errors consume attempts. `max_attempts = 2`. Infrastructure errors consume budget, not attempts. | Misattribution could loop or escalate early | Observed misclassification |
+| 10 | Retry semantics | Only QA verdicts and deterministically classified hard Developer errors consume attempts. `max_attempts = 2` is the total attempt allocation; `task.attempt` starts at 1 and increments only when a retry starts. In M4, only an engine-confirmed `QA_FAILED` may trigger an automatic retry. Approval denial, `BudgetError` and `LimitExceeded` do not trigger a retry and do not consume an attempt. No deterministic hard-Developer-error classifier exists, and M4 does not introduce one. Any other Developer-stage exception is recorded as `developer_stage_failure_unclassified`: stage attribution only, not Developer-code fault, and not a ProviderError claim. It stops in the existing `blocked` state, does not retry and does not consume an attempt. Existing Cost Guard settlement/uncertain accounting remains unchanged. Infrastructure errors consume budget, not attempts. | Misattribution could loop or escalate early | Observed misclassification |
 | 11 | Provider strategy | Tool-calling capable models only. Strict JSON validation with one repair retry. | A provider without native tool calls cannot be used | Adding such a provider |
 | 12 | Pricing source | Static per-million-token table. Placeholder models, missing pricing entries and negative prices fail live mode before any call. | Reported USD drifts from real billing, or a live run starts with no valid price | Any billing-relevant decision |
 | 13 | Snake technology | Pure logic in `game.py`, optional tkinter shell in `app.py`, deterministic headless mode | tkinter may be absent; accepted because it is not required for acceptance | If a real UI is required as a gate |
@@ -820,16 +824,71 @@ This table states the same requirements already defined in sections E–F. It ad
 | M7 | Snake live end-to-end run | Happy path on the live provider plus human spot check | M5 and M6 | Section F criteria satisfied; report published | `runs/<run_id>/report.md` and recorded spot check | Required — Phase 1 acceptance depends on it |
 | M8 | Documentation and progress | Charter and plan updates, `plans/phase1-backlog.md` | M7 | Progress recorded; backlog written; archived documents untouched | Updated documents | Not started |
 
-### Appendix A — Revision 6 assessment (unapproved working-tree text)
+### Appendix A — M4 Design Baseline (C1–C7)
 
-Revision 6 is not committed and is not part of this review branch. The rows below quote the committed wording the proposal would change, summarise the proposal, and record an assessment. No revision 6 item becomes a rule here.
+This appendix consolidates the Revision 6 clarifications into one narrow M4 design baseline. It is documentation only; M4 implementation is not authorized. C2 and C3 are approved rules. C1 and C4–C7 are proposed baseline defaults and remain subject to Human approval. The baseline is intentionally testable and revisable after real-world use.
 
-| ID | Original committed wording | Revision 6 proposal (uncommitted) | Assessment | Recommendation | Approval status |
-|---|---|---|---|---|---|
-| C1 | Limits table: `max_attempts = 2`; M4: "attempt counting and `escalated` when attempts are exhausted." | `max_attempts` is total attempts, not retries; `task.attempt` starts at 1 and increments only when a retry starts. | Clear and testable; removes ambiguity about the meaning of the number. | Adopt as clarification if approved. | `PROPOSAL — HUMAN APPROVAL REQUIRED` |
-| C2 | M4: "`qa_failed` routing"; risk table #10: "Only QA verdicts and hard Developer errors consume attempts." | Only an engine-confirmed `QA_FAILED` may trigger a retry; denial, budget, limit, provider and infrastructure errors do not consume attempts. | Consistent with risk #10 for QA failures and with the terminal stops in A.8/A.9; it narrows the trigger. | Adopt as clarification if approved. | `PROPOSAL — HUMAN APPROVAL REQUIRED` |
-| C3 | Risk table #10: "Only QA verdicts and hard Developer errors consume attempts." | M4 excludes hard Developer errors from retry scope until a deterministic signal exists. | **Conflicts** with the committed risk-table wording, which includes hard Developer errors. The conflict cannot be resolved by the Worker. | Keep the committed wording until the Human decides; do not promote C3. | `OPEN — HUMAN DECISION REQUIRED` |
-| C4 | Handoff table B.2: Developer bundle includes "previous QA failed checks"; QA bundle includes "previous QA verdict". | Retried sessions receive bounded engine-produced failure feedback (failed checks, criteria, engine reasons; previous QA verdict), never full transcripts. | Compatible with B.2; makes the bound explicit. | Adopt as clarification if approved. | `PROPOSAL — HUMAN APPROVAL REQUIRED` |
-| C5 | Limits table: `max_llm_calls_per_task = 20`; no reset rule stated. | `task.llm_calls` remains cumulative across attempts and is not reset by a retry. | Compatible; closes an accounting ambiguity. | Adopt as clarification if approved. | `PROPOSAL — HUMAN APPROVAL REQUIRED` |
-| C6 | Risk table #10: "Infrastructure errors consume budget, not attempts." | Engine internal errors do not retry; the workflow stops, preserves evidence and waits for human review. | Compatible with the committed wording. | Adopt as clarification if approved. | `PROPOSAL — HUMAN APPROVAL REQUIRED` |
-| C7 | Not applicable — procedural note. | The revision adds documentation only and does not update the checklist or status. | Accurate as a scope statement; this review branch keeps revision 6 unapproved and separate. | No action. | `PROPOSAL — HUMAN APPROVAL REQUIRED` |
+#### M4.1 Attempt allocation and counter increment (C1 — proposed)
+
+**Status:** `PROPOSED BASELINE DEFAULT — HUMAN APPROVAL REQUIRED`
+
+`max_attempts` is the total number of attempts for a task, not the number of retries. A task starts with `task.attempt = 1`. The counter increments only when a retry actually starts, never when a failure is first recorded. Attempt allocation, attempt consumption and counter increment are separate:
+
+- allocation = total attempts allowed;
+- consumption = an attempt counts toward the retry cap;
+- increment = `task.attempt` increases by one only when a retry starts.
+
+Consumption by failure type, consistent with the approved C2/C3 wording:
+
+- engine-confirmed `QA_FAILED`: consumes the attempt and may trigger a retry;
+- deterministically classified hard Developer error: consumes the attempt but does not trigger an automatic retry in M4;
+- unclassified Developer-stage exception: does not consume an attempt;
+- approval denial, `BudgetError` and `LimitExceeded`: do not consume an attempt.
+
+Consumption and increment are independent: consuming an attempt does not itself increment `task.attempt`; the counter increments only when a retry actually starts. These are the only consumption rules recorded here; no additional consumption rule is introduced.
+
+Approved C2/C3 wording already states these semantics. That approval applies only as part of C2/C3; C1 itself remains a proposed baseline default.
+
+#### M4.2 Retry eligibility and Developer-stage failures (C2, C3 — approved)
+
+**Status:** `APPROVED — 2026-11-24`
+
+Only an engine-confirmed `QA_FAILED` may trigger an automatic retry in M4. Approval denial, `BudgetError` and `LimitExceeded` keep their existing terminal handling; none triggers a retry or consumes an attempt. Any other Developer-stage exception is recorded as `developer_stage_failure_unclassified`, with safe diagnostic information. This is stage attribution only; it does not assert Developer-code fault and does not claim a ProviderError cause. It stops in the existing `blocked` state, does not retry and does not consume an attempt. Existing Cost Guard settlement/uncertain accounting remains unchanged. No hard-Developer-error classifier is introduced in M4; deterministically classified hard Developer errors remain a future category. A classified hard Developer error would consume the attempt in which it occurs but would not trigger an automatic retry in M4.
+
+No new state or transition is introduced; A.6 documents the existing `dev_running → blocked` reason mapping.
+
+#### M4.3 Failure feedback (C4 — proposed)
+
+**Status:** `PROPOSED BASELINE DEFAULT — HUMAN APPROVAL REQUIRED`
+
+A retried Developer session receives a bounded failure feedback bundle produced by the engine: the failed checks, the criteria they cover and the engine's failure reasons. A retried QA session receives the previous QA verdict, including its failed checks, together with the engine failure reason. No full transcript, no Developer self-assessment and no unnecessary history are passed to either role.
+
+#### M4.4 LLM call accounting (C5 — proposed)
+
+**Status:** `PROPOSED BASELINE DEFAULT — HUMAN APPROVAL REQUIRED`
+
+`task.llm_calls` stays cumulative across the attempts of the same task and is not reset by a retry. The existing `max_llm_calls_per_task` limit therefore continues to apply for the whole task.
+
+#### M4.5 Engine internal errors (C6 — proposed)
+
+**Status:** `PROPOSED BASELINE DEFAULT — HUMAN APPROVAL REQUIRED`
+
+An engine internal error does not trigger an automatic retry and does not trigger ordinary QA-failure escalation. Existing engine error handling is preserved, together with the relevant evidence. M4 introduces no new workflow state or transition for engine internal errors; the failure is left for human review through the existing handling.
+
+#### M4.6 Baseline documentation scope (C7 — proposed)
+
+**Status:** `PROPOSED BASELINE DEFAULT — HUMAN APPROVAL REQUIRED`
+
+This baseline is documentation only. It does not update the milestone checklist or implementation status. M4 completion must be recorded when M4 is completed and accepted.
+
+#### M4.7 Status summary
+
+| ID | Baseline section | Status | Provenance |
+|---|---|---|---|
+| C1 | M4.1 | `PROPOSED BASELINE DEFAULT — HUMAN APPROVAL REQUIRED` | Revision 6 C1 |
+| C2 | M4.2 | `APPROVED — 2026-11-24` | Revision 6 C2 |
+| C3 | M4.2 | `APPROVED — 2026-11-24` | Revision 6 C3 |
+| C4 | M4.3 | `PROPOSED BASELINE DEFAULT — HUMAN APPROVAL REQUIRED` | Revision 6 C4 |
+| C5 | M4.4 | `PROPOSED BASELINE DEFAULT — HUMAN APPROVAL REQUIRED` | Revision 6 C5 |
+| C6 | M4.5 | `PROPOSED BASELINE DEFAULT — HUMAN APPROVAL REQUIRED` | Revision 6 C6 |
+| C7 | M4.6 | `PROPOSED BASELINE DEFAULT — HUMAN APPROVAL REQUIRED` | Revision 6 C7 |
