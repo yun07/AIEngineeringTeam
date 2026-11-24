@@ -198,6 +198,31 @@ def test_qa_fail_with_unknown_execution_id_blocks(tmp_path):
     assert "task_retry_started" not in kinds
 
 
+def test_qa_fail_after_a_timed_out_execution_blocks(tmp_path):
+    # A timed-out execution has exit_code=None, which is not a genuine
+    # non-zero program failure and must never trigger a retry.
+    timed_out_run = RunResult(
+        exit_code=None, stdout="", stderr="", timed_out=True
+    )
+    _, store, run, result = run_demo(
+        tmp_path,
+        qa_script_responses=qa_script(verdict="fail", exit_code=1),
+        runner=ScriptedRunner([timed_out_run]),
+    )
+
+    task = result.tasks[0]
+    assert result.state is RunState.BLOCKED
+    assert task.state is TaskState.BLOCKED
+    assert task.state is not TaskState.QA_FAILED
+    assert task.attempt == 1
+    assert "execution_timed_out" in (result.block_reason or "")
+
+    kinds = event_kinds(store, run.id)
+    assert "task_qa_failed" not in kinds
+    assert "task_retry_started" not in kinds
+    assert kinds[-1] == "run_blocked"
+
+
 def test_qa_fail_with_mismatched_command_blocks(tmp_path):
     # QA reports a command the engine never executed for that execution id.
     checks = (

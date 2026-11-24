@@ -196,6 +196,11 @@ def failure_evidence_reasons(
                 f"{check.command} does not match {record.command_line}"
             )
             continue
+        if record.timed_out:
+            # A timeout is an infrastructure failure, not verifiable program
+            # failure, and its exit code is None rather than a real non-zero.
+            reasons.append(f"execution_timed_out: {check.execution_id}")
+            continue
         if record.exit_code != check.exit_code:
             reasons.append(
                 "exit_code_mismatch: "
@@ -203,7 +208,11 @@ def failure_evidence_reasons(
                 f"observed {record.exit_code}"
             )
             continue
-        if record.exit_code != 0:
+        if (
+            isinstance(record.exit_code, int)
+            and not isinstance(record.exit_code, bool)
+            and record.exit_code != 0
+        ):
             observed_failure = True
 
     if not observed_failure:
