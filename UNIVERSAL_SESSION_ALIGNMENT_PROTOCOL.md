@@ -110,13 +110,26 @@ Rules:
 
 ### 0.3 Session bootstrap, workflow modes and document discovery
 
-Bootstrap order for every new session:
+Bootstrap order for every new session. Choose the mode first (see "Alignment modes" below), then follow that mode's order.
+
+**Continuation Alignment:**
+
+1. Read `AGENTS.md` first. When the Human supplies only the `AGENTS.md` link, that link is the session entry point.
+2. Read the project README Project Configuration section.
+3. Read the configured compact project state document.
+4. Read only the sections of this protocol and the project documents that the task needs.
+5. Verify the repository identity and the current `main` commit.
+
+**Full Alignment:**
 
 1. Read `AGENTS.md` first. When the Human supplies only the `AGENTS.md` link, that link is the session entry point.
 2. Follow `AGENTS.md` to read this protocol's Part 1 schema and bootstrap instructions.
 3. Read the project `README.md` for Project Configuration and project context.
-4. Read the primary entry document named by the README Project Configuration. Read it in full under Full Alignment; under Continuation Alignment read the configured compact project state document and only the sections the task needs.
+4. Read the primary entry document named by the README Project Configuration in full.
 5. Select Layer 2 documents by relevance to the current task.
+6. Verify the repository identity and the current `main` commit.
+
+In both modes, report which documents were read and which were not. The compact project state document is a snapshot that never proves implementation or test results. Independent review, independent QA and the authorization boundary in §0.1 are unchanged.
 
 If `AGENTS.md` or `README.md` is unavailable, mark it `MISSING` and continue with the available sources. Never invent their content.
 
