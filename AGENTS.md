@@ -17,17 +17,33 @@ ChatGPT and Zoo Code must each complete this bootstrap independently. Neither ma
 2. Read `AGENTS.md` first.
 3. Identify the repository root from the provided URL. Do not hardcode a repository URL in this file.
 4. Locate `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` in the same repository and branch context.
-5. Read in this order:
-   - `AGENTS.md`
-   - `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` (configuration schema and bootstrap instructions)
-   - the project `README.md` (Project Configuration and project context)
-   - the primary entry document named by the README configuration
-   - relevant Layer 2 documents selected for the current task
-6. Complete session alignment before proposing or undertaking implementation work.
-7. Read accessible repository documents directly. Never ask the Human to provide information that is already accessible in the repository.
-8. If a required document cannot be accessed, name the exact missing document and the access limitation. Report unverified information explicitly; never skip it silently or invent its contents.
-9. Report a concise alignment status covering: repository, branch and commit used as evidence; documents read and missing; project, milestone and task as declared by the README; confirmed decisions and unresolved Human decisions; and work authorization status.
-10. Bootstrap and alignment are read-only. They do not authorize implementation, code execution, file modification, commit, push, merge or deployment.
+5. Choose the alignment mode (§2.1), then read in that mode's order:
+   - **Continuation Alignment** (ordinary continuation, when `main` and the compact project state document are verifiable): `AGENTS.md` → the README Project Configuration section → the compact project state document → the relevant sections of `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` → task-specific project documents.
+   - **Full Alignment** (first session, major architecture change, material conflict, or untrusted state): `AGENTS.md` → `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` (configuration schema and bootstrap instructions) → the project `README.md` (Project Configuration and project context) → the primary entry document named by the README configuration, in full → relevant Layer 2 documents selected for the current task.
+6. Verify the repository identity and the current `main` commit in both modes, and report which documents were read and which were not.
+7. Complete session alignment before proposing or undertaking implementation work.
+8. Read accessible repository documents directly. Never ask the Human to provide information that is already accessible in the repository.
+9. If a required document cannot be accessed, name the exact missing document and the access limitation. Report unverified information explicitly; never skip it silently or invent its contents.
+10. Report a concise alignment status covering: repository, branch and commit used as evidence; documents read and missing; project, milestone and task as declared by the README; confirmed decisions and unresolved Human decisions; and work authorization status.
+11. The compact project state document is a snapshot, never proof of implementation or test results. Independent review, independent QA and the authorization boundaries in §6 and §7 are unchanged in both modes.
+12. Bootstrap and alignment are read-only. They do not authorize implementation, code execution, file modification, commit, push, merge or deployment.
+
+### 2.1 Alignment modes
+
+Choose the mode before reading. The project configuration names the compact project state document; a project without one uses Full Alignment.
+
+| Mode | Use when | Minimum reading |
+|---|---|---|
+| **Full Alignment** | First session on a project, a major architecture change, a material conflict, or when the current state cannot be trusted | This file, the alignment protocol, the README Project Configuration, the primary entry document in full, then the Layer 2 documents the task needs |
+| **Continuation Alignment** | Ordinary continuation in the same project, when `main` and the compact project state document are verifiable | This file → the README Project Configuration section → the compact project state document → the relevant protocol sections and task-specific project documents |
+
+Rules:
+
+1. Both modes verify the repository and the current `main` commit, and both report what was read and what was not.
+2. Continuation Alignment follows that fixed order and reads only the protocol sections and project documents that the task touches. It does not read the whole README, the whole charter or the whole repository on every session.
+3. A compact state document is a snapshot, never proof. It may record intent and decisions, but it never proves that code or tests work; verify an implementation claim against the code, tests or run evidence when the task depends on it.
+4. Additional reads or tests are driven by the task's evidence needs, not by completeness.
+5. Both modes preserve independent reasoning, evidence citation, the independent QA requirement, and the authorization boundary in §6 and §7. Neither mode authorises commit, push or merge.
 
 ## 3. Roles and Authority
 

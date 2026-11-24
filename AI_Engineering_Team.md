@@ -4,7 +4,7 @@
 
 Last updated: 23 November 2026
 
-**Status:** Canonical charter, proposed revision 3 (documentation clarity pass — `PROPOSAL — HUMAN APPROVAL REQUIRED`). Phase 1 is in progress: M0 closeout is recorded, M1–M3 implementation is present with formal closeout `UNVERIFIED`, M4 is not implemented, and Phase 1 is not accepted.
+**Status:** Canonical charter, proposed revision 3 (documentation clarity pass — `PROPOSAL — HUMAN APPROVAL REQUIRED`). Phase 1 is in progress: M0 closeout is recorded, M1–M3 implementation is present with formal closeout `UNVERIFIED`, M4 is completed, reviewed and merged into `main` at `9c11b6a`, and Phase 1 is not accepted.
 
 ## 1. Project Vision
 
@@ -423,7 +423,7 @@ The Phase 1 plan is the canonical milestone record. Three completion states are 
 | M1 FakeProvider walking skeleton | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` | source and tests exist; no closeout record |
 | M2 QA execution, evidence and approval | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` | source and scenario tests exist; no closeout record |
 | M3 Cost accounting and budget enforcement | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` | cost modules and tests exist; no closeout record |
-| M4 Retry and escalation | Not implemented | Not started | Not started | engine blocks with `qa_failed_no_retry_in_m2` |
+| M4 Retry and escalation | Completed and merged | Recorded — reviewed and merged at `9c11b6a` | Merge approved by the Human 2026-11-24 | `tests/scenarios/test_retry_then_pass.py`, `tests/scenarios/test_retry_exhausted.py`, `tests/test_m4_retry.py` |
 | M5 Live provider validation | Diagnostic only | Not recorded | Not recorded | run `20261123T110208Z-97bc01`; formal acceptance explicitly not recorded |
 | M6 Snake specification | Not started | Not started | Not started | no `projects/snake` artefact |
 | M7 Snake live end-to-end run | Not started | Not started | Not started | — |
@@ -433,7 +433,7 @@ Status notes:
 
 - The DeepSeek Live E2E diagnostic succeeded on `projects/diagnostic` (run `20261123T110208Z-97bc01`): the task completed, the engine accepted the QA evidence, 7 API calls were recorded, and actual cost was USD 0.004748 with no outstanding or uncertain reservation. It created a `hello.txt` file and is not the Snake Game acceptance run.
 - An earlier revision of this section described M0–M3 as implementation closeout complete. Under the three-state separation above that wording overstated the evidence for M1–M3: implementation is present, but no M1–M3 closeout artefacts exist in the repository. This correction is `PROPOSAL — HUMAN APPROVAL REQUIRED`.
-- M4 retry and escalation are not implemented. A QA failure currently blocks the run; the engine records this as `qa_failed_no_retry_in_m2`.
+- M4 retry and escalation are completed and merged (`9c11b6a`). Only an engine-confirmed QA failure backed by verified non-zero execution evidence retries once; exhausted attempts escalate. `BudgetError`, provider, engine and infrastructure failures never retry. The status and evidence wording for M4 was updated in documentation commit `85d6c90`.
 - Phase 1 is not accepted. Acceptance requires the Snake run and the recorded human spot check defined in the Phase 1 plan.
 
 #### Milestone dependencies
@@ -447,7 +447,6 @@ These dependencies are recorded in `plans/phase1-architecture-plan.md` and resta
 
 #### Outstanding work
 
-- M4 retry, failure feedback and escalation.
 - M5 formal live-provider milestone acceptance and closeout.
 - M6 Snake specification with criterion IDs and a negative test.
 - M7 Snake live end-to-end run and the human QA test-file spot check.
@@ -455,11 +454,11 @@ These dependencies are recorded in `plans/phase1-architecture-plan.md` and resta
 
 #### Current position and next required milestone
 
-- [FACT] Current position: Phase 1, implementation present through the M3 scope, M4 not started, M5 diagnostic only, Phase 1 not accepted.
-- [FACT] The plan's dependency order makes M4 the prerequisite for M5 and M6.
-- [FACT] The previous text named finishing the Snake acceptance work as the immediate objective while also recording that M4 is not implemented. Those two statements conflict.
-- `M4 is the next required prerequisite`: under the documented dependency sequence, M5 and M6 require M4. M5 and M6 are therefore not valid immediate next steps unless the Human explicitly approves a change to that dependency sequence.
-- `OPEN — HUMAN AUTHORIZATION REQUIRED`: M4 implementation still requires separate explicit Human authorization. This charter records the prerequisite; it does not authorise the work.
+- [FACT] Current position: Phase 1, implementation present through the M4 scope, M5 diagnostic only, Phase 1 not accepted.
+- [FACT] M4 was completed, independently reviewed and merged into `main` at `9c11b6a` on 2026-11-24 with explicit Human merge approval.
+- [FACT] The documented dependency order makes M5 and M6 the next valid milestones; they may proceed in parallel now that M4 exists.
+- `NO TASK AUTHORISED`: neither M5 nor M6 work is authorised by this charter. Each needs its own explicit Human authorization.
+- The operational snapshot for continuation sessions is [`PROJECT_STATE.md`](PROJECT_STATE.md). It is a derived summary only, not an independent authority: this charter remains authoritative for principles, governance and decisions, and the Phase 1 plan remains the canonical milestone record. On any conflict those documents win.
 
 The Phase 1 blueprint is kept in `plans/phase1-architecture-plan.md` and is subordinate to this charter and to ADR-001.
 

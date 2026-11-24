@@ -6,7 +6,7 @@
 
 你講一個目標，例如「寫一個 Snake 遊戲」。系統會拆成任務，交俾 Developer 實作，再由獨立 QA 測試，最後由 Workflow Engine 決定收貨或者停手報告。AI 負責思考同動手，但流程、權限、預算同「收唔收貨」都由程式控制，最終決定權喺你手上。
 
-QA 未通過時，目前會停止並報告；Retry / Escalation 屬 M4 planned work。
+QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 2`，包含首次 attempt）；用盡仍然失敗就標 `escalated` 並停手交你決定。
 
 架構採用 Hybrid：核心決策同流程自己寫，provider SDK 等 commodity 部分可以直接採用；Phase 1 唔使用 agent framework。
 
@@ -19,6 +19,7 @@ QA 未通過時，目前會停止並報告；Retry / Escalation 屬 M4 planned w
 | Project name | AI Engineering Team |
 | Project root | `c:/AIProjects/AIEngineeringTeam` |
 | Primary entry document | `AI_Engineering_Team.md` |
+| Compact project state document | `PROJECT_STATE.md` |
 | Working-rules entry point | `AGENTS.md` |
 | Architecture / design documents | `plans/phase1-architecture-plan.md`, `plans/adr-001-hybrid-architecture.md` |
 | Decision records | `plans/adr-001-hybrid-architecture.md`, `plans/operations-decisions.md` |
@@ -27,8 +28,8 @@ QA 未通過時，目前會停止並報告；Retry / Escalation 屬 M4 planned w
 | Tests / evidence / logs | `tests/`, `runs/`, `projects/` |
 | Git repository | `https://github.com/yun07/AIEngineeringTeam` |
 | Baseline branch | `main`; review branches are based on the latest `origin/main` |
-| Current milestone / phase | Phase 1 — M4 is the next required prerequisite; implementation not authorized |
-| Current task | M4 retry and escalation — not started |
+| Current milestone / phase | Phase 1 — M4 completed, reviewed and merged; M5 and M6 are the next valid milestones |
+| Current task | No task authorised; current position is recorded in [`PROJECT_STATE.md`](PROJECT_STATE.md) |
 | Configured language | Cantonese, Traditional Chinese |
 | Documentation language policy | `README.md`: Traditional Chinese; `AGENTS.md` and `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`: English |
 | Environment | Conda `ai-team`, Python 3.12.16 |
@@ -40,8 +41,13 @@ QA 未通過時，目前會停止並報告；Retry / Escalation 屬 M4 planned w
 ### 1.2 新 Session 入口
 
 1. Human 提供 `AGENTS.md` link 作為入口。
-2. 依 Protocol §0.3：`AGENTS.md` → Protocol → README（本 Project Configuration）→ `AI_Engineering_Team.md` → Layer 2。
-3. 如果欄位缺失，標 `NOT CONFIGURED`；不要猜測 paths 或 project facts。
+2. 先決定 alignment 模式（規則見 [`AGENTS.md`](AGENTS.md) §2.1 同 Protocol §0.3）：
+   - **Full Alignment**：首次接手、重大架構改動、資料有實質衝突，或當前狀態不可信。
+   - **Continuation Alignment**：同一專案日常接續，而且 `main` 同 [`PROJECT_STATE.md`](PROJECT_STATE.md) 都可以核實。
+3. Continuation Alignment 讀取次序（固定最少順序）：`AGENTS.md` → 本 README 的 §1.1 Project Configuration → [`PROJECT_STATE.md`](PROJECT_STATE.md) → 只讀與任務相關的 [`UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`](UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md) 段落同任務文件。日常接續唔需要讀整個 README、`AI_Engineering_Team.md` 全文或整個 repo。
+4. Full Alignment 讀取次序：`AGENTS.md` → Protocol → README（本 Project Configuration）→ `AI_Engineering_Team.md` 全文 → Layer 2。
+5. 狀態快照只係快照，唔証明 code 或 test 可用；需要時仍要對實際 code、tests 或 run evidence 核實。
+6. 如果欄位缺失，標 `NOT CONFIGURED`；不要猜測 paths 或 project facts。
 
 ## 2. 四個角色
 
@@ -66,8 +72,9 @@ flowchart TD
     E --> F[QA 自己寫測試並驗證]
     F --> G[Engine 核對證據]
     G -->|通過| H[報告同交付]
-    G -->|失敗| I[停止並報告<br/>Retry / Escalation — Planned M4]
-    I -.-> D
+    G -->|失敗| I[重試一次<br/>Retry — M4]
+    I --> D
+    G -->|重試用盡| J[escalated<br/>交你決定]
 ```
 
 重點：Developer 同 QA 唔會直接對話。Engine 只會交一份有範圍嘅交接資料俾下一個角色，唔會成段對話倒過去。
@@ -90,11 +97,11 @@ flowchart TD
 
 ## 6. 現況同下一步
 
-**現況**：Phase 1 進行中。M0 closeout 有紀錄（`plans/m0-environment-report.md` PASS）；M1–M3 implementation 已存在，但 formal closeout 係 `UNVERIFIED`，冇 closeout artefact。DeepSeek Live E2E diagnostic 已成功（`projects/diagnostic`，7 次 API call，actual USD 0.004748），但只係 `hello.txt` diagnostic，唔係 Snake 驗收，亦唔代表 M5 formal acceptance 已完成。
+**現況**：Phase 1 進行中。M0 closeout 有紀錄（`plans/m0-environment-report.md` PASS）；M1–M3 implementation 已存在，但 formal closeout 仍係 `UNVERIFIED`，冇 closeout artefact。M4 retry／escalation 已完成 implementation、independent review 同 Human 批准的 merge（M4 implementation merge commit `9c11b6a`）。DeepSeek Live E2E diagnostic 已成功（`projects/diagnostic`，7 次 API call，actual USD 0.004748），但只係 `hello.txt` diagnostic，唔係 Snake 驗收，亦唔代表 M5 formal acceptance 已完成。
 
-M4 retry／escalation 未開始，亦未獲 Human 授權；M5、M6 依賴 M4；M6–M8 未開始。Phase 1 **未 acceptance**。
+M5 仍然只係 diagnostic，formal acceptance 未記錄；M6–M8 未開始。Phase 1 **未 acceptance**。即時狀態快照見 [`PROJECT_STATE.md`](PROJECT_STATE.md)；該檔只係衍生快照，唔係權威 —— 里程碑記錄以 [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) 為準，原則同治理以 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) 為準。M4 狀態與證據的本次文件更新見 commit `85d6c90`。
 
-**下一步**：下一個必要前置係 M4 retry／escalation，但 implementation 仍待 Human 明確授權；之後才係 M5 formal acceptance 同 M6 Snake 規格，再做 M7 live run + human QA spot check，最後 M8 更新進度同 backlog。
+**下一步**：M4 已完成，M5 formal acceptance 同 M6 Snake 規格係下一個有效里程碑，兩者可以並行；之後 M7 live run + human QA spot check，最後 M8。以上每一項都要 Human 另外授權。
 
 ### 6.1 改動點樣驗收
 
@@ -121,6 +128,7 @@ M4 retry／escalation 未開始，亦未獲 Human 授權；M5、M6 依賴 M4；M
 | [`plans/adr-001-hybrid-architecture.md`](plans/adr-001-hybrid-architecture.md) | 已接受嘅 Hybrid 架構決定。架構問題以佢為準，但仍低於 Charter。 |
 | [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) | Phase 1 實作藍圖，低於 Charter 同 ADR-001。 |
 | [`plans/operations-decisions.md`](plans/operations-decisions.md) | 操作層決定，例如 Zoo Code orchestration 問題，唔係架構權威。 |
+| [`PROJECT_STATE.md`](PROJECT_STATE.md) | Continuation Alignment 用的狀態快照；衍生自 Charter 同 Phase 1 plan，有衝突時以上述權威文件為準。 |
 | [`plans/oss-architecture-research.md`](plans/oss-architecture-research.md)、[`plans/architecture-decision-review.md`](plans/architecture-decision-review.md)、[`plans/m0-environment-report.md`](plans/m0-environment-report.md) | 歷史研究、決策理由同環境紀錄，只作背景，唔係現行規範。 |
 
 ## 8. 三個常用詞

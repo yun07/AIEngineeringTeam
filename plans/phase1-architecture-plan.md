@@ -2,7 +2,7 @@
 
 **Project:** Generic AI Engineering Team
 **Scope:** Phase 1 = minimal but complete end-to-end system
-**Status:** Implementation baseline agreed. Phase 1 in progress: M0 closeout recorded; M1–M3 implementation present with formal closeout `UNVERIFIED`; M4 not started; M5 diagnostic only; M6–M8 not started; Phase 1 not accepted.
+**Status:** Implementation baseline agreed. Phase 1 in progress: M0 closeout recorded; M1–M3 implementation present with formal closeout `UNVERIFIED`; M4 completed, reviewed and merged into `main` at `9c11b6a`; M5 diagnostic only; M6–M8 not started; Phase 1 not accepted.
 **Revision:** 5 approved text retained. Proposed revision 7 (documentation clarity and consistency) — `PROPOSAL — HUMAN APPROVAL REQUIRED`. Revision 6 clarifications C1–C7 are consolidated in Appendix A: C2 and C3 are approved rules; C1 and C4–C7 remain proposed baseline defaults.
 **Companion documents:** [`AI_Engineering_Team.md`](../AI_Engineering_Team.md)
 **Archived reference:** `plans/oss-architecture-research.md` and `plans/architecture-decision-review.md` are frozen. Do not update them.
@@ -652,7 +652,7 @@ M4 retry and failure semantics are consolidated in **Appendix A — M4 Design Ba
 
 Exit criterion: the retry-then-pass and retry-exhausted scenarios pass as separate runs.
 
-Current status: not started. The engine blocks a QA failure with `qa_failed_no_retry_in_m2`; no retry scenario exists in `tests/scenarios/`.
+Current status: implemented, independently reviewed and merged into `main` at `9c11b6a` (branch head `432a776`; review fixes `78d6e9c` and `432a776`). An engine-confirmed QA failure with verified non-zero execution evidence retries once; exhausted attempts escalate. `qa_failed_no_retry_in_m2` no longer exists in the engine. Evidence: `tests/scenarios/test_retry_then_pass.py`, `tests/scenarios/test_retry_exhausted.py`, `tests/test_m4_retry.py`. This status and evidence wording was recorded in documentation commit `85d6c90`.
 
 ### M5 Live provider validation
 
@@ -802,7 +802,7 @@ Status legend: `[x]` = completion criteria evidenced; `[ ]` = not evidenced. The
 - [ ] M1 Build the FakeProvider walking skeleton: models, minimal config, snapshot store, agent session, plan and Developer write stages with read, write and list tools only, execution limits and report — implementation present; formal closeout `UNVERIFIED`
 - [ ] M2 Add QA-only execution with scrubbed environment, per-execution CONFIRM approval prompts, `qa_tests/` restriction, criterion coverage, negative check validation and denial handling — implementation present; formal closeout `UNVERIFIED`
 - [ ] M3 Add cost accounting: usage records, token accounting, USD pricing, budget enforcement and live-mode configuration validation — implementation present; formal closeout `UNVERIFIED`
-- [ ] M4 Add retry, failure feedback and escalation — not started
+- [x] M4 Add retry, failure feedback and escalation — implementation completed, independently reviewed and merged into `main` at `9c11b6a`
 - [ ] M5 Validate the live provider adapter on one small task with a tiny budget, rejected placeholders and per-execution QA approvals — diagnostic executed; formal acceptance and closeout not recorded
 - [ ] M6 Write the Snake specification with criterion IDs and a QA test plan that includes a negative test — not started
 - [ ] M7 Run the live Snake end-to-end success case, verify acceptance criteria and complete the human QA test file spot check — not started
@@ -818,7 +818,7 @@ This table states the same requirements already defined in sections E–F. It ad
 | M1 | FakeProvider vertical slice | Models, config, store, agent session, plan, Developer write, limits, report | M0 | One fake run creates tasks, writes a file, writes a report, limits asserted | Test run and report | Not recorded (`UNVERIFIED`) |
 | M2 | QA execution and evidence | QA shell tool, approval prompts, `qa_tests/` restriction, coverage and negative-check validation | M1 | Five M2 scenarios pass; policy denials proven | Scenario tests and approvals log | Not recorded (`UNVERIFIED`) |
 | M3 | Cost and budget | Usage records, pricing, budget stop, live-mode config validation | M2 | Budget-stop scenario passes; invalid pricing rejected | Tests, `usage.jsonl`, report | Not recorded (`UNVERIFIED`) |
-| M4 | Retry and escalation | `qa_failed` routing, failure feedback, attempt counting, escalation | M3 | Retry-then-pass and retry-exhausted pass as separate runs | Scenario tests | Not started |
+| M4 | Retry and escalation | `qa_failed` routing, failure feedback, attempt counting, escalation | M3 | Retry-then-pass and retry-exhausted pass as separate runs | Scenario tests and `tests/test_m4_retry.py`; merged at `9c11b6a` | Merge approved by the Human 2026-11-24 |
 | M5 | Live provider validation | Adapter wiring, tiny budget, per-execution approval | M4 | Placeholder models and invalid pricing refused; usage and cost recorded; redaction verified; approval prompt observed | Run artefacts and report | Not recorded; formal acceptance outstanding |
 | M6 | Snake specification | Requirement, criterion IDs, headless mode, QA test plan with a negative test | M4 (may run in parallel with M5) | Every criterion ID maps to at least one planned check; negative case identifiable | Specification document | Human review of the specification |
 | M7 | Snake live end-to-end run | Happy path on the live provider plus human spot check | M5 and M6 | Section F criteria satisfied; report published | `runs/<run_id>/report.md` and recorded spot check | Required — Phase 1 acceptance depends on it |
@@ -826,7 +826,7 @@ This table states the same requirements already defined in sections E–F. It ad
 
 ### Appendix A — M4 Design Baseline (C1–C7)
 
-This appendix consolidates the Revision 6 clarifications into one narrow M4 design baseline. It is documentation only; M4 implementation is not authorized. C2 and C3 are approved rules. C1 and C4–C7 are proposed baseline defaults and remain subject to Human approval. The baseline is intentionally testable and revisable after real-world use.
+This appendix consolidates the Revision 6 clarifications into one narrow M4 design baseline. It records the agreed semantics, not a task list: M4 implementation is completed, reviewed and merged into `main` at `9c11b6a`, and this appendix stays the reference for those semantics. C2 and C3 are approved rules. C1 and C4–C7 are proposed baseline defaults and remain subject to Human approval. The baseline is intentionally testable and revisable after real-world use.
 
 #### M4.1 Attempt allocation and counter increment (C1 — proposed)
 
