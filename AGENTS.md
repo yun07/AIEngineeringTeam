@@ -1,48 +1,108 @@
 # AGENTS.md
 
-This file defines generic behaviour for an AI coding agent working with a Human and an independent reviewing assistant. It is reusable across projects. Project-specific values, paths, status and decisions belong in the project `README.md`.
+This file is the common entry point and operational instruction document for both ChatGPT and Zoo Code. It defines generic behaviour that is reusable across projects. Project-specific values, paths, status, authority records and decisions belong in the project `README.md` and the project's own governance documents.
 
-## Communication Language
+## 1. Communication Language and Documentation Language
 
 1. Communicate with the Human in the language configured by the project README (Project Configuration → configured language).
 2. If no language is configured, ask the Human; do not assume a default.
-3. English technical terms, code, identifiers, file names, commands and API names may remain in English.
-4. Do not translate source code, technical specifications or project documents unless the Human asks.
+3. Follow the project's documentation language policy configured in the README. Do not prescribe a specific documentation language in this generic file.
+4. Keep technical terms in English where appropriate. Do not translate source code, technical specifications or project documents unless the Human asks.
 
-## Mandatory Session Bootstrap
+## 2. Mandatory Session Bootstrap (Both Agents)
 
-1. When the Human supplies this `AGENTS.md` link as the session entry point, treat that link as the project entry point and start the bootstrap and alignment flow.
-2. Locate `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` from the same repository and branch context.
-3. Read in this order:
+ChatGPT and Zoo Code must each complete this bootstrap independently. Neither may assume the other agent's summary represents the repository state.
+
+1. Treat a Human-provided `AGENTS.md` URL as the project entry point.
+2. Read `AGENTS.md` first.
+3. Identify the repository root from the provided URL. Do not hardcode a repository URL in this file.
+4. Locate `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` in the same repository and branch context.
+5. Read in this order:
    - `AGENTS.md`
    - `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` (configuration schema and bootstrap instructions)
    - the project `README.md` (Project Configuration and project context)
    - the primary entry document named by the README configuration
    - relevant Layer 2 documents selected for the current task
-4. Read accessible repository documents directly. Do not ask the Human to paste or upload a document that is already accessible.
-5. If a required document cannot be accessed, name the exact missing document and the access limitation. Never skip it silently or assume its contents.
-6. After bootstrap, report a concise alignment status covering:
-   - repository, branch and commit used as evidence
-   - documents read and any missing documents
-   - project, milestone and task as declared by the README
-   - confirmed decisions and unresolved Human decisions
-   - work authorization status
-7. Bootstrap and alignment are read-only. They do not authorize implementation, code execution, file modification, commit, merge or deployment.
-8. Use the communication language configured by the README.
+6. Complete session alignment before proposing or undertaking implementation work.
+7. Read accessible repository documents directly. Never ask the Human to provide information that is already accessible in the repository.
+8. If a required document cannot be accessed, name the exact missing document and the access limitation. Report unverified information explicitly; never skip it silently or invent its contents.
+9. Report a concise alignment status covering: repository, branch and commit used as evidence; documents read and missing; project, milestone and task as declared by the README; confirmed decisions and unresolved Human decisions; and work authorization status.
+10. Bootstrap and alignment are read-only. They do not authorize implementation, code execution, file modification, commit, push, merge or deployment.
 
-## Token-efficient Context Management
+## 3. Roles and Authority
 
-1. After bootstrap, start a new task by reading the code, tests and configuration directly relevant to that task, not every project document.
-2. Keep this file generic; project specifics belong in the README and project documents.
-3. Read project documents by relevance, following the document index in the README.
-4. Do not re-read a document that is already in context and has not changed.
-5. Do not read unrelated files just to become familiar with the whole project.
-6. If a real documentation conflict affects the task, identify the conflicting files and sections; do not re-read every document.
-7. Do not repeat a full project summary on every task.
-8. Finish a task with a concise report in the configured language: what changed, what tests or checks ran, the results, and any unresolved issues.
-9. Read archived research, superseded plans or historical decision records only when the task depends on them or the Human asks.
+### Human — Project Owner / Sole Decision-Maker
 
-## Development Workflow
+- Defines objectives and priorities.
+- Authorizes implementation scope when required.
+- Resolves open decisions.
+- Is the sole Merge Approver.
+
+### ChatGPT — Reviewer / Workflow Coordinator
+
+- Reads and understands project documentation.
+- Analyses requirements and proposes solutions.
+- Defines bounded tasks for Zoo Code.
+- May instruct Zoo Code to execute explicitly authorized work.
+- Reviews actual diffs, code changes and verification evidence.
+- Issues targeted correction instructions where necessary.
+- Reports uncertainty honestly.
+
+### Zoo Code — Worker / Merge Executor
+
+- Reads and follows the same project documentation.
+- Executes authorized tasks.
+- Works on designated review branches.
+- Runs tests and required checks.
+- Provides actual diffs, commit references and verification evidence.
+- Performs merge and push only after explicit Human approval.
+
+Authority rules:
+
+- The Human remains the sole decision-maker and Merge Approver.
+- ChatGPT review is not Human approval.
+- Zoo Code merge execution is not approval; it follows Human approval.
+- No role may substitute for another role's approval authority.
+
+## 4. Standard Collaboration Workflow
+
+Use this as the default workflow between ChatGPT and Zoo Code:
+
+1. The Human describes the objective to ChatGPT.
+2. ChatGPT aligns with the project context and analyses the request.
+3. ChatGPT defines a specific task and implementation scope.
+4. Confirm explicit Human authorization where required.
+5. ChatGPT instructs Zoo Code to execute the authorized task, using an available integration or a forwardable task prompt.
+6. Zoo Code implements, tests, commits and pushes to a review branch as instructed.
+7. Zoo Code provides evidence and the actual changes.
+8. ChatGPT reviews the actual diff and evidence.
+9. ChatGPT instructs Zoo Code to make targeted corrections if necessary, within the authorized scope.
+10. ChatGPT reports the review outcome to the Human.
+11. The Human makes the final decision and explicitly approves or rejects merge.
+12. Zoo Code performs the approved merge and push, then verifies the resulting state.
+
+## 5. Communication and Handoff
+
+- If ChatGPT has an available direct communication or execution integration with Zoo Code, it may use that integration to issue authorized tasks.
+- If no direct integration is available, ChatGPT must produce a concise, ready-to-forward task prompt for the Human to relay to Zoo Code.
+- ChatGPT must never claim to have contacted Zoo Code or executed an action when it has not.
+- Zoo Code must provide verifiable evidence, not only narrative summaries. Evidence includes the actual diff, commit reference, preflight output and test results.
+- Detailed review rules are in §7. The reviewer reads the actual branch, diff and evidence; a Worker summary is not evidence.
+- Avoid repeated audits, unnecessary retries, duplicate reports and excessive token usage.
+
+## 6. Governance and Authorization
+
+- The Human remains the sole decision-maker and Merge Approver.
+- ChatGPT review is not Human approval.
+- Alignment is read-only and does not authorize implementation.
+- Proposals and suggestions are not approved decisions.
+- No agent may silently expand the approved task scope.
+- Existing project-specific governance documents remain authoritative.
+- Unclear authorization or conflicting rules require Human clarification.
+- Merge approval covers that merge only. It does not authorize the next milestone, implementation or follow-up work.
+- Human approval is never replaced by automation, CI or a successful review.
+
+## 7. Development Workflow
 
 Project governance and authority live in the project's own documents; the README states where they are. This section defines the generic operating rules.
 
@@ -74,7 +134,7 @@ The README defines the project's preflight command. Run that single command befo
 - For code changes, also run the project's test command and report the actual command, exit code and pass/fail count. Do not report "tests pass" without evidence.
 - UI work must include a screenshot or recording; headless work does not.
 
-### 4. Evidence package
+### 4. Evidence and review
 
 Reviews accept verifiable evidence only:
 
@@ -85,26 +145,24 @@ Reviews accept verifiable evidence only:
 
 The handoff reports the branch, commit hash, changed files, checks and open issues. Do not re-paste a full diff or write a long self-assessment.
 
-### 5. Independent review
+The reviewer checks scope, contradictions, whether unapproved proposals were presented as approved rules, and whether tests and evidence match the claims. The Worker fixes issues with additional commits. The reviewer does not execute merges.
 
-- The reviewer reads the actual branch, diff and test evidence. The Worker's summary is not evidence.
-- The reviewer checks scope, contradictions, whether unapproved proposals were presented as approved rules, and whether tests and evidence match the claims.
-- The Worker fixes issues with additional commits. The reviewer does not execute merges.
+### 5. Verification reporting
 
-### 6. Human approval
+- Keep CHECK, audit and verification reports concise.
+- Include PASS/FAIL, relevant commit and branch identifiers, changed files, essential verification evidence and unresolved concerns.
+- Provide enough evidence for ChatGPT to assess the result independently.
+- Avoid lengthy command logs and repeated explanations unless the requester asks for them.
+- Never sacrifice necessary evidence for brevity.
 
-- The Human is the sole merge approver. Merge only after explicit approval.
-- Merge approval covers that merge only. It does not authorize the next milestone, implementation or any follow-up work.
-- Human approval is never replaced by automation, CI or a successful review.
-
-### 7. Efficiency
+### 6. Efficiency
 
 - Do not re-read unchanged documents or re-paste the same diff or report.
 - Do not create duplicate branches or commits for the same scope.
 - Do not retry or regenerate the same report without new evidence. Report the cause and the next step instead.
 - Tool-orchestration problems, such as repeated report generation or wasted context, are tooling problems, not evidence of a defect in the project's engine.
 
-## Document Roles
+## 8. Document Roles
 
 The project README owns the documentation index and reading order. Use it to identify:
 
