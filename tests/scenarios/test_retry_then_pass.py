@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from aiteam.models import RunState, TaskState
 from aiteam.providers.fake import text_response, tool_response
-from tests.fakes import event_kinds, qa_script, run_demo, write_call
+from aiteam.tools.shell import RunResult
+from tests.fakes import (
+    ScriptedRunner,
+    event_kinds,
+    qa_script,
+    run_demo,
+    write_call,
+)
 
 # Two full Developer attempts: the retry writes the file again.
 TWO_ATTEMPT_DEVELOPER = [
@@ -15,6 +22,9 @@ TWO_ATTEMPT_DEVELOPER = [
     ),
     text_response("Rewrote notes.md after the QA feedback."),
 ]
+
+# A genuine failing execution, observed by the engine, backs the first failure.
+FAILED_RUN = RunResult(exit_code=1, stdout="1 failed in 0.01s", stderr="")
 
 FEEDBACK_MARKERS = (
     "Previous attempt feedback",
@@ -30,7 +40,8 @@ def test_first_qa_failure_retries_once_then_passes(tmp_path):
     engine, store, run, result = run_demo(
         tmp_path,
         developer_script=TWO_ATTEMPT_DEVELOPER,
-        qa_script_responses=qa_script(verdict="fail") + qa_script(),
+        qa_script_responses=qa_script(verdict="fail", exit_code=1) + qa_script(),
+        runner=ScriptedRunner([FAILED_RUN]),
     )
 
     assert result.state is RunState.COMPLETED

@@ -157,6 +157,60 @@ def validate_verdict(
     return reasons
 
 
+def failure_evidence_reasons(
+    *, verdict: QaVerdict, audit: Sequence[CommandRecord]
+) -> list[str]:
+    """Return the reasons a reported QA failure is not verifiable.
+
+    An empty list means the engine itself observed a genuine non-zero exit code
+    for a reported failing execution. A failure verdict that cannot be
+    substantiated this way must not become a retryable ``QA_FAILED``.
+    """
+    if verdict.verdict != "fail":
+        return ["not_a_failure_verdict"]
+    if not verdict.checks:
+        return ["no_checks_reported"]
+    if not audit:
+        return ["no_command_executed"]
+
+    audit_by_execution = {
+        record.execution_id: record for record in audit if record.execution_id
+    }
+    reasons: list[str] = []
+    observed_failure = False
+    for index, check in enumerate(verdict.checks, start=1):
+        label = check.name or check.criterion or f"check {index}"
+        if not check.command.strip():
+            reasons.append(f"check_without_command: {label}")
+            continue
+        if not check.execution_id:
+            reasons.append(f"missing_execution_id: {label}")
+            continue
+        record = audit_by_execution.get(check.execution_id)
+        if record is None:
+            reasons.append(f"unknown_execution_id: {check.execution_id}")
+            continue
+        if normalize_command(check.command) != normalize_command(record.command_line):
+            reasons.append(
+                "command_mismatch_for_execution: "
+                f"{check.command} does not match {record.command_line}"
+            )
+            continue
+        if record.exit_code != check.exit_code:
+            reasons.append(
+                "exit_code_mismatch: "
+                f"{check.command} reported {check.exit_code} "
+                f"observed {record.exit_code}"
+            )
+            continue
+        if record.exit_code != 0:
+            observed_failure = True
+
+    if not observed_failure:
+        reasons.append("no_failed_execution_observed")
+    return reasons
+
+
 def _test_file_reasons(test_file: str, project_root: Path) -> list[str]:
     qa_root = (project_root / "qa_tests").resolve()
     candidate = (project_root / test_file).resolve()

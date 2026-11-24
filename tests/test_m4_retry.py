@@ -27,6 +27,7 @@ from aiteam.providers.fake import (
     tool_response,
 )
 from aiteam.state.store import StateStore
+from aiteam.tools.shell import RunResult
 from tests.fakes import (
     ScriptedRunner,
     StubProvider,
@@ -40,6 +41,10 @@ from tests.fakes import (
     run_demo,
     write_call,
 )
+
+
+# A genuine failing execution, observed by the engine.
+FAILED_RUN = RunResult(exit_code=1, stdout="1 failed in 0.01s", stderr="")
 
 
 class _RaisingProvider:
@@ -77,7 +82,8 @@ def _engine_with_provider(tmp_path, provider, **limits):
 def test_escalation_after_a_single_allowed_attempt_keeps_attempt_at_one(tmp_path):
     _, store, run, result = run_demo(
         tmp_path,
-        qa_script_responses=qa_script(verdict="fail"),
+        qa_script_responses=qa_script(verdict="fail", exit_code=1),
+        runner=ScriptedRunner([FAILED_RUN]),
         max_attempts=1,
     )
 
@@ -148,6 +154,82 @@ def test_qa_limit_breach_blocks_without_retry(tmp_path):
     kinds = event_kinds(store, run.id)
     assert "task_retry_started" not in kinds
     assert "task_qa_failed" not in kinds
+
+
+def test_qa_fail_without_a_failed_execution_blocks_instead_of_retrying(tmp_path):
+    # The only scripted execution succeeds (exit code 0), so the reported
+    # failure is not backed by any program failure the engine observed.
+    _, store, run, result = run_demo(
+        tmp_path, qa_script_responses=qa_script(verdict="fail")
+    )
+
+    task = result.tasks[0]
+    assert result.state is RunState.BLOCKED
+    assert task.state is TaskState.BLOCKED
+    assert task.state is not TaskState.QA_FAILED
+    assert task.attempt == 1
+    assert "qa_failure_unsubstantiated" in (result.block_reason or "")
+    assert "no_failed_execution_observed" in (result.block_reason or "")
+
+    kinds = event_kinds(store, run.id)
+    assert "task_qa_failed" not in kinds
+    assert "task_retry_started" not in kinds
+    assert kinds[-1] == "run_blocked"
+
+
+def test_qa_fail_with_unknown_execution_id_blocks(tmp_path):
+    # QA cites an execution id the engine never issued.
+    _, store, run, result = run_demo(
+        tmp_path,
+        qa_script_responses=qa_script(
+            verdict="fail", exit_code=1, execution_override="deadbeef"
+        ),
+        runner=ScriptedRunner([FAILED_RUN]),
+    )
+
+    task = result.tasks[0]
+    assert result.state is RunState.BLOCKED
+    assert task.state is TaskState.BLOCKED
+    assert task.attempt == 1
+    assert "unknown_execution_id: deadbeef" in (result.block_reason or "")
+
+    kinds = event_kinds(store, run.id)
+    assert "task_qa_failed" not in kinds
+    assert "task_retry_started" not in kinds
+
+
+def test_qa_fail_with_mismatched_command_blocks(tmp_path):
+    # QA reports a command the engine never executed for that execution id.
+    checks = (
+        {
+            "criterion": "C1",
+            "name": "positive check",
+            "kind": "positive",
+            "command": "python -m pytest qa_tests -v",
+            "exit_code": 1,
+            "test_file": "qa_tests/test_demo.py",
+        },
+        {
+            "criterion": "C1",
+            "name": "negative check",
+            "kind": "negative",
+            "command": "python -m pytest qa_tests -v",
+            "exit_code": 1,
+            "test_file": "qa_tests/test_demo.py",
+        },
+    )
+    _, store, run, result = run_demo(
+        tmp_path,
+        qa_script_responses=qa_script(verdict="fail", checks=checks, exit_code=1),
+        runner=ScriptedRunner([FAILED_RUN]),
+    )
+
+    assert result.state is RunState.BLOCKED
+    assert result.tasks[0].state is TaskState.BLOCKED
+    assert "command_mismatch_for_execution" in (result.block_reason or "")
+
+    kinds = event_kinds(store, run.id)
+    assert "task_retry_started" not in kinds
 
 
 def test_engine_internal_error_stops_automatic_execution(tmp_path, monkeypatch):

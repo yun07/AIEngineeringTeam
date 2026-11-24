@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from aiteam.models import RunState, TaskState
 from aiteam.providers.fake import text_response, tool_response
-from tests.fakes import event_kinds, qa_script, run_demo, write_call
+from aiteam.tools.shell import RunResult
+from tests.fakes import (
+    ScriptedRunner,
+    event_kinds,
+    qa_script,
+    run_demo,
+    write_call,
+)
 
 TWO_ATTEMPT_DEVELOPER = [
     tool_response([write_call("notes.md", "first attempt\n")]),
@@ -16,11 +23,19 @@ TWO_ATTEMPT_DEVELOPER = [
 ]
 
 
+# Both attempts report a genuine non-zero execution, so both are verifiable.
+FAILED_RUN = RunResult(exit_code=1, stdout="1 failed in 0.01s", stderr="")
+
+
 def test_second_qa_failure_escalates_with_evidence_preserved(tmp_path):
     engine, store, run, result = run_demo(
         tmp_path,
         developer_script=TWO_ATTEMPT_DEVELOPER,
-        qa_script_responses=qa_script(verdict="fail") + qa_script(verdict="fail"),
+        qa_script_responses=(
+            qa_script(verdict="fail", exit_code=1)
+            + qa_script(verdict="fail", exit_code=1)
+        ),
+        runner=ScriptedRunner([FAILED_RUN, FAILED_RUN]),
     )
 
     assert result.state is RunState.ESCALATED

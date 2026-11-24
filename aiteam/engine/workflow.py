@@ -29,7 +29,12 @@ from aiteam.engine.context import (
     ContextError,
     load_context_files,
 )
-from aiteam.engine.evidence import VerdictError, parse_verdict, validate_verdict
+from aiteam.engine.evidence import (
+    VerdictError,
+    failure_evidence_reasons,
+    parse_verdict,
+    validate_verdict,
+)
 from aiteam.engine.handoff import (
     developer_bundle,
     failure_feedback,
@@ -769,6 +774,39 @@ class WorkflowEngine:
                 {"task": task.id, "reason": task.block_reason},
             )
             self._block(f"approval_denied: {denial.command_line}")
+            return
+
+        if verdict.verdict != "pass":
+            # A failure verdict is retryable only when the engine can verify a
+            # genuine non-zero execution behind it. Unverifiable failure claims
+            # stop for Human review instead of consuming a retry.
+            unsubstantiated = failure_evidence_reasons(
+                verdict=verdict, audit=shell_tools.records
+            )
+            if unsubstantiated:
+                task.state = TaskState.BLOCKED
+                task.qa_failure_reason = None
+                task.block_reason = (
+                    "qa_failure_unsubstantiated: " + "; ".join(unsubstantiated)
+                )
+                self._store.save(run)
+                self._store.append_event(
+                    run.id,
+                    "task_blocked",
+                    {"task": task.id, "reason": task.block_reason},
+                )
+                self._block(task.block_reason)
+                return
+            task.state = TaskState.QA_FAILED
+            task.qa_failure_reason = (
+                f"qa_reported_fail: {verdict.summary.strip() or 'no summary'}"
+            )
+            self._store.save(run)
+            self._store.append_event(
+                run.id,
+                "task_qa_failed",
+                {"task": task.id, "reason": task.qa_failure_reason},
+            )
             return
 
         reasons = validate_verdict(
