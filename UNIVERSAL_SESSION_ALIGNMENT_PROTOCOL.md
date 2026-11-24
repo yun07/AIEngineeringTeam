@@ -2,54 +2,53 @@
 
 - **Version:** Draft 1 (initial draft — not yet V1.0)
 - **Documentation clarity revision:** `PROPOSAL — HUMAN APPROVAL REQUIRED` (2026-11-23). This revision clarifies evidence modes, stage ownership, authorization boundaries and uncertainty labels. It is not an approved rule until the Human accepts it.
+- **Generic workflow revision:** `PROPOSAL — HUMAN APPROVAL REQUIRED` (2026-11-23). Moves project-specific values out of this protocol and into the project README. The protocol remains unapproved until the Human accepts it.
 - **Purpose:** Start a new AI session and confirm that it understands the project before any work begins.
 - **Applies to:** any project, any repository-capable coding agent (for example Zoo Code), and any chat-based assistant (for example ChatGPT).
 - **Human trigger phrase:** "Read this document and follow its steps to start the Alignment Test."
 
 This document has two parts:
 
-1. **Part 1 — Project Configuration.** The only part edited per project.
-2. **Part 2 — Universal Protocol.** Do not edit. It is identical for every project.
+1. **Part 1 — Project Configuration Schema.** A generic list of configuration fields. Values live in the project README.
+2. **Part 2 — Universal Protocol.** The generic alignment and collaboration process. It contains no project-specific values.
 
 If a rule here conflicts with the project's own governing documents, the project documents win for project facts, and this protocol wins only for the *process* of alignment. Report the conflict; do not silently resolve it.
 
 ---
 
-## Part 1 — Project Configuration
+## Part 1 — Project Configuration Schema
 
-> Fill this table for the project, or leave a field as `NOT CONFIGURED`.
-> Every `<...>` placeholder must be replaced or marked `NOT CONFIGURED`; a remaining placeholder is itself a configuration defect.
-> A session may instead receive its configuration per session from the Human. The participant must record the configuration source as `FILE` or `HUMAN-SUPPLIED`.
-> Never invent a path or a project fact. Paths are relative to the project root unless written as absolute.
-> Values below were verified against the repository on 2026-11-23. Current milestone: Phase 1. Next required prerequisite: M4. Current task: M4 retry and escalation. Implementation has not started and is NOT AUTHORIZED. Revision 6 C3 remains `OPEN — HUMAN DECISION REQUIRED`.
+This protocol stores no project values. The project README must define them once, in a Project Configuration section. Do not duplicate project values here.
 
-| Field | Value |
+| Field | Purpose |
 |---|---|
-| Project name | AI Engineering Team |
-| Project root | `c:/AIProjects/AIEngineeringTeam` |
-| Primary entry document | `AI_Engineering_Team.md` |
-| Working-rules entry point | `AGENTS.md` (read discipline, Git rules, document-change governance) |
-| Architecture / design documents | `plans/phase1-architecture-plan.md`, `plans/adr-001-hybrid-architecture.md` |
-| Decision records | `plans/adr-001-hybrid-architecture.md`, `plans/operations-decisions.md` |
-| Status / progress documents | `AI_Engineering_Team.md`, `README.md` |
-| Technical specifications | `plans/phase1-architecture-plan.md` |
-| Tests / evidence / logs | `tests/`, `runs/`, `projects/` |
-| Git repository (URL or local path) | `https://github.com/yun07/AIEngineeringTeam` |
-| Canonical main baseline | `main` at `b78eaed` (verified 2026-11-23); alignment and document work use a review branch or worktree |
-| Current milestone / phase | Phase 1 — M4 is the next required prerequisite; implementation awaits separate Human authorization |
-| Current task | M4 retry and escalation — not started; authorization not granted |
-| Document authority order (optional) | `AI_Engineering_Team.md` > `plans/adr-001-hybrid-architecture.md` > `plans/phase1-architecture-plan.md` > `plans/operations-decisions.md` |
-| Project-specific restrictions | Read-only during alignment; Phase 1 forbids package installation; no agent framework; every generated-code execution needs its own approval; only the engine reads secrets; document changes use a review branch and need Human merge approval |
+| Project name | Human-readable identity of the project |
+| Project root | Repository or workspace root |
+| Primary entry document | The authoritative project document to read during Stage 1 |
+| Working-rules entry point | Agent instruction file, normally `AGENTS.md` |
+| Architecture / design documents | Design sources for Layer 2 |
+| Decision records | Approved decisions and their authority order |
+| Status / progress documents | Current status and milestone records |
+| Technical specifications | Specifications relevant to the task |
+| Tests / evidence / logs | Where verification evidence is stored |
+| Git repository and baseline branch | Remote or local repository and the committed review baseline |
+| Current milestone / phase | Declared project position, not verified status |
+| Current task | Declared task, not verified status |
+| Configured communication language | Language the Human wants participants to use |
+| Preflight command | The single command used before commit |
+| Project-specific restrictions | Mandatory project constraints |
+| Documentation index and reading order | Where each document type is described |
+| Project limitations | Features not implemented or not approved |
 
-Configuration rules:
+Resolution rules:
 
-1. The **primary entry document** is the authoritative project document every participant must read. Session bootstrap also reads `AGENTS.md` and `README.md`, in the order defined in §0.3.
-2. Paths listed here are *candidates*, not a reading list. Part 2 decides what to read.
-3. A path that does not exist is reported as `MISSING` and never recreated or guessed.
-4. Project-specific restrictions are mandatory constraints for every stage, including read-only ones.
-5. Configuration may be supplied **per session** by the Human when the file cannot be edited. The participant must state whether its configuration came from `FILE` or `HUMAN-SUPPLIED`.
-6. A configuration value that cannot be verified stays `NOT CONFIGURED` or `UNVERIFIED`; it is never filled with a plausible guess.
-7. Changing the value of a configured field is a document change. It requires the project's document-change process and Human approval, and is not part of an alignment session.
+1. Read the project README Project Configuration section before Stage 1.
+2. Record the configuration source as `README` or `HUMAN-SUPPLIED`.
+3. A missing field is reported as `NOT CONFIGURED`; never invent a value or path.
+4. If the primary entry document is missing, stop and report that alignment cannot start.
+5. Project-specific restrictions are mandatory constraints at every stage, including read-only stages.
+6. Configuration may be supplied per session by the Human when the README cannot be read. State that source.
+7. Changing project configuration is a project document change. It requires the project's document-change process and Human approval; it is not part of an alignment session.
 
 ---
 
@@ -113,9 +112,9 @@ Rules:
 Bootstrap order for every new session:
 
 1. Read `AGENTS.md` first. When the Human supplies only the `AGENTS.md` link, that link is the session entry point.
-2. Follow `AGENTS.md` to read this protocol's Part 1 configuration and bootstrap instructions, or receive the configuration per session.
-3. Read `README.md` for the project overview and current status summary.
-4. Read the primary entry document `AI_Engineering_Team.md` in full.
+2. Follow `AGENTS.md` to read this protocol's Part 1 schema and bootstrap instructions.
+3. Read the project `README.md` for Project Configuration and project context.
+4. Read the primary entry document named by the README Project Configuration in full.
 5. Select Layer 2 documents by relevance to the current task.
 
 If `AGENTS.md` or `README.md` is unavailable, mark it `MISSING` and continue with the available sources. Never invent their content.
@@ -142,7 +141,7 @@ Rules:
 1. A session states its mode before acting.
 2. Entering Documentation or Development mode is never inherited from Alignment.
 3. Merge is always a separate grant and is never implied by commit or push.
-4. Operational checks, the evidence package and the review handoff for Documentation and Development are defined once in `AGENTS.md` §Development Workflow and executed by `scripts/preflight.py`; this protocol does not duplicate them.
+4. Operational checks, the evidence package and the review handoff for Documentation and Development are defined once in `AGENTS.md` §Development Workflow and the project README's configured preflight command; this protocol does not duplicate them.
 
 ### 1. Access capabilities
 
@@ -455,6 +454,6 @@ For chat-based assistants with REMOTE DOCUMENT ACCESS: read the primary entry do
 
 ## Status of this document
 
-Draft 1 for human review. The 2026-11-23 documentation-clarity revision is a `PROPOSAL — HUMAN APPROVAL REQUIRED`; it adds the `REMOTE DOCUMENT ACCESS` mode, the authorization boundary, the statement-label table, stage ownership and the per-session configuration rule. It becomes a rule only when the Human approves it.
+Draft 1 for human review. The 2026-11-23 documentation-clarity revision is a `PROPOSAL — HUMAN APPROVAL REQUIRED`; it adds the `REMOTE DOCUMENT ACCESS` mode, the authorization boundary, the statement-label table, stage ownership and the per-session configuration rule. The 2026-11-23 generic-workflow revision is also a proposal: Part 1 becomes a schema and project values move to the README. Neither revision becomes a rule until the Human approves it.
 
 Known follow-ups before V1.0: confirm the report template covers every project type in use, confirm the `CONDITIONAL` cap rule for `LIMITED` and `REMOTE DOCUMENT ACCESS` evidence modes, and decide whether a machine-readable configuration variant is worth adding.
