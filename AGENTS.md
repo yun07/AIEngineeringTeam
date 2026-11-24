@@ -147,7 +147,15 @@ The handoff reports the branch, commit hash, changed files, checks and open issu
 
 The reviewer checks scope, contradictions, whether unapproved proposals were presented as approved rules, and whether tests and evidence match the claims. The Worker fixes issues with additional commits. The reviewer does not execute merges.
 
-### 5. Efficiency
+### 5. Verification reporting
+
+- Keep CHECK, audit and verification reports concise.
+- Include PASS/FAIL, relevant commit and branch identifiers, changed files, essential verification evidence and unresolved concerns.
+- Provide enough evidence for ChatGPT to assess the result independently.
+- Avoid lengthy command logs and repeated explanations unless the requester asks for them.
+- Never sacrifice necessary evidence for brevity.
+
+### 6. Efficiency
 
 - Do not re-read unchanged documents or re-paste the same diff or report.
 - Do not create duplicate branches or commits for the same scope.
