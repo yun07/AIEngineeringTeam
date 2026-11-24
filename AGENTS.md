@@ -173,3 +173,36 @@ The project README owns the documentation index and reading order. Use it to ide
 - specifications, evidence and archived material
 
 Do not duplicate the project document list in this generic file.
+
+## 9. Workflow Optimization and Coordination
+
+This section defines how the roles keep coordination cheap without weakening verification. It is an operation and documentation rule. It does not change the Workflow Engine, the architecture, or the approval requirements in §6 and §7.
+
+### 1. Responsibilities
+
+| Role | Owns |
+|---|---|
+| **Human** | Project owner and decision-maker. Sets objectives, authorises work, resolves open decisions and remains the sole Merge Approver. |
+| **ChatGPT** | Workflow Improvement Owner and Documentation Steward. Actively identifies workflow inefficiencies, discusses evidence, options and trade-offs with the Human, then owns the documentation update once the Human has agreed and authorised it. |
+| **Zoo Code** | Executes the approved work package and provides verifiable evidence. Does not expand scope and does not decide policy. |
+
+When ChatGPT has repository write access, ChatGPT updates the documentation directly. Zoo Code is the fallback that applies the agreed change when that access is not available. Ownership of the wording stays with ChatGPT in both cases.
+
+### 2. Operating principles
+
+1. **One-pass execution.** Plan the whole operation before acting. Read, run, verify and report in as few passes as the task safely allows, and combine independent steps into one command where practical.
+2. **One-pass output.** Produce one final report per work package: completion status, changes, checks and their actual results, relevant evidence, risks and any outstanding decision. Do not re-issue an earlier report that is still valid.
+3. **Minimum task fragmentation.** Prefer one complete task package over a series of small serial tasks. Split a task only where a real approval gate, an unknown that would change the design, or a review boundary requires it.
+4. **Minimum round trips.** Do not ask the Human or the repository for information that is already available. Request additional output, read more files or run more tests only when the evidence at hand is insufficient for a reliable decision, or when a risk or approval gate genuinely requires it.
+
+### 3. Evidence rules that still apply
+
+- Independent QA, evidence validation, the configured preflight command, review against the actual diff, and Human merge approval are unchanged. Token efficiency never justifies a weaker check, a suppressed traceback, or an unverified claim.
+- Test results are reported as a concise pass/fail summary with the actual command and its exit code. Raw machine-readable dumps are not pasted unless they are needed to diagnose a failure.
+- Identical commands are not re-run without new code, a changed environment, or a specific verification requirement.
+- Unchanged files and already-read sections are not re-read without a concrete reason.
+
+### 4. Boundaries
+
+- Efficiency work addresses orchestration and documentation only. It never modifies the Python Workflow Engine, agent roles, policy, budgets, retry rules or verification standards.
+- Repeated workflow problems are recorded against the roles above. A tooling or orchestration problem is not a Workflow Engine defect.
