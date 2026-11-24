@@ -40,20 +40,26 @@ def test_missing_criterion_blocks_with_a_named_reason(tmp_path):
         )
     )
 
+    # One allowed attempt: the first engine-confirmed QA failure escalates.
     _, store, run, result = run_demo(
-        tmp_path, qa_script_responses=only_c1, plan=TWO_CRITERIA_PLAN
+        tmp_path,
+        qa_script_responses=only_c1,
+        plan=TWO_CRITERIA_PLAN,
+        max_attempts=1,
     )
 
-    assert result.state is RunState.BLOCKED
+    assert result.state is RunState.ESCALATED
     reason = result.block_reason or ""
-    assert "qa_failed_no_retry_in_m2" in reason
+    assert "attempts_exhausted" in reason
     assert "missing_criterion: C2" in reason
-    assert result.tasks[0].state is TaskState.QA_FAILED
+    assert result.tasks[0].state is TaskState.ESCALATED
+    assert result.tasks[0].attempt == 1
     assert "missing_criterion: C2" in (result.tasks[0].qa_failure_reason or "")
 
     kinds = event_kinds(store, run.id)
     assert "task_qa_failed" in kinds
-    assert "run_blocked" in kinds
+    assert "task_escalated" in kinds
+    assert "run_escalated" in kinds
 
     report = (store.run_dir(run.id) / "report.md").read_text(encoding="utf-8")
     assert "Engine result: **rejected**" in report
