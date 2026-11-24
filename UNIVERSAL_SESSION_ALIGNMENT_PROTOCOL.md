@@ -25,6 +25,7 @@ This protocol stores no project values. The project README must define them once
 | Project name | Human-readable identity of the project |
 | Project root | Repository or workspace root |
 | Primary entry document | The authoritative project document to read during Stage 1 |
+| Compact project state document | Short operational snapshot (current `main` HEAD, milestone status, next valid milestone) used by continuation alignment |
 | Working-rules entry point | Agent instruction file, normally `AGENTS.md` |
 | Architecture / design documents | Design sources for Layer 2 |
 | Decision records | Approved decisions and their authority order |
@@ -114,10 +115,24 @@ Bootstrap order for every new session:
 1. Read `AGENTS.md` first. When the Human supplies only the `AGENTS.md` link, that link is the session entry point.
 2. Follow `AGENTS.md` to read this protocol's Part 1 schema and bootstrap instructions.
 3. Read the project `README.md` for Project Configuration and project context.
-4. Read the primary entry document named by the README Project Configuration in full.
+4. Read the primary entry document named by the README Project Configuration. Read it in full under Full Alignment; under Continuation Alignment read the configured compact project state document and only the sections the task needs.
 5. Select Layer 2 documents by relevance to the current task.
 
 If `AGENTS.md` or `README.md` is unavailable, mark it `MISSING` and continue with the available sources. Never invent their content.
+
+Alignment modes:
+
+| Mode | Use when | Minimum reading |
+|---|---|---|
+| **Full Alignment** | First session on a project, a major architecture change, a material conflict, or when the current state cannot be trusted | `AGENTS.md`, this protocol, the README Project Configuration, the primary entry document in full, then the Layer 2 documents the task needs |
+| **Continuation Alignment** | Ordinary continuation when `main` and the configured compact project state document are verifiable | `AGENTS.md`, the compact project state document, the protocol sections and project documents relevant to the task |
+
+Rules:
+
+1. A project without a configured compact project state document uses Full Alignment.
+2. Both modes verify the repository and the current `main` commit, and both report what was read and what was not.
+3. A compact state document is a snapshot, never proof. Verify implementation claims against code, tests or run evidence when the task depends on them.
+4. Neither mode changes the alignment gates, the evidence rules, independent QA, or the authorization boundary in §0.1.
 
 This mandatory bootstrap order takes precedence over the general task-specific retrieval order in `AGENTS.md`. After bootstrap, apply the token-efficient retrieval rules in `AGENTS.md` and §2 of this protocol; ordinary tasks must not read the entire repository.
 
