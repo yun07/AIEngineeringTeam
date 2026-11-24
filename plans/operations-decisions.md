@@ -49,7 +49,7 @@
 
 ### Rationale
 
-- Token Efficiency Review（2026-11-24，read-only audit）顯示大部分可避免開銷來自 orchestration：重複 full-suite 執行、raw JUnit 輸出、無效的輸出讀取、重疊讀檔、重複報告，以及每個 turn 的固定開銷。屬工具層問題，同 engine 無關。
+- Token Efficiency Review（2026-11-24，read-only audit）顯示大部分可避免開銷來自 orchestration：重複 full-suite 執行、raw JUnit 輸出、無效的輸出讀取、重疊讀檔、重複報告，以及每個 turn 的固定開銷。此判斷屬基於可見 session 與 tool-call 記錄的定性評估，並非實測 token telemetry。屬工具層問題，同 engine 無關。
 - 以「一次做完整、一次講清楚」方式協作，可減少 round trip，同時保留 independent review、evidence 同 Human 決定權。
 
 ### Audit evidence（保留為 evidence，不是硬性規則）
@@ -66,7 +66,7 @@
 | F6 | 尋找 Python 環境用了 4 次呼叫 |
 | F7 | `findstr` 不支援 regex anchor，導致一次失敗 |
 | F8 | `workflow.py` 以 7 段重疊 slice 讀取 |
-| F9 | 每個 turn 的 `environment_details` 固定開銷（屬 client 設定） |
+| F9 | 每個 turn 重複注入 `environment_details` 會產生額外 context 開銷；能否由 client 設定關閉或減少，仍屬 `UNVERIFIED` |
 | F10 | 兩份報告重複同一批 evidence |
 | F11 | Preflight 在無內容差異時重複執行 |
 
