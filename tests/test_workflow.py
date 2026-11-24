@@ -262,14 +262,31 @@ def test_next_action_is_pure_routing():
         request="build",
         provider="fake",
     )
-    assert next_action(run) is Action.ORCHESTRATE_PLAN
+    assert next_action(run, max_attempts=2) is Action.ORCHESTRATE_PLAN
 
     run.state = RunState.EXECUTING
     run.tasks = [Task(id="T1", description="write a file")]
-    assert next_action(run) is Action.RUN_DEVELOPER
+    assert next_action(run, max_attempts=2) is Action.RUN_DEVELOPER
+
+    run.tasks[0].state = TaskState.DEV_RUNNING
+    assert next_action(run, max_attempts=2) is Action.RUN_QA
+
+    run.tasks[0].state = TaskState.QA_FAILED
+    assert next_action(run, max_attempts=2) is Action.RETRY_TASK
+
+    run.tasks[0].attempt = 2
+    assert next_action(run, max_attempts=2) is Action.ESCALATE
+
+    run.tasks[0].state = TaskState.ESCALATED
+    assert next_action(run, max_attempts=2) is Action.ESCALATE
 
     run.tasks[0].state = TaskState.DONE
-    assert next_action(run) is Action.FINALIZE
+    assert next_action(run, max_attempts=2) is Action.FINALIZE
+
+    # A blocked task is never retried: only an engine-confirmed QA failure
+    # routes to retry_task.
+    run.tasks[0].state = TaskState.BLOCKED
+    assert next_action(run, max_attempts=2) is Action.FINALIZE
 
 
 def test_provider_failure_during_planning_blocks_the_run_with_report(tmp_path):
@@ -301,7 +318,7 @@ def test_provider_failure_during_planning_blocks_the_run_with_report(tmp_path):
     assert stored.tasks == []
 
 
-def test_provider_failure_during_developer_blocks_the_run_with_report(tmp_path):
+def test_unclassified_developer_failure_blocks_without_retry(tmp_path):
     engine, store = build_engine(
         tmp_path,
         orchestrator_script=[json_response(plan_payload(1))],
@@ -312,23 +329,30 @@ def test_provider_failure_during_developer_blocks_the_run_with_report(tmp_path):
 
     assert result.state is RunState.BLOCKED
     reason = result.block_reason or ""
-    assert "provider_error" in reason
+    assert "developer_stage_failure_unclassified" in reason
+    # Stage attribution only: no ProviderError cause is claimed.
+    assert "provider_error" not in reason
     assert "developer task T1" in reason
-    assert result.tasks[0].state is TaskState.BLOCKED
-    assert result.tasks[0].files_written == ["notes.md"]
+    task = result.tasks[0]
+    assert task.state is TaskState.BLOCKED
+    assert task.attempt == 1
+    assert task.files_written == ["notes.md"]
 
     kinds = event_kinds(store, run.id)
-    assert "provider_error" in kinds
+    assert "developer_stage_failure_unclassified" in kinds
+    assert "provider_error" not in kinds
+    assert "task_retry_started" not in kinds
     assert kinds[-1] == "run_blocked"
 
     report = (store.run_dir(run.id) / "report.md").read_text(encoding="utf-8")
-    assert "provider_error" in report
+    assert "developer_stage_failure_unclassified" in report
     assert "notes.md" in report
 
     stored = store.load_run(run.id)
     assert stored is not None
     assert stored.state is RunState.BLOCKED
     assert stored.tasks[0].state is TaskState.BLOCKED
+    assert stored.tasks[0].attempt == 1
 
 
 def test_developer_cannot_reach_a_forbidden_tool_even_when_registered(

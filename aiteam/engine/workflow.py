@@ -2,9 +2,9 @@
 
 Control flow lives here and nowhere else. next_action() is a pure function of
 run state, so every routing rule is testable offline with the fake provider.
-M2 covers the plan stage, the Developer write stage, QA execution behind human
-approval, engine-side evidence validation and the run report. Retries and cost
-accounting arrive later.
+The engine covers the plan stage, the Developer write stage, QA execution
+behind human approval, engine-side evidence validation, cost accounting,
+QA-failure retry with escalation, and the run report.
 """
 
 from __future__ import annotations
@@ -32,6 +32,7 @@ from aiteam.engine.context import (
 from aiteam.engine.evidence import VerdictError, parse_verdict, validate_verdict
 from aiteam.engine.handoff import (
     developer_bundle,
+    failure_feedback,
     file_manifest,
     orchestrator_prompt,
     qa_bundle,
@@ -67,17 +68,35 @@ class PlanLimitError(PlanError):
     """Raised when a valid-looking plan breaches max_tasks_per_plan."""
 
 
-def next_action(run: Run, tasks: Sequence[Task] | None = None) -> Action:
-    """Pure routing function: the only place that decides what happens next."""
+def next_action(
+    run: Run,
+    tasks: Sequence[Task] | None = None,
+    *,
+    max_attempts: int,
+) -> Action:
+    """Pure routing function: the only place that decides what happens next.
+
+    ``max_attempts`` is the total attempt allocation for a task. Only an
+    engine-confirmed ``QA_FAILED`` may route to ``RETRY_TASK``; approval
+    denial, budget, limit, provider and engine failures keep their existing
+    terminal handling and never retry.
+    """
     if run.state is RunState.PLANNING:
         return Action.ORCHESTRATE_PLAN
 
     task_list = list(run.tasks if tasks is None else tasks)
     if run.state is RunState.EXECUTING:
+        if any(task.state is TaskState.ESCALATED for task in task_list):
+            return Action.ESCALATE
         if all(
             task.state in (TaskState.DONE, TaskState.QA_PASSED) for task in task_list
         ):
             return Action.FINALIZE
+        failed = [task for task in task_list if task.state is TaskState.QA_FAILED]
+        if failed:
+            if any(task.attempt < max_attempts for task in failed):
+                return Action.RETRY_TASK
+            return Action.ESCALATE
         if any(task.state is TaskState.PENDING for task in task_list):
             return Action.RUN_DEVELOPER
         if any(
@@ -368,7 +387,9 @@ class WorkflowEngine:
             if self._steps > MAX_ROUTING_STEPS:
                 raise RuntimeError("routing did not reach a terminal state")
 
-            action = next_action(run)
+            action = next_action(
+                run, max_attempts=self._config.limits.max_attempts
+            )
             if action is Action.ORCHESTRATE_PLAN:
                 self._handle_plan()
                 if plan_only and run.state not in TERMINAL_RUN_STATES:
@@ -377,6 +398,10 @@ class WorkflowEngine:
                 self._handle_developer()
             elif action is Action.RUN_QA:
                 self._handle_qa()
+            elif action is Action.RETRY_TASK:
+                self._handle_retry()
+            elif action is Action.ESCALATE:
+                self._handle_escalate()
             elif action is Action.FINALIZE:
                 self._finalize()
             else:
@@ -527,6 +552,7 @@ class WorkflowEngine:
                     task=task,
                     manifest=file_manifest(self._workspace.root),
                     context_sections=self._task_context(task),
+                    failure_feedback=failure_feedback(task),
                 )
             )
         except BudgetError as exc:
@@ -547,13 +573,18 @@ class WorkflowEngine:
             )
             self._block(task.block_reason)
             return
-        except Exception as exc:  # provider or transport failure
+        except Exception as exc:
+            # Any other Developer-stage exception is stage attribution only: it
+            # stops blocked, does not retry, does not consume an attempt and
+            # does not claim a ProviderError cause.
             task.llm_calls += session.llm_calls
             task.turns += session.turns
             task.files_written = self._written_paths(session)
             task.state = TaskState.BLOCKED
-            task.block_reason = f"provider_error: {self._safe_error(exc)}"
-            self._provider_error(
+            task.block_reason = (
+                f"developer_stage_failure_unclassified: {self._safe_error(exc)}"
+            )
+            self._stage_failure_unclassified(
                 stage=f"developer task {task.id}", session=session, exc=exc
             )
             return
@@ -687,6 +718,15 @@ class WorkflowEngine:
                         "Return only the JSON verdict object."
                     )
                 )
+            except BudgetError as repair_budget:
+                # Approved C2: a budget stop is never a QA failure and never
+                # consumes an attempt.
+                task.llm_calls += session.llm_calls
+                task.turns += session.turns
+                task.state = TaskState.BLOCKED
+                task.block_reason = str(repair_budget)
+                self._block(task.block_reason)
+                return
             except LimitExceeded as repair_limit:
                 task.llm_calls += session.llm_calls
                 task.turns += session.turns
@@ -698,17 +738,17 @@ class WorkflowEngine:
                 self._block(task.block_reason)
                 return
             except Exception as repair_error:
+                # QA-stage handling is unchanged: this stays a blocked run and
+                # never becomes a retryable QA failure.
                 task.llm_calls += session.llm_calls
                 task.turns += session.turns
-                task.state = TaskState.QA_FAILED
-                task.qa_failure_reason = f"verdict_invalid: {repair_error}"
-                self._store.save(run)
-                self._store.append_event(
-                    run.id,
-                    "task_qa_failed",
-                    {"task": task.id, "reason": task.qa_failure_reason},
+                task.state = TaskState.BLOCKED
+                task.block_reason = f"provider_error: {self._safe_error(repair_error)}"
+                self._provider_error(
+                    stage=f"qa verdict repair (task {task.id})",
+                    session=session,
+                    exc=repair_error,
                 )
-                self._block(f"qa_failed_no_retry_in_m2: {task.qa_failure_reason}")
                 return
 
         task.llm_calls += session.llm_calls
@@ -739,6 +779,8 @@ class WorkflowEngine:
             project_root=self._workspace.root,
         )
         if reasons:
+            # An engine-confirmed QA failure. Routing decides between one retry
+            # and escalation; the failure evidence stays on the task.
             task.state = TaskState.QA_FAILED
             task.qa_failure_reason = "; ".join(reasons)
             self._store.save(run)
@@ -747,7 +789,6 @@ class WorkflowEngine:
                 "task_qa_failed",
                 {"task": task.id, "reason": task.qa_failure_reason},
             )
-            self._block(f"qa_failed_no_retry_in_m2: {task.qa_failure_reason}")
             return
 
         task.state = TaskState.QA_PASSED
@@ -762,6 +803,75 @@ class WorkflowEngine:
                 "commands": len(shell_tools.records),
                 "session_id": session.session_id,
             },
+        )
+
+    def _handle_retry(self) -> None:
+        """Start one retry for a QA-failed task.
+
+        This is the only place that increments ``task.attempt``, so the counter
+        moves only when a retry actually starts.
+        """
+        run = self._require_run()
+        limits = self._config.limits
+        task = next(
+            (item for item in run.tasks if item.state is TaskState.QA_FAILED), None
+        )
+        if task is None:
+            return
+        if task.attempt >= limits.max_attempts:
+            self._handle_escalate()
+            return
+
+        remaining_calls = limits.max_llm_calls_per_task - task.llm_calls
+        if remaining_calls < 1:
+            task.state = TaskState.BLOCKED
+            task.block_reason = (
+                f"max_llm_calls_per_task={limits.max_llm_calls_per_task} "
+                f"reached before retry for task {task.id}"
+            )
+            self._block(task.block_reason)
+            return
+
+        previous_failure = task.qa_failure_reason
+        task.attempt += 1
+        task.state = TaskState.PENDING
+        self._store.save(run)
+        self._store.append_event(
+            run.id,
+            "task_retry_started",
+            {
+                "task": task.id,
+                "attempt": task.attempt,
+                "max_attempts": limits.max_attempts,
+                "previous_failure": previous_failure,
+            },
+        )
+
+    def _handle_escalate(self) -> None:
+        """Escalate a QA-failed task whose attempts are exhausted."""
+        run = self._require_run()
+        limits = self._config.limits
+        task = next(
+            (item for item in run.tasks if item.state is TaskState.QA_FAILED), None
+        )
+        if task is None:
+            return
+        task.state = TaskState.ESCALATED
+        self._store.save(run)
+        self._store.append_event(
+            run.id,
+            "task_escalated",
+            {
+                "task": task.id,
+                "attempt": task.attempt,
+                "max_attempts": limits.max_attempts,
+                "reason": task.qa_failure_reason,
+            },
+        )
+        self._escalate_run(
+            f"attempts_exhausted: task {task.id} failed QA on attempt "
+            f"{task.attempt} of max_attempts={limits.max_attempts}: "
+            f"{task.qa_failure_reason or 'no reason recorded'}"
         )
 
     def _finalize(self) -> None:
@@ -785,6 +895,16 @@ class WorkflowEngine:
         run.block_reason = reason
         self._store.save(run)
         self._store.append_event(run.id, "run_blocked", {"reason": reason})
+        self._write_report()
+
+    def _escalate_run(self, reason: str) -> None:
+        """Stop the run for Human intervention, preserving failure evidence."""
+        run = self._require_run()
+        run.state = RunState.ESCALATED
+        reason = self._redact(reason)
+        run.block_reason = reason
+        self._store.save(run)
+        self._store.append_event(run.id, "run_escalated", {"reason": reason})
         self._write_report()
 
     def _redact(self, text: str) -> str:
@@ -929,6 +1049,33 @@ class WorkflowEngine:
         self._store.append_event(run.id, "provider_error", data)
         self._block(f"provider_error: {self._safe_error(exc)} (while {stage})")
 
+    def _stage_failure_unclassified(
+        self, *, stage: str, session: AgentSession, exc: Exception
+    ) -> None:
+        """Record an unclassified Developer-stage failure.
+
+        Stage attribution only: this does not assert Developer-code fault and
+        does not claim a ProviderError cause, so no provider details are
+        attached.
+        """
+        run = self._require_run()
+        self._store.append_event(
+            run.id,
+            "developer_stage_failure_unclassified",
+            {
+                "stage": stage,
+                "error_type": type(exc).__name__,
+                "message": self._safe_error(exc, include_type=False),
+                "session_id": session.session_id,
+                "llm_calls": session.llm_calls,
+                "turns": session.turns,
+            },
+        )
+        self._block(
+            f"developer_stage_failure_unclassified: {self._safe_error(exc)} "
+            f"(while {stage})"
+        )
+
     def _safe_error(self, exc: Exception, *, include_type: bool = True) -> str:
         message = self._redact(" ".join(str(exc).split()))
         if len(message) > 200:
@@ -1035,14 +1182,15 @@ class WorkflowEngine:
                 f"- max_tasks_per_plan = {limits.max_tasks_per_plan}",
                 f"- max_turns_per_session = {limits.max_turns_per_session}",
                 f"- max_llm_calls_per_task = {limits.max_llm_calls_per_task}",
-                f"- max_attempts = {limits.max_attempts} (enforced from M4)",
+                f"- max_attempts = {limits.max_attempts}",
                 "",
                 "## Reporting notes",
                 "",
                 "Cost figures come from the Cost Guard: local token estimates "
                 "for each preflight reservation, then provider-reported usage "
-                "for the actual USD. Retry and escalation routing is not "
-                "implemented yet, so no attempt beyond the first is recorded.",
+                "for the actual USD. Only an engine-confirmed QA failure "
+                "retries; the attempt counter moves when a retry starts, and a "
+                "task escalates when its attempts are exhausted.",
                 "",
             ]
         )

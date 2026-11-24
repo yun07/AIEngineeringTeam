@@ -19,15 +19,17 @@ def test_verdict_without_a_negative_check_is_rejected(tmp_path):
         )
     )
 
+    # One allowed attempt: the first engine-confirmed QA failure escalates.
     _, store, run, result = run_demo(
-        tmp_path, qa_script_responses=positive_only
+        tmp_path, qa_script_responses=positive_only, max_attempts=1
     )
 
-    assert result.state is RunState.BLOCKED
+    assert result.state is RunState.ESCALATED
     reason = result.block_reason or ""
-    assert "qa_failed_no_retry_in_m2" in reason
+    assert "attempts_exhausted" in reason
     assert "missing_negative_check" in reason
-    assert result.tasks[0].state is TaskState.QA_FAILED
+    assert result.tasks[0].state is TaskState.ESCALATED
+    assert result.tasks[0].attempt == 1
 
     report = (store.run_dir(run.id) / "report.md").read_text(encoding="utf-8")
     assert "missing_negative_check" in report
