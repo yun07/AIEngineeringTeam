@@ -6,9 +6,7 @@ This file is the common entry point and operational instruction document for bot
 
 1. Communicate with the Human in the language configured by the project README (Project Configuration → configured language).
 2. If no language is configured, ask the Human; do not assume a default.
-3. Documentation language policy:
-   - `README.md`: Traditional Chinese.
-   - `AGENTS.md` and `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`: English.
+3. Follow the project's documentation language policy configured in the README. Do not prescribe a specific documentation language in this generic file.
 4. Keep technical terms in English where appropriate. Do not translate source code, technical specifications or project documents unless the Human asks.
 
 ## 2. Mandatory Session Bootstrap (Both Agents)

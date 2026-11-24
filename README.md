@@ -30,6 +30,7 @@ QA 未通過時，目前會停止並報告；Retry / Escalation 屬 M4 planned w
 | Current milestone / phase | Phase 1 — M4 is the next required prerequisite; implementation not authorized |
 | Current task | M4 retry and escalation — not started |
 | Configured language | Cantonese, Traditional Chinese |
+| Documentation language policy | `README.md`: Traditional Chinese; `AGENTS.md` and `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`: English |
 | Environment | Conda `ai-team`, Python 3.12.16 |
 | Preflight command | `python scripts/preflight.py` |
 | Document authority order | `AI_Engineering_Team.md` > `plans/adr-001-hybrid-architecture.md` > `plans/phase1-architecture-plan.md` > `plans/operations-decisions.md` |
