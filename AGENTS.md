@@ -36,12 +36,12 @@ Choose the mode before reading. The project configuration names the compact proj
 | Mode | Use when | Minimum reading |
 |---|---|---|
 | **Full Alignment** | First session on a project, a major architecture change, a material conflict, or when the current state cannot be trusted | This file, the alignment protocol, the README Project Configuration, the primary entry document in full, then the Layer 2 documents the task needs |
-| **Continuation Alignment** | Ordinary continuation in the same project, when `main` and the compact project state document are verifiable | This file, the compact project state document, the protocol sections and project documents relevant to the task |
+| **Continuation Alignment** | Ordinary continuation in the same project, when `main` and the compact project state document are verifiable | This file → the README Project Configuration section → the compact project state document → the relevant protocol sections and task-specific project documents |
 
 Rules:
 
 1. Both modes verify the repository and the current `main` commit, and both report what was read and what was not.
-2. Continuation Alignment reads only the protocol sections and project documents that the task touches. It does not read the whole charter on every session.
+2. Continuation Alignment follows that fixed order and reads only the protocol sections and project documents that the task touches. It does not read the whole README, the whole charter or the whole repository on every session.
 3. A compact state document is a snapshot, never proof. It may record intent and decisions, but it never proves that code or tests work; verify an implementation claim against the code, tests or run evidence when the task depends on it.
 4. Additional reads or tests are driven by the task's evidence needs, not by completeness.
 5. Both modes preserve independent reasoning, evidence citation, the independent QA requirement, and the authorization boundary in §6 and §7. Neither mode authorises commit, push or merge.

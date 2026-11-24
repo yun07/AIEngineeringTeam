@@ -44,7 +44,7 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 2. 先決定 alignment 模式（規則見 [`AGENTS.md`](AGENTS.md) §2.1 同 Protocol §0.3）：
    - **Full Alignment**：首次接手、重大架構改動、資料有實質衝突，或當前狀態不可信。
    - **Continuation Alignment**：同一專案日常接續，而且 `main` 同 [`PROJECT_STATE.md`](PROJECT_STATE.md) 都可以核實。
-3. Continuation Alignment 讀取次序：`AGENTS.md` → [`PROJECT_STATE.md`](PROJECT_STATE.md) → 只讀與任務相關的 protocol 段落同專案文件。
+3. Continuation Alignment 讀取次序（固定最少順序）：`AGENTS.md` → 本 README 的 §1.1 Project Configuration → [`PROJECT_STATE.md`](PROJECT_STATE.md) → 只讀與任務相關的 [`UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`](UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md) 段落同任務文件。日常接續唔需要讀整個 README、`AI_Engineering_Team.md` 全文或整個 repo。
 4. Full Alignment 讀取次序：`AGENTS.md` → Protocol → README（本 Project Configuration）→ `AI_Engineering_Team.md` 全文 → Layer 2。
 5. 狀態快照只係快照，唔証明 code 或 test 可用；需要時仍要對實際 code、tests 或 run evidence 核實。
 6. 如果欄位缺失，標 `NOT CONFIGURED`；不要猜測 paths 或 project facts。
@@ -97,9 +97,9 @@ flowchart TD
 
 ## 6. 現況同下一步
 
-**現況**：Phase 1 進行中。M0 closeout 有紀錄（`plans/m0-environment-report.md` PASS）；M1–M3 implementation 已存在，但 formal closeout 仍係 `UNVERIFIED`，冇 closeout artefact。M4 retry／escalation 已完成 implementation、independent review 同 Human 批准的 merge（merge commit `6844cfa`）。DeepSeek Live E2E diagnostic 已成功（`projects/diagnostic`，7 次 API call，actual USD 0.004748），但只係 `hello.txt` diagnostic，唔係 Snake 驗收，亦唔代表 M5 formal acceptance 已完成。
+**現況**：Phase 1 進行中。M0 closeout 有紀錄（`plans/m0-environment-report.md` PASS）；M1–M3 implementation 已存在，但 formal closeout 仍係 `UNVERIFIED`，冇 closeout artefact。M4 retry／escalation 已完成 implementation、independent review 同 Human 批准的 merge（M4 implementation merge commit `9c11b6a`）。DeepSeek Live E2E diagnostic 已成功（`projects/diagnostic`，7 次 API call，actual USD 0.004748），但只係 `hello.txt` diagnostic，唔係 Snake 驗收，亦唔代表 M5 formal acceptance 已完成。
 
-M5 仍然只係 diagnostic，formal acceptance 未記錄；M6–M8 未開始。Phase 1 **未 acceptance**。即時狀態以 [`PROJECT_STATE.md`](PROJECT_STATE.md) 作快照，權威仍係 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) 同 [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md)。
+M5 仍然只係 diagnostic，formal acceptance 未記錄；M6–M8 未開始。Phase 1 **未 acceptance**。即時狀態快照見 [`PROJECT_STATE.md`](PROJECT_STATE.md)；該檔只係衍生快照，唔係權威 —— 里程碑記錄以 [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) 為準，原則同治理以 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) 為準。M4 狀態與證據的本次文件更新見 commit `85d6c90`。
 
 **下一步**：M4 已完成，M5 formal acceptance 同 M6 Snake 規格係下一個有效里程碑，兩者可以並行；之後 M7 live run + human QA spot check，最後 M8。以上每一項都要 Human 另外授權。
 

@@ -2,21 +2,21 @@
 
 - **Purpose:** short operational snapshot for Continuation Alignment.
 - **Scope:** Phase 1 progress for `yun07/AIEngineeringTeam`.
-- **main HEAD when written:** `6844cfa9606c6bebc82806e41dbb69bc2b1e6640` (2026-11-24, UTC+8 workspace).
-- **Status of this file:** a snapshot, never proof. It records intent and recorded decisions. It never proves that code or tests work; verify an implementation claim against the code, tests or run evidence when the task depends on it.
+- **main HEAD when written:** `6844cfa9606c6bebc82806e41dbb69bc2b1e6640` (the workflow-optimization documentation merge; the M4 implementation merge is `9c11b6a`).
+- **Status of this file:** a derived snapshot, never proof and never an authority. It records derived status only; the canonical documents listed in §1 always win. It never proves that code or tests work.
 
 ## 1. Which document is authoritative
 
 | Information | Authoritative source |
 |---|---|
-| Vision, principles, governance, Human authority | `AI_Engineering_Team.md` |
+| Vision, principles, governance, Human authority | `AI_Engineering_Team.md` (project charter) |
 | Architecture decision (hybrid; no agent framework in Phase 1) | `plans/adr-001-hybrid-architecture.md` |
-| Phase 1 scope, milestone contract, M4 design baseline | `plans/phase1-architecture-plan.md` |
+| Phase 1 scope and the **canonical milestone record** | `plans/phase1-architecture-plan.md` |
 | Operation-layer decisions (OD-nnn) | `plans/operations-decisions.md` |
 | Workflow, evidence, review and approval rules | `AGENTS.md` |
 | Alignment process | `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` |
 | Project configuration values | `README.md` §1.1 |
-| Current milestone status | This file, derived from the sources above. On any conflict the sources win and this file is corrected. |
+| Compact operational snapshot for session continuation | This file — derived summary only, not an independent authority, and it does not override any document above |
 
 ## 2. Project purpose (brief)
 
@@ -24,13 +24,15 @@ A personal AI engineering team. One Python Workflow Engine owns state, permissio
 
 ## 3. Milestone status
 
+Derived from `plans/phase1-architecture-plan.md`, which remains the canonical milestone record. If this table differs from the plan, the plan wins and this file is corrected.
+
 | Milestone | Implementation | Formal closeout | Human acceptance |
 |---|---|---|---|
 | M0 Environment and repository | Completed | Recorded PASS (`plans/m0-environment-report.md`) | As recorded in that report |
 | M1 FakeProvider walking skeleton | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` |
 | M2 QA execution, evidence, approvals | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` |
 | M3 Cost accounting and budget | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` |
-| M4 Retry and escalation | Completed and merged into `main` at `6844cfa` | Completion evidence recorded in the Phase 1 plan | Merge approved by the Human 2026-11-24 |
+| M4 Retry and escalation | Completed and merged into `main` at `9c11b6a` | Completion evidence recorded in the Phase 1 plan | Merge approved by the Human 2026-11-24 |
 | M5 Live provider validation | Diagnostic only | Not recorded | Not recorded |
 | M6 Snake specification | Not started | Not started | Not started |
 | M7 Snake live end-to-end run | Not started | Not started | Not started |
@@ -66,13 +68,14 @@ M1–M3 are present in code but are **not** formally closed. "Present" does not 
 
 | Evidence | Reference |
 |---|---|
-| M4 implementation merged into `main` | merge commit `6844cfa9606c6bebc82806e41dbb69bc2b1e6640`; source `73cf8eb0f6bc90022890b584d4acc6fda51294b5` (reconciliation work package) |
-| M4 retry/escalation code merged | merge commit `9c11b6ab0842280b51fdd0c4bcec5db1f078c1ca`; branch head `432a776098777c3be5faa16232c53a63c2431c0b`, review fixes `78d6e9c` and `432a776` |
+| M4 implementation merged into `main` | **implementation merge commit `9c11b6ab0842280b51fdd0c4bcec5db1f078c1ca`**; branch head `432a776098777c3be5faa16232c53a63c2431c0b`; review fixes `78d6e9c` and `432a776` |
+| M4 status and evidence wording recorded | documentation commit `85d6c90ad3bc16adaa8e2842774240d7a80c3599` on `review/m4-status-reconciliation` — documentation only, not the implementation merge |
 | M4 test evidence | full suite 328 tests, 0 failed, 0 errors, 5 skipped (skips are Windows symlink privilege only) at `78d6e9c`; focused 32 tests, 0 failed at `432a776`; scenario tests `tests/scenarios/test_retry_then_pass.py` and `tests/scenarios/test_retry_exhausted.py` |
 | M4 review outcome | Independent review PASS; Human merge approval recorded 2026-11-24 |
+| Workflow optimization principles recorded | documentation merge `6844cfa9606c6bebc82806e41dbb69bc2b1e6640` (source `73cf8eb0f6bc90022890b584d4acc6fda51294b5`) — documentation only, not the M4 implementation |
 | M0 environment | `plans/m0-environment-report.md` (PASS) |
 | M5 diagnostic run | `projects/diagnostic`, run `20261123T110208Z-97bc01`, 7 API calls, actual USD 0.004748 — not a Snake acceptance run |
 
 ## 9. Update rule
 
-Update this file in the same work package that records a milestone status change, and keep it to roughly two pages. It never duplicates the Charter or the Phase 1 plan, and it never becomes the authority for principles, architecture, scope or workflow rules.
+Update this file in the same work package that records a milestone status change, and keep it to roughly two pages. It never duplicates the Charter or the Phase 1 plan, it is never the authority for principles, architecture, scope, milestone status or workflow rules, and it never becomes proof that code or tests work.

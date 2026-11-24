@@ -125,14 +125,15 @@ Alignment modes:
 | Mode | Use when | Minimum reading |
 |---|---|---|
 | **Full Alignment** | First session on a project, a major architecture change, a material conflict, or when the current state cannot be trusted | `AGENTS.md`, this protocol, the README Project Configuration, the primary entry document in full, then the Layer 2 documents the task needs |
-| **Continuation Alignment** | Ordinary continuation when `main` and the configured compact project state document are verifiable | `AGENTS.md`, the compact project state document, the protocol sections and project documents relevant to the task |
+| **Continuation Alignment** | Ordinary continuation when `main` and the configured compact project state document are verifiable | `AGENTS.md` → the README Project Configuration section → the compact project state document → the relevant protocol sections and task-specific project documents |
 
 Rules:
 
 1. A project without a configured compact project state document uses Full Alignment.
-2. Both modes verify the repository and the current `main` commit, and both report what was read and what was not.
-3. A compact state document is a snapshot, never proof. Verify implementation claims against code, tests or run evidence when the task depends on them.
-4. Neither mode changes the alignment gates, the evidence rules, independent QA, or the authorization boundary in §0.1.
+2. Continuation Alignment follows that fixed order, and does not require the whole README, the whole charter or the whole repository.
+3. Both modes verify the repository and the current `main` commit, and both report what was read and what was not.
+4. A compact state document is a snapshot, never proof. Verify implementation claims against code, tests or run evidence when the task depends on them.
+5. Neither mode changes the alignment gates, the evidence rules, independent QA, or the authorization boundary in §0.1.
 
 This mandatory bootstrap order takes precedence over the general task-specific retrieval order in `AGENTS.md`. After bootstrap, apply the token-efficient retrieval rules in `AGENTS.md` and §2 of this protocol; ordinary tasks must not read the entire repository.
 
