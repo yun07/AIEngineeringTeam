@@ -57,7 +57,7 @@ Changes proposed in revision 7 (documentation clarity, `PROPOSAL — HUMAN APPRO
 
 1. The header status reflects verified repository evidence instead of "No implementation started".
 2. A milestone contract table adds Objective, Scope, Dependencies, Completion Criteria, Required Evidence and Human Acceptance for M0–M8.
-3. Dependencies M4 → M5/M6 → M7 → M8 are stated explicitly.
+3. Dependencies M4 → M5 → M6 → M7 → M8 are stated explicitly.
 4. The checklist records evidence-based status and no longer implies that implementation equals formal closeout.
 5. Revision 6 C1–C7 are consolidated in Appendix A; C2 and C3 are approved rules, while C1 and C4–C7 remain proposed baseline defaults.
 
@@ -676,7 +676,7 @@ Exit criterion: the live criteria in section F are satisfied, `runs/<run_id>/rep
 
 Update `AI_Engineering_Team.md` progress and environment tables, and the plan checklist, only after M7 is complete. Write `plans/phase1-backlog.md` with the deferred items in section G. Do not update the archived research or decision review documents.
 
-M0 through M4 are sequential. M5 and M6 may proceed in parallel only once M4 exists. M7 requires both M5 and M6. M8 runs only after M7 is complete and accepted.
+M0 through M8 are sequential: each milestone begins only after the previous one is completed and recorded. M5 is next, then M6, then M7, then M8. M7 requires completed M5 and M6. M8 runs only after M7 is complete and accepted.
 
 ### After Phase 1 — architecture comparison
 
@@ -820,8 +820,8 @@ This table states the same requirements already defined in sections E–F. It ad
 | M3 | Cost and budget | Usage records, pricing, budget stop, live-mode config validation | M2 | Budget-stop scenario passes; invalid pricing rejected | Tests, `usage.jsonl`, report | Not recorded (`UNVERIFIED`) |
 | M4 | Retry and escalation | `qa_failed` routing, failure feedback, attempt counting, escalation | M3 | Retry-then-pass and retry-exhausted pass as separate runs | Scenario tests and `tests/test_m4_retry.py`; merged at `9c11b6a` | Merge approved by the Human 2026-11-24 |
 | M5 | Live provider validation | Adapter wiring, tiny budget, per-execution approval | M4 | Placeholder models and invalid pricing refused; usage and cost recorded; redaction verified; approval prompt observed | Run artefacts and report | Not recorded; formal acceptance outstanding |
-| M6 | Snake specification | Requirement, criterion IDs, headless mode, QA test plan with a negative test | M4 (may run in parallel with M5) | Every criterion ID maps to at least one planned check; negative case identifiable | Specification document | Human review of the specification |
-| M7 | Snake live end-to-end run | Happy path on the live provider plus human spot check | M5 and M6 | Section F criteria satisfied; report published | `runs/<run_id>/report.md` and recorded spot check | Required — Phase 1 acceptance depends on it |
+| M6 | Snake specification | Requirement, criterion IDs, headless mode, QA test plan with a negative test | M5 | Every criterion ID maps to at least one planned check; negative case identifiable | Specification document | Human review of the specification |
+| M7 | Snake live end-to-end run | Happy path on the live provider plus human spot check | Completed M5 and M6 | Section F criteria satisfied; report published | `runs/<run_id>/report.md` and recorded spot check | Required — Phase 1 acceptance depends on it |
 | M8 | Documentation and progress | Charter and plan updates, `plans/phase1-backlog.md` | M7 | Progress recorded; backlog written; archived documents untouched | Updated documents | Not started |
 
 ### Appendix A — M4 Design Baseline (C1–C7)

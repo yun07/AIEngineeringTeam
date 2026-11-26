@@ -438,9 +438,9 @@ Status notes:
 
 #### Milestone dependencies
 
-- M0 → M1 → M2 → M3 → M4 are sequential.
-- M5 and M6 may proceed in parallel only once M4 exists.
-- M7 requires M5 and M6.
+- M0 → M1 → M2 → M3 → M4 → M5 → M6 are sequential.
+- M5 is the next milestone; M6 begins only after M5 is completed.
+- M7 requires completed M5 and M6.
 - M8 runs only after M7 is complete.
 
 These dependencies are recorded in `plans/phase1-architecture-plan.md` and restated here for visibility; they are not a new decision.
@@ -456,7 +456,7 @@ These dependencies are recorded in `plans/phase1-architecture-plan.md` and resta
 
 - [FACT] Current position: Phase 1, implementation present through the M4 scope, M5 diagnostic only, Phase 1 not accepted.
 - [FACT] M4 was completed, independently reviewed and merged into `main` at `9c11b6a` on 2026-11-24 with explicit Human merge approval.
-- [FACT] The documented dependency order makes M5 and M6 the next valid milestones; they may proceed in parallel now that M4 exists.
+- [FACT] The documented dependency order makes M5 the next valid milestone; M6 follows once M5 is completed, then M7 and M8 in turn.
 - `NO TASK AUTHORISED`: neither M5 nor M6 work is authorised by this charter. Each needs its own explicit Human authorization.
 - The operational snapshot for continuation sessions is [`PROJECT_STATE.md`](PROJECT_STATE.md). It is a derived summary only, not an independent authority: this charter remains authoritative for principles, governance and decisions, and the Phase 1 plan remains the canonical milestone record. On any conflict those documents win.
 
