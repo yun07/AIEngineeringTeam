@@ -794,7 +794,7 @@ Status labels are evidence-based. `RESOLVED` items have an approved record or a 
 6. **Not an open decision.** The three-role versus two-role comparison metrics are defined after the Snake run, using its recorded data. No code changes are implied.
 7. **PARTLY RESOLVED.** QA uses the same model as the Developer in Phase 1 and no second provider is required (`config/aiteam.toml`). Whether to assign different models or a second provider per role, and how to compare cost, speed and quality, remains open in the charter.
 
-M5 prerequisites and M5 acceptance are separate requirements. M5 execution needs only the adapter wiring for the selected provider, valid model identifiers and pricing in `config/aiteam.toml`, and a run budget, all recorded above. M5 acceptance is the section E exit criterion together with the live criteria in section F, and it is recorded separately. No existing requirement makes M1–M3 retroactive closeout artefacts a prerequisite for starting M5.
+M5 prerequisites and M5 acceptance are separate requirements. M5 execution needs only the adapter wiring for the selected provider, valid model identifiers and pricing in `config/aiteam.toml`, and a run budget that the Human decides for that M5 run, as item 3 above records. M5 acceptance is the section E exit criterion together with the live criteria in section F, and it is recorded separately. No existing requirement makes M1–M3 retroactive closeout artefacts a prerequisite for starting M5.
 
 ---
 
