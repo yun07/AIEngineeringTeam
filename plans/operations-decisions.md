@@ -73,3 +73,29 @@
 ### Scope note
 
 本決定不授權任何 code、engine、client settings 或 automation 改動，亦不改變 preflight、review 同 merge approval 要求。
+
+---
+
+## OD-003 — Collaboration Workflow v2
+
+- **Date:** 2026-11-26
+- **Classification:** Collaboration Workflow / Orchestration
+- **Status:** Human approved — 詳細常設規則寫入 [`AGENTS.md`](../AGENTS.md) §9；本條只記錄決定、理據同範圍。
+- **Authority:** 只屬 operation / documentation 規則。不改變 Python Workflow Engine、runtime code、tests、client settings、automation、dependency 或產品架構，亦不放寬 Human approval、independent review 或 independent QA。
+
+### Decision
+
+1. 三方角色沿用並收緊：Human 保留 commit / push / merge 批准權；ChatGPT 負責優化流程、準備 coherent work package、獨立審閱實際改動同 evidence、維持文件一致；Zoo Code 負責執行已批准 work package、做一次 self-review 同 refinement、提供精簡 evidence-based 報告。
+2. 原則維持 One-pass Execution、One-pass Output、Minimum Round Trips，並明確以一個 coherent work package（單一 review 邊界）取代連串小任務。
+3. 只向 Human 提出 material decision、真正 ambiguity、風險或必要授權；已議定細節由 executor 在授權範圍內處理。
+4. 減少重複讀檔、報告、dispatch 同無必要 rerun，但不得因此降低 independent QA、independent review 或 evidence 品質。
+5. 複雜工作（多步驟、多檔案、跨模組）執行一次 `Execute → Self-review → Refine → Final report` 循環；small / low-risk 工作按比例檢查，不設儀式。Self-review 唔可以取代 independent QA 或 reviewer 的獨立檢視。
+
+### Rationale
+
+- OD-002 只覆蓋 one-pass 同 round-trip 紀律；實際協作仍出現 work package 切得過碎、executor 無正式自檢步驟、報告重複等問題。
+- 將「完整 work package + 一次自檢 + 精簡報告」寫成常設規則，可減少來回，同時保留全部驗證關卡。
+
+### Scope note
+
+本決定不授權任何 code、engine、runtime、test、client settings 或 automation 改動，亦不改變 preflight、independent review、independent QA 同 merge approval 要求。詳細條文只保留在 [`AGENTS.md`](../AGENTS.md) §9，避免重複。

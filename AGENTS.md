@@ -198,27 +198,53 @@ This section defines how the roles keep coordination cheap without weakening ver
 
 | Role | Owns |
 |---|---|
-| **Human** | Project owner and decision-maker. Sets objectives, authorises work, resolves open decisions and remains the sole Merge Approver. |
-| **ChatGPT** | Workflow Improvement Owner and Documentation Steward. Actively identifies workflow inefficiencies, discusses evidence, options and trade-offs with the Human, then owns the documentation update once the Human has agreed and authorised it. |
-| **Zoo Code** | Executes the approved work package and provides verifiable evidence. Does not expand scope and does not decide policy. |
+| **Human** | Project owner and decision-maker. Defines objectives, resolves material decisions, and retains approval authority for commit, push and merge, including sole Merge Approver. |
+| **ChatGPT** | Reviewer and Workflow Coordinator. Optimises the workflow, prepares coherent work packages, independently reviews the actual changes and evidence, and maintains documentation consistency. Owns the wording of documentation updates once the Human agrees and authorises them. |
+| **Zoo Code** | Executor. Executes the approved work package, performs appropriate self-review and refinement, and provides concise evidence-based reports. Does not expand scope and does not decide policy. |
 
 When ChatGPT has repository write access, ChatGPT updates the documentation directly. Zoo Code is the fallback that applies the agreed change when that access is not available. Ownership of the wording stays with ChatGPT in both cases.
 
 ### 2. Operating principles
 
 1. **One-pass execution.** Plan the whole operation before acting. Read, run, verify and report in as few passes as the task safely allows, and combine independent steps into one command where practical.
-2. **One-pass output.** Produce one final report per work package: completion status, changes, checks and their actual results, relevant evidence, risks and any outstanding decision. Do not re-issue an earlier report that is still valid.
-3. **Minimum task fragmentation.** Prefer one complete task package over a series of small serial tasks. Split a task only where a real approval gate, an unknown that would change the design, or a review boundary requires it.
+2. **One-pass output.** Produce one final report per work package: completion status, files and changes, self-review findings, refinements made, checks and their actual results, relevant evidence, and any remaining issue or decision. Do not re-issue an earlier report that is still valid, and do not paste raw test output unless it is needed as evidence.
+3. **Minimum task fragmentation.** Bundle related work into one coherent work package with one review boundary. Split a task only where a real approval gate, an unknown that would change the design, or a review boundary requires it.
 4. **Minimum round trips.** Do not ask the Human or the repository for information that is already available. Request additional output, read more files or run more tests only when the evidence at hand is insufficient for a reliable decision, or when a risk or approval gate genuinely requires it.
+5. **Ask only for material decisions.** Ask the Human only for a material decision, genuine ambiguity, risk, or a required authorization. Detail that is already agreed is resolved by the executor inside the authorised scope.
+6. **Cut waste, not quality.** Reduce duplicate reads, reports, dispatches and unnecessary reruns. Never reduce independent QA, independent review or evidence quality to save tokens.
 
-### 3. Evidence rules that still apply
+### 3. Self-review and refinement
+
+For multi-step, multi-file, cross-module or otherwise complex work, the executor runs one cycle of:
+
+**Execute → Self-review → Refine → Final report**
+
+1. Review the completed work against the original requirements and acceptance criteria.
+2. Identify omissions, inconsistencies, defects and unnecessary changes.
+3. Refine within the original authorization.
+4. Re-verify the affected scope after refinement.
+5. Report what was reviewed, what was refined and what remains unresolved.
+
+One complete cycle is enough: do not loop, and do not treat self-review as a reason to re-run unaffected checks. For small, low-risk tasks, use proportionate checks without ceremony.
+
+Self-review never replaces independent QA or the reviewer's independent inspection of the actual changes.
+
+### 4. Evidence rules that still apply
 
 - Independent QA, evidence validation, the configured preflight command, review against the actual diff, and Human merge approval are unchanged. Token efficiency never justifies a weaker check, a suppressed traceback, or an unverified claim.
 - Test results are reported as a concise pass/fail summary with the actual command and its exit code. Raw machine-readable dumps are not pasted unless they are needed to diagnose a failure.
 - Identical commands are not re-run without new code, a changed environment, or a specific verification requirement.
 - Unchanged files and already-read sections are not re-read without a concrete reason.
 
-### 4. Boundaries
+### 5. Boundaries
 
-- Efficiency work addresses orchestration and documentation only. It never modifies the Python Workflow Engine, agent roles, policy, budgets, retry rules or verification standards.
-- Repeated workflow problems are recorded against the roles above. A tooling or orchestration problem is not a Workflow Engine defect.
+Changing the collaboration roles, the collaboration workflow rules and their documentation is in scope for this section.
+
+Without separate authorization, this section does not change:
+
+- runtime agent roles or runtime architecture;
+- the Python Workflow Engine;
+- execution policies, budgets and retry rules;
+- independent QA and verification standards.
+
+Repeated workflow problems are recorded against the roles above. A tooling or orchestration problem is not a Workflow Engine defect.
