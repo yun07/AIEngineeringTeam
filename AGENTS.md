@@ -89,22 +89,28 @@ Use this as the default workflow between ChatGPT and Zoo Code:
 3. ChatGPT defines a specific task and implementation scope.
 4. Confirm explicit Human authorization where required.
 5. ChatGPT instructs Zoo Code to execute the authorized task, using an available integration or a forwardable task prompt.
-6. Zoo Code implements, tests, commits and pushes to a review branch as instructed.
-7. Zoo Code provides evidence and the actual changes.
-8. ChatGPT reviews the actual diff and evidence.
-9. ChatGPT instructs Zoo Code to make targeted corrections if necessary, within the authorized scope.
+6. Zoo Code implements, tests, commits and pushes the review branch to the configured remote repository, once the task's push grant exists.
+7. Zoo Code reports the exact repository, branch name, commit SHA, checks and unresolved items.
+8. ChatGPT fetches and reviews the actual remote branch and diff with its own repository or GitHub access. A Worker summary is not a substitute for the actual diff.
+9. ChatGPT instructs Zoo Code to make targeted corrections if necessary, within the authorized scope; corrections are pushed to the same branch.
 10. ChatGPT reports the review outcome to the Human.
 11. The Human makes the final decision and explicitly approves or rejects merge.
 12. Zoo Code performs the approved merge and push, then verifies the resulting state.
 
+Review happens on the pushed remote review branch. The Human is not a transfer channel for patches, diffs or repository files.
+
 ## 5. Communication and Handoff
 
+- The standard review handoff is the pushed remote review branch. Zoo Code reports the repository, branch name and commit SHA, and the reviewer reads that branch on the remote.
 - If ChatGPT has an available direct communication or execution integration with Zoo Code, it may use that integration to issue authorized tasks.
 - If no direct integration is available, ChatGPT must produce a concise, ready-to-forward task prompt for the Human to relay to Zoo Code.
 - ChatGPT must never claim to have contacted Zoo Code or executed an action when it has not.
 - Zoo Code must provide verifiable evidence, not only narrative summaries. Evidence includes the actual diff, commit reference, preflight output and test results.
 - Detailed review rules are in §7. The reviewer reads the actual branch, diff and evidence; a Worker summary is not evidence.
 - Avoid repeated audits, unnecessary retries, duplicate reports and excessive token usage.
+- ChatGPT must not ask the Human to download a patch, upload a patch, copy a diff, or relay repository files that are accessible on the remote branch.
+- The Human's role is task direction, material decisions, required authorisations and merge approval. Relaying patches, diffs or repository content is not part of this workflow.
+- If the remote branch or its diff is genuinely inaccessible, ChatGPT states the exact access failure and the unavailable remote resource, uses the available repository or GitHub access first, and asks the Human to decide an alternative review method. A patch or other manual transfer is an exceptional fallback agreed with the Human, never the default workflow.
 
 ## 6. Governance and Authorization
 
@@ -163,7 +169,7 @@ The README defines the project's preflight command. Run that single command befo
 
 Reviews accept verifiable evidence only:
 
-- the actual Git diff (the reviewer reads the branch or patch directly)
+- the actual Git diff, read by the reviewer from the pushed remote branch
 - the preflight command and its actual output
 - test results, or screenshot/log evidence for UI work
 - a list of unresolved items
@@ -171,6 +177,34 @@ Reviews accept verifiable evidence only:
 The handoff reports the branch, commit hash, changed files, checks and open issues. Do not re-paste a full diff or write a long self-assessment.
 
 The reviewer checks scope, contradictions, whether unapproved proposals were presented as approved rules, and whether tests and evidence match the claims. The Worker fixes issues with additional commits. The reviewer does not execute merges.
+
+The pushed review branch is the standard review medium: Zoo Code reports the repository, branch name and commit SHA, and the reviewer inspects the remote branch and diff directly. Asking the Human to transfer a patch or paste a diff is not part of this workflow; it is an exceptional fallback only when remote access genuinely fails and the Human agrees.
+
+#### Two-Layer Documentation Review
+
+Every documentation change must receive two distinct review passes. The Worker performs both layers in self-review and preflight; the reviewer performs both layers independently on the pushed review branch.
+
+1. **Change Review**
+   - Inspect the actual diff line by line.
+   - Verify factual accuracy, wording, scope compliance and consistency with the authorised requirements.
+   - Confirm that no unrelated or unauthorised change was introduced.
+2. **Document Consistency Review**
+   - Re-examine the complete affected document, not only the changed lines or sections.
+   - Check for contradictions, outdated statements, duplicated facts, inconsistent terminology, status descriptions and broken cross-references.
+   - Where a changed fact is repeated in another authoritative or dependent document, inspect those references for consistency.
+   - This layer is a concrete reason to re-examine an unchanged document or an already-read section; it does not conflict with the re-read limits in §7.6 and §9.
+
+Out-of-scope findings:
+
+- Record and report additional issues discovered outside the authorised change scope.
+- Do not silently expand the task or modify additional content.
+- Obtain Human authorisation before making an out-of-scope correction.
+
+Review outcome:
+
+- A successful Change Review alone is not sufficient for a documentation review PASS.
+- Both layers must pass, or the remaining findings must be reported explicitly.
+- These two layers add documentation checks only. They do not change the independent QA, evidence or Human approval requirements in §6 and §7.1–§7.3.
 
 ### 5. Verification reporting
 
