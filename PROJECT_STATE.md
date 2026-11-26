@@ -11,7 +11,7 @@ Canonical milestone status, scope and evidence are recorded in `plans/phase1-arc
 ## 2. Where the project stands
 
 - Phase 1 is in progress and is not accepted. M4 is complete, reviewed and merged into `main` (implementation merge `9c11b6a`).
-- **M5 is the next milestone**; M6 follows M5, then M7, then M8. M8 follows M7 because M7 carries Phase 1 acceptance.
+- **M5 is the next milestone**; M6 follows M5, then M7, then M8. M8 follows M7's completion and the Human acceptance that closes M7, because M7 carries Phase 1 acceptance.
 - No M5–M8 work is authorised by this snapshot.
 - Per-milestone status, including the M1–M3 "present but not formally closed" position, is recorded only in the Phase 1 plan.
 
@@ -26,7 +26,6 @@ Canonical milestone status, scope and evidence are recorded in `plans/phase1-arc
 ## 4. Outstanding Human decisions
 
 - When to authorise M5, the next milestone.
-- Whether M1–M3 need retroactive closeout artefacts before M5 **acceptance** is recorded. This concerns acceptance only; no canonical requirement makes it a prerequisite for starting M5.
 
 ## 5. Evidence pointers
 

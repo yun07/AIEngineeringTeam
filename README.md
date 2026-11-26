@@ -23,7 +23,7 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 | Working-rules entry point | `AGENTS.md` |
 | Architecture / design documents | `plans/phase1-architecture-plan.md`, `plans/adr-001-hybrid-architecture.md` |
 | Decision records | `plans/adr-001-hybrid-architecture.md`, `plans/operations-decisions.md` |
-| Status / progress documents | `AI_Engineering_Team.md`, `README.md` |
+| Status / progress documents | `plans/phase1-architecture-plan.md` (canonical milestone status and acceptance record); `PROJECT_STATE.md` (compact continuation snapshot, not a competing status authority); `AI_Engineering_Team.md` and `README.md` (governance and current status narrative) |
 | Technical specifications | `plans/phase1-architecture-plan.md` |
 | Tests / evidence / logs | `tests/`, `runs/`, `projects/` |
 | Git repository | `https://github.com/yun07/AIEngineeringTeam` |
