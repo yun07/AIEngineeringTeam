@@ -41,13 +41,10 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 ### 1.2 新 Session 入口
 
 1. Human 提供 `AGENTS.md` link 作為入口。
-2. 先決定 alignment 模式（規則見 [`AGENTS.md`](AGENTS.md) §2.1 同 Protocol §0.3）：
-   - **Full Alignment**：首次接手、重大架構改動、資料有實質衝突，或當前狀態不可信。
-   - **Continuation Alignment**：同一專案日常接續，而且 `main` 同 [`PROJECT_STATE.md`](PROJECT_STATE.md) 都可以核實。
-3. Continuation Alignment 讀取次序（固定最少順序）：`AGENTS.md` → 本 README 的 §1.1 Project Configuration → [`PROJECT_STATE.md`](PROJECT_STATE.md) → 只讀與任務相關的 [`UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`](UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md) 段落同任務文件。日常接續唔需要讀整個 README、`AI_Engineering_Team.md` 全文或整個 repo。
-4. Full Alignment 讀取次序：`AGENTS.md` → Protocol → README（本 Project Configuration）→ `AI_Engineering_Team.md` 全文 → Layer 2。
-5. 狀態快照只係快照，唔証明 code 或 test 可用；需要時仍要對實際 code、tests 或 run evidence 核實。
-6. 如果欄位缺失，標 `NOT CONFIGURED`；不要猜測 paths 或 project facts。
+2. Bootstrap 步驟、alignment 模式（Full / Continuation Alignment）同每個模式嘅最少讀取次序，只喺 [`AGENTS.md`](AGENTS.md) §2 同 §2.1 定義一次；本 README 唔重複。
+3. 本專案嘅 Project Configuration 喺上面 §1.1；Continuation Alignment 會讀 §1.1 同 [`PROJECT_STATE.md`](PROJECT_STATE.md)，其餘協定段落同任務文件只讀與任務相關嘅部分。
+4. 狀態快照只係快照，唔証明 code 或 test 可用；需要時仍要對實際 code、tests 或 run evidence 核實。
+5. 如果欄位缺失，標 `NOT CONFIGURED`；不要猜測 paths 或 project facts。
 
 ## 2. 四個角色
 

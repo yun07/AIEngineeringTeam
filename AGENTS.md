@@ -17,9 +17,7 @@ ChatGPT and Zoo Code must each complete this bootstrap independently. Neither ma
 2. Read `AGENTS.md` first.
 3. Identify the repository root from the provided URL. Do not hardcode a repository URL in this file.
 4. Locate `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` in the same repository and branch context.
-5. Choose the alignment mode (§2.1), then read in that mode's order:
-   - **Continuation Alignment** (ordinary continuation, when `main` and the compact project state document are verifiable): `AGENTS.md` → the README Project Configuration section → the compact project state document → the relevant sections of `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` → task-specific project documents.
-   - **Full Alignment** (first session, major architecture change, material conflict, or untrusted state): `AGENTS.md` → `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` (configuration schema and bootstrap instructions) → the project `README.md` (Project Configuration and project context) → the primary entry document named by the README configuration, in full → relevant Layer 2 documents selected for the current task.
+5. Choose the alignment mode and follow that mode's order. The modes and their minimum reading are defined in §2.1 only.
 6. Verify the repository identity and the current `main` commit in both modes, and report which documents were read and which were not.
 7. Complete session alignment before proposing or undertaking implementation work.
 8. Read accessible repository documents directly. Never ask the Human to provide information that is already accessible in the repository.
@@ -97,19 +95,13 @@ Use this as the default workflow between ChatGPT and Zoo Code:
 11. The Human makes the final decision and explicitly approves or rejects merge.
 12. Zoo Code performs the approved merge and push, then verifies the resulting state.
 
-Review happens on the pushed remote review branch. The Human is not a transfer channel for patches, diffs or repository files.
-
 ## 5. Communication and Handoff
 
 - The standard review handoff is the pushed remote review branch. Zoo Code reports the repository, branch name and commit SHA, and the reviewer reads that branch on the remote.
-- If ChatGPT has an available direct communication or execution integration with Zoo Code, it may use that integration to issue authorized tasks.
-- If no direct integration is available, ChatGPT must produce a concise, ready-to-forward task prompt for the Human to relay to Zoo Code.
+- The handoff carries verifiable evidence — the actual diff or commit reference, the preflight output and the test results — never a narrative summary alone. The evidence and review rules are in §7.4.
+- If ChatGPT has an available direct communication or execution integration with Zoo Code, it may use that integration to issue authorized tasks. If no direct integration is available, it produces a concise, ready-to-forward task prompt for the Human to relay to Zoo Code.
 - ChatGPT must never claim to have contacted Zoo Code or executed an action when it has not.
-- Zoo Code must provide verifiable evidence, not only narrative summaries. Evidence includes the actual diff, commit reference, preflight output and test results.
-- Detailed review rules are in §7. The reviewer reads the actual branch, diff and evidence; a Worker summary is not evidence.
-- Avoid repeated audits, unnecessary retries, duplicate reports and excessive token usage.
-- ChatGPT must not ask the Human to download a patch, upload a patch, copy a diff, or relay repository files that are accessible on the remote branch.
-- The Human's role is task direction, material decisions, required authorisations and merge approval. Relaying patches, diffs or repository content is not part of this workflow.
+- ChatGPT must not ask the Human to download a patch, upload a patch, copy a diff, or relay repository files that are accessible on the remote branch. The Human's role is task direction, material decisions, required authorisations and merge approval, not transferring patches, diffs or repository content.
 - If the remote branch or its diff is genuinely inaccessible, ChatGPT states the exact access failure and the unavailable remote resource, uses the available repository or GitHub access first, and asks the Human to decide an alternative review method. A patch or other manual transfer is an exceptional fallback agreed with the Human, never the default workflow.
 
 ## 6. Governance and Authorization
@@ -132,8 +124,8 @@ Project governance and authority live in the project's own documents; the README
 
 | Class | Examples | Review branch | Commit / push | Merge |
 |---|---|---|---|---|
-| Documentation | README, protocol, agent instructions, plans | Required | Allowed after required checks, unless the project says otherwise | Human approval only |
-| Code / milestone | Source, tests, configuration | Required | Each step requires explicit Human approval unless the project grants a different grant | Human approval only |
+| Documentation | README, protocol, agent instructions, plans | Required | Explicit Human grant, normally named in the work package | Human approval only |
+| Code / milestone | Source, tests, configuration | Required | Explicit Human grant, normally named in the work package | Human approval only |
 
 - Approval of one class or step never implies approval of another: document edit, code edit, test execution, commit, push and merge are separate grants.
 - Never edit a protected branch directly, force-push, `reset --hard`, or clean unapproved work.
@@ -149,11 +141,12 @@ Project governance and authority live in the project's own documents; the README
 **Post-merge branch cleanup.** These rules are mandatory merge-closeout steps. Human approval is required for the merge, but this policy grants standing operational authority to delete review-branch references that meet the safety conditions below. No separate approval is required for such cleanup.
 
 5. **Clean up merged review branches.** After a review branch has been merged, verify that the remote `main` contains its reviewed commit, then delete that remote review branch as part of the merge closeout. Do not leave completed review branches in place indefinitely.
-6. **Clean up superseded branches.** When a newer review branch replaces an older one, assess the older branch once the replacement is merged. Delete it only after confirming that every required change and unique commit is preserved in the merged history.
+6. **Clean up superseded branches.** When a newer review branch replaces an older one, assess the older branch once the replacement is merged. Delete it only after confirming that every required change is preserved in the merged history. Preserved means the content is present in `main`; the original commit SHA does not have to be an ancestor when a change was incorporated through replacement commits. Record the content comparison as the evidence.
 7. **Preserve history.** Delete branch references only. Never delete commits, rewrite history, or force-push as part of cleanup.
 8. **Protect unfinished work.** Never delete `main`, protected or permanent branches, active review branches, or any branch holding unmerged work that has not been preserved.
 9. **Verify before deleting.** State the exact remote branch name and its HEAD, confirm the relevant changes are present in `main`, then delete. If a branch's status or contents are uncertain, stop and report instead of guessing.
 10. **Record the result once.** Report deleted branch names and their last HEADs in the merge closeout report. Do not produce a separate cleanup report unless an issue needs escalation.
+11. **Local cleanup needs its own grant.** The standing authority above covers remote review-branch references only. Deleting a local branch or removing a worktree requires explicit Human authorization in that session. Remove the worktree before deleting its branch, and stop and report if a branch cannot be deleted without rewriting history.
 
 ### 3. Preflight validation
 
@@ -173,8 +166,6 @@ Reviews accept verifiable evidence only:
 - the preflight command and its actual output
 - test results, or screenshot/log evidence for UI work
 - a list of unresolved items
-
-The handoff reports the branch, commit hash, changed files, checks and open issues. Do not re-paste a full diff or write a long self-assessment.
 
 The reviewer checks scope, contradictions, whether unapproved proposals were presented as approved rules, and whether tests and evidence match the claims. The Worker fixes issues with additional commits. The reviewer does not execute merges.
 
@@ -250,7 +241,7 @@ When ChatGPT has repository write access, ChatGPT updates the documentation dire
 ### 2. Operating principles
 
 1. **One-pass execution.** Plan the whole operation before acting. Read, run, verify and report in as few passes as the task safely allows, and combine independent steps into one command where practical.
-2. **One-pass output.** Produce one final report per work package: completion status, files and changes, self-review findings, refinements made, checks and their actual results, relevant evidence, and any remaining issue or decision. Do not re-issue an earlier report that is still valid, and do not paste raw test output unless it is needed as evidence.
+2. **One-pass output.** Produce one final report per work package, in the shape defined in §7.5, including the self-review outcome required by §9.3. Do not re-issue an earlier report that is still valid, and do not paste raw test output unless it is needed as evidence.
 3. **Minimum task fragmentation.** Bundle related work into one coherent work package with one review boundary. Split a task only where a real approval gate, an unknown that would change the design, or a review boundary requires it.
 4. **Minimum round trips.** Do not ask the Human or the repository for information that is already available. Request additional output, read more files or run more tests only when the evidence at hand is insufficient for a reliable decision, or when a risk or approval gate genuinely requires it.
 5. **Ask only for material decisions.** Ask the Human only for a material decision, genuine ambiguity, risk, or a required authorization. Detail that is already agreed is resolved by the executor inside the authorised scope.

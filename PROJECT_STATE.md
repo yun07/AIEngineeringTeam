@@ -1,81 +1,39 @@
 # Project State — AI Engineering Team
 
-- **Purpose:** short operational snapshot for Continuation Alignment.
-- **Scope:** Phase 1 progress for `yun07/AIEngineeringTeam`.
-- **main HEAD when written:** `baae9dcdf251a11cdacb12c3fafc0a50d644bbba` — the **historical** `main` HEAD at the time this snapshot was written (sequential M5→M8 milestone-order documentation commit, fast-forwarded into `main`; the M4 implementation merge remains `9c11b6a`). It is not the current `main` HEAD. Continuation Alignment must verify the current remote `main` HEAD independently, and report `CURRENT HEAD UNVERIFIED` when it cannot. The historical SHA is not refreshed for ordinary documentation commits.
-- **Status of this file:** a derived snapshot, never proof and never an authority. It records derived status only; the canonical documents listed in §1 always win. It never proves that code or tests work.
+- **Purpose:** short operational snapshot for Continuation Alignment. Read it after the README §1.1 Project Configuration section.
+- **Status:** a derived snapshot. It is never an authority and never proof that code or tests work.
+- **Baseline recorded:** `main` at `615f20039cc37cefee2e032b1ca920ad4a520199` when this snapshot was last reviewed. This is a historical reference, not the current `main` HEAD: verify the current remote `main` independently during alignment, and report `CURRENT HEAD UNVERIFIED` when that is not possible. The SHA is not refreshed for ordinary documentation commits.
 
-## 1. Which document is authoritative
+## 1. Authority
 
-| Information | Authoritative source |
-|---|---|
-| Vision, principles, governance, Human authority | `AI_Engineering_Team.md` (project charter) |
-| Architecture decision (hybrid; no agent framework in Phase 1) | `plans/adr-001-hybrid-architecture.md` |
-| Phase 1 scope and the **canonical milestone record** | `plans/phase1-architecture-plan.md` |
-| Operation-layer decisions (OD-nnn) | `plans/operations-decisions.md` |
-| Workflow, evidence, review and approval rules | `AGENTS.md` |
-| Alignment process | `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` |
-| Project configuration values | `README.md` §1.1 |
-| Compact operational snapshot for session continuation | This file — derived summary only, not an independent authority, and it does not override any document above |
+Canonical milestone status, scope and evidence are recorded in `plans/phase1-architecture-plan.md`; this file never copies them. Principles and governance are in `AI_Engineering_Team.md`, architecture in `plans/adr-001-hybrid-architecture.md`, operation decisions in `plans/operations-decisions.md`, workflow and approval rules in `AGENTS.md`, the alignment process in `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`, and project values in `README.md` §1.1. If this file disagrees with any of them, they win and this file is corrected.
 
-## 2. Project purpose (brief)
+## 2. Where the project stands
 
-A personal AI engineering team. One Python Workflow Engine owns state, permissions, budget, evidence validation and acceptance. Orchestrator, Developer and independent QA run as separate sessions and exchange bounded handoff bundles only.
+- Phase 1 is in progress and is not accepted. M4 is complete, reviewed and merged into `main` (implementation merge `9c11b6a`).
+- **M5 is the next milestone**; M6 follows M5, then M7, then M8. M8 follows M7 because M7 carries Phase 1 acceptance.
+- No M5–M8 work is authorised by this snapshot.
+- Per-milestone status, including the M1–M3 "present but not formally closed" position, is recorded only in the Phase 1 plan.
 
-## 3. Milestone status
+## 3. Decisions that shape current work
 
-Derived from `plans/phase1-architecture-plan.md`, which remains the canonical milestone record. If this table differs from the plan, the plan wins and this file is corrected.
+- Hybrid architecture; Phase 1 uses no agent framework (ADR-001).
+- The live provider is DeepSeek through the OpenAI-compatible adapter; provider, model and pricing are in `config/aiteam.toml`.
+- Roles run as independent sessions with bounded handoffs, and every generated-code execution needs its own Human approval.
+- Retry semantics: only an engine-confirmed QA failure backed by verified non-zero execution evidence retries; `max_attempts = 2` counts the initial attempt; exhausted attempts escalate; `BudgetError`, `LimitExceeded`, provider, engine and infrastructure failures never retry.
+- Workflow coordination follows `AGENTS.md` §9 with OD-002 and OD-003. The WP2 Revision 1 target architecture is an accepted architecture baseline; its observability, governance and evolution steps (A1–A4) are not authorised.
 
-| Milestone | Implementation | Formal closeout | Human acceptance |
-|---|---|---|---|
-| M0 Environment and repository | Completed | Recorded PASS (`plans/m0-environment-report.md`) | As recorded in that report |
-| M1 FakeProvider walking skeleton | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` |
-| M2 QA execution, evidence, approvals | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` |
-| M3 Cost accounting and budget | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` |
-| M4 Retry and escalation | Completed and merged into `main` at `9c11b6a` | Completion evidence recorded in the Phase 1 plan | Merge approved by the Human 2026-11-24 |
-| M5 Live provider validation | Diagnostic only | Not recorded | Not recorded |
-| M6 Snake specification | Not started | Not started | Not started |
-| M7 Snake live end-to-end run | Not started | Not started | Not started |
-| M8 Documentation and progress | Not started | Not started | Not started |
+## 4. Outstanding Human decisions
 
-M1–M3 are present in code but are **not** formally closed. "Present" does not mean closed or accepted.
+- When to authorise M5, the next milestone.
+- Whether M1–M3 need retroactive closeout artefacts before M5 **acceptance** is recorded. This concerns acceptance only; no canonical requirement makes it a prerequisite for starting M5.
 
-## 4. Current position and next valid milestones
+## 5. Evidence pointers
 
-- Phase 1 is in progress. Phase 1 is **not** accepted.
-- M4 is complete. **M5 is the next milestone**; M6 follows M5, then M7, then M8, in that order.
-- No M5, M6, M7 or M8 work is authorised by this snapshot.
+- M4: implementation merge `9c11b6ab0842280b51fdd0c4bcec5db1f078c1ca`, branch head `432a776098777c3be5faa16232c53a63c2431c0b`, review fixes `78d6e9c` and `432a776`; full suite 328 tests, 0 failed, 5 skipped at `78d6e9c`; independent review PASS; Human merge approval 2026-11-24.
+- M0: `plans/m0-environment-report.md` (PASS).
+- M5 diagnostic only: `projects/diagnostic`, run `20261123T110208Z-97bc01`, 7 API calls, actual USD 0.004748 — not a Snake acceptance run.
 
-## 5. Dependencies
+## 6. Update rule
 
-`M0 → M1 → M2 → M3 → M4 → M5 → M6 → M7 → M8`, each milestone waiting for the previous one to be completed. M8 may proceed only after M7 is complete and accepted, because M7 carries Phase 1 acceptance.
-
-## 6. Decisions that matter for current work
-
-- Hybrid architecture: this project owns the decisions; Phase 1 uses no agent framework (ADR-001).
-- The live provider is DeepSeek through the OpenAI-compatible adapter; provider, model and pricing live in `config/aiteam.toml`.
-- Roles run as independent sessions with bounded handoffs, and every generated-code execution needs its own human approval.
-- M4 semantics: only an engine-confirmed QA failure backed by verified non-zero execution evidence retries; `max_attempts = 2` counts the initial attempt; exhausted attempts escalate; `BudgetError`, `LimitExceeded`, provider, engine and infrastructure failures never retry.
-- Workflow coordination follows `AGENTS.md` §9 and `plans/operations-decisions.md` OD-002 and OD-003.
-- Target architecture baseline: WP2 Revision 1 was accepted at the architecture stage by the Human. M5–M8 remain the delivery priority; the observability, governance and evolution steps (A1–A4) are not authorised.
-
-## 7. Outstanding Human decisions
-
-- When to authorise M5, the next milestone. This snapshot authorises no M5–M8 work.
-- Whether M1–M3 need retroactive closeout artefacts before M5 **acceptance** can be recorded. This concerns acceptance only: no canonical requirement makes it a prerequisite for starting M5. The Human decides this; this snapshot does not.
-
-## 8. Latest verified evidence
-
-| Evidence | Reference |
-|---|---|
-| M4 implementation merged into `main` | **implementation merge commit `9c11b6ab0842280b51fdd0c4bcec5db1f078c1ca`**; branch head `432a776098777c3be5faa16232c53a63c2431c0b`; review fixes `78d6e9c` and `432a776` |
-| M4 status and evidence wording recorded | documentation commit `85d6c90ad3bc16adaa8e2842774240d7a80c3599` on `review/m4-status-reconciliation` — documentation only, not the implementation merge |
-| M4 test evidence | full suite 328 tests, 0 failed, 0 errors, 5 skipped (skips are Windows symlink privilege only) at `78d6e9c`; focused 32 tests, 0 failed at `432a776`; scenario tests `tests/scenarios/test_retry_then_pass.py` and `tests/scenarios/test_retry_exhausted.py` |
-| M4 review outcome | Independent review PASS; Human merge approval recorded 2026-11-24 |
-| Workflow optimization principles recorded | documentation merge `6844cfa9606c6bebc82806e41dbb69bc2b1e6640` (source `73cf8eb0f6bc90022890b584d4acc6fda51294b5`) — documentation only, not the M4 implementation |
-| M0 environment | `plans/m0-environment-report.md` (PASS) |
-| M5 diagnostic run | `projects/diagnostic`, run `20261123T110208Z-97bc01`, 7 API calls, actual USD 0.004748 — not a Snake acceptance run |
-
-## 9. Update rule
-
-Update this file in the same work package that records a milestone status change, and keep it to roughly two pages. It never duplicates the Charter or the Phase 1 plan, it is never the authority for principles, architecture, scope, milestone status or workflow rules, and it never becomes proof that code or tests work.
+Update this file in the same work package that changes a milestone status, and keep it short. Never copy milestone tables, plan sections or governance rules here; point to the authoritative document instead.

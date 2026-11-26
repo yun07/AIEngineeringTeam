@@ -25,7 +25,7 @@ This protocol stores no project values. The project README must define them once
 | Project name | Human-readable identity of the project |
 | Project root | Repository or workspace root |
 | Primary entry document | The authoritative project document to read during Stage 1 |
-| Compact project state document | Short operational snapshot (current `main` HEAD, milestone status, next valid milestone) used by continuation alignment |
+| Compact project state document | Short operational snapshot (recorded `main` baseline, current position, next valid milestone) used by continuation alignment. It points to the canonical milestone record instead of copying milestone status. |
 | Working-rules entry point | Agent instruction file, normally `AGENTS.md` |
 | Architecture / design documents | Design sources for Layer 2 |
 | Decision records | Approved decisions and their authority order |
@@ -110,45 +110,7 @@ Rules:
 
 ### 0.3 Session bootstrap, workflow modes and document discovery
 
-Bootstrap order for every new session. Choose the mode first (see "Alignment modes" below), then follow that mode's order.
-
-**Continuation Alignment:**
-
-1. Read `AGENTS.md` first. When the Human supplies only the `AGENTS.md` link, that link is the session entry point.
-2. Read the project README Project Configuration section.
-3. Read the configured compact project state document.
-4. Read only the sections of this protocol and the project documents that the task needs.
-5. Verify the repository identity and the current `main` commit.
-
-**Full Alignment:**
-
-1. Read `AGENTS.md` first. When the Human supplies only the `AGENTS.md` link, that link is the session entry point.
-2. Follow `AGENTS.md` to read this protocol's Part 1 schema and bootstrap instructions.
-3. Read the project `README.md` for Project Configuration and project context.
-4. Read the primary entry document named by the README Project Configuration in full.
-5. Select Layer 2 documents by relevance to the current task.
-6. Verify the repository identity and the current `main` commit.
-
-In both modes, report which documents were read and which were not. The compact project state document is a snapshot that never proves implementation or test results. Independent review, independent QA and the authorization boundary in §0.1 are unchanged.
-
-If `AGENTS.md` or `README.md` is unavailable, mark it `MISSING` and continue with the available sources. Never invent their content.
-
-Alignment modes:
-
-| Mode | Use when | Minimum reading |
-|---|---|---|
-| **Full Alignment** | First session on a project, a major architecture change, a material conflict, or when the current state cannot be trusted | `AGENTS.md`, this protocol, the README Project Configuration, the primary entry document in full, then the Layer 2 documents the task needs |
-| **Continuation Alignment** | Ordinary continuation when `main` and the configured compact project state document are verifiable | `AGENTS.md` → the README Project Configuration section → the compact project state document → the relevant protocol sections and task-specific project documents |
-
-Rules:
-
-1. A project without a configured compact project state document uses Full Alignment.
-2. Continuation Alignment follows that fixed order, and does not require the whole README, the whole charter or the whole repository.
-3. Both modes verify the repository and the current `main` commit, and both report what was read and what was not.
-4. A compact state document is a snapshot, never proof. Verify implementation claims against code, tests or run evidence when the task depends on them.
-5. Neither mode changes the alignment gates, the evidence rules, independent QA, or the authorization boundary in §0.1.
-
-This mandatory bootstrap order takes precedence over the general task-specific retrieval order in `AGENTS.md`. After bootstrap, apply the token-efficient retrieval rules in `AGENTS.md` and §2 of this protocol; ordinary tasks must not read the entire repository.
+The mandatory bootstrap, the two alignment modes and each mode's minimum reading are defined once in `AGENTS.md` §2 and §2.1. Read `AGENTS.md` first, then follow that mode's order; this protocol does not restate it. In both modes the repository identity and the current `main` commit are verified, and the documents read and not read are reported. This bootstrap order takes precedence over general task-specific retrieval; after bootstrap, apply the token-efficient retrieval rules in `AGENTS.md` §7.6 and §2 of this protocol.
 
 Document discovery:
 
