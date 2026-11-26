@@ -48,7 +48,7 @@ M1–M3 are present in code but are **not** formally closed. "Present" does not 
 
 ## 5. Dependencies
 
-`M0 → M1 → M2 → M3 → M4 → M5 → M6 → M7 → M8`, each milestone waiting for the previous one to be completed.
+`M0 → M1 → M2 → M3 → M4 → M5 → M6 → M7 → M8`, each milestone waiting for the previous one to be completed. M8 may proceed only after M7 is complete and accepted, because M7 carries Phase 1 acceptance.
 
 ## 6. Decisions that matter for current work
 
