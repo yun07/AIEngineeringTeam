@@ -2,7 +2,7 @@
 
 - **Purpose:** short operational snapshot for Continuation Alignment.
 - **Scope:** Phase 1 progress for `yun07/AIEngineeringTeam`.
-- **main HEAD when written:** `baae9dcdf251a11cdacb12c3fafc0a50d644bbba` (sequential M5→M8 milestone-order documentation commit, fast-forwarded into `main`; the M4 implementation merge remains `9c11b6a`).
+- **main HEAD when written:** `baae9dcdf251a11cdacb12c3fafc0a50d644bbba` — the **historical** `main` HEAD at the time this snapshot was written (sequential M5→M8 milestone-order documentation commit, fast-forwarded into `main`; the M4 implementation merge remains `9c11b6a`). It is not the current `main` HEAD. Continuation Alignment must verify the current remote `main` HEAD independently, and report `CURRENT HEAD UNVERIFIED` when it cannot. The historical SHA is not refreshed for ordinary documentation commits.
 - **Status of this file:** a derived snapshot, never proof and never an authority. It records derived status only; the canonical documents listed in §1 always win. It never proves that code or tests work.
 
 ## 1. Which document is authoritative
@@ -62,7 +62,7 @@ M1–M3 are present in code but are **not** formally closed. "Present" does not 
 ## 7. Outstanding Human decisions
 
 - When to authorise M5, the next milestone. This snapshot authorises no M5–M8 work.
-- Whether M1–M3 need retroactive closeout artefacts before M5 acceptance is recorded.
+- Whether M1–M3 need retroactive closeout artefacts before M5 **acceptance** can be recorded. This concerns acceptance only: no canonical requirement makes it a prerequisite for starting M5. The Human decides this; this snapshot does not.
 
 ## 8. Latest verified evidence
 

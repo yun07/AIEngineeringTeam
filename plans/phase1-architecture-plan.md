@@ -557,18 +557,18 @@ runs/<run_id>/
 | Conda environment `ai-team` | Target environment | Use it for everything |
 | Python 3.12.16 | Confirmed in `ai-team` | None |
 | pip | Confirmed in `ai-team` | None |
-| OpenAI SDK | Confirmed only in `local-agent`, not in `ai-team` | Check in `ai-team`. Install manually by the user if missing. Never installed by an agent. |
-| pytest | Not yet verified in `ai-team` | Check and install manually if missing |
-| tkinter | Not yet verified in `ai-team` | Check. The Snake fixture must pass without it. |
+| OpenAI SDK | Installed and verified in `ai-team`: SDK 3.57.0 (2026-11-23). The M0 report recorded it missing and deferred it until before M5. | Never installed by an agent. Phase 1 denies installation; re-check only if the environment changes. |
+| pytest | Installed and verified in `ai-team`: pytest 9.2.0 (2026-11-23). The M0 report recorded it missing and required it before M1. | Never installed by an agent. Phase 1 denies installation; re-check only if the environment changes. |
+| tkinter | Present: Tk 8.6, verified at M0. | None. The Snake fixture must still pass headless. |
 | Git repository and initial commit | Already exist | Verify clean tree and current branch |
 
-If the OpenAI SDK, pytest or tkinter is missing, the agent team reports it. The user installs it in a normal shell. Phase 1 contains no installation path at all.
+As of 2026-11-23 all three are present in `ai-team`. If any of them later becomes missing, the agent team reports it and the user installs it in a normal shell; Phase 1 contains no installation path at all.
 
 ### D.2 Dependencies
 
 | Dependency | Type | Why it is needed |
 |---|---|---|
-| `openai` | runtime | SDK for the currently assumed provider adapter. Handles tool schemas, retries and usage reporting. Already available in another environment, must be confirmed in `ai-team`. |
+| `openai` | runtime | Installed and verified in `ai-team`: OpenAI SDK 3.57.0 (2026-11-23). Used by the OpenAI-compatible provider adapter; handles tool schemas, retries and usage reporting. |
 | `pytest` | dev | Runs the engine's own tests and is reused as the project test runner for QA, so no second test framework appears. |
 
 The adapter isolates the engine from the SDK. If a different live provider is selected, its SDK replaces `openai` and the pricing table is updated; engine code and configuration keys stay unchanged.
@@ -784,13 +784,17 @@ Verified by QA's own tests, not by claims.
 
 ### G.2 Remaining decisions before implementation
 
-1. Real provider model identifiers for each role and their current pricing entries. Placeholders are rejected in live mode, so these must be settled before M5.
-2. Whether the OpenAI SDK must be installed into `ai-team`, and whether `pytest` and `tkinter` are present. This is a manual user action determined at M0.
-3. Run budget and model choice for the single live Snake run, keeping the first live run deliberately small.
-4. Whether project slugs other than the Snake fixture should stay git ignored after Phase 1. The Snake fixture is tracked in Phase 1. Recommendation: keep other slugs ignored until Git isolation exists.
-5. Initial live provider identity. Provider choice remains open, including a DeepSeek option; the adapter and pricing table isolate the engine from that choice.
-6. The three-role versus two-role comparison metrics are defined after the Snake run, using its recorded data. No code changes are implied.
-7. QA model choice per run is open. Phase 1 defaults to the same model and does not require a second provider.
+Status labels are evidence-based. `RESOLVED` items have an approved record or a configured value; `OPEN` items still need a Human decision. This list records status only and does not promote proposed revision 7.
+
+1. **RESOLVED.** Provider identity, model identifiers and pricing entries: `config/aiteam.toml` sets provider `deepseek` with an explicit endpoint, model `deepseek-flash` for all three roles, and a `[pricing."deepseek-flash"]` entry; placeholders and invalid pricing are rejected in live mode. Evidence: charter §7 "Decided and no longer open", `config/aiteam.toml`.
+2. **RESOLVED after M0.** The M0 environment report (2026-11-20) recorded `openai` and `pytest` as **missing** and `tkinter` as present, and deferred the OpenAI SDK until before M5. The OpenAI SDK 3.57.0 and pytest 9.2.0 were installed and verified afterwards in the `ai-team` environment (charter §6, 2026-11-23). The M0 findings are historical evidence; the later verified state is the current one. Evidence: `plans/m0-environment-report.md` and `AI_Engineering_Team.md` §6.
+3. **PARTLY RESOLVED.** Model choice is configured in `config/aiteam.toml`. The run budget for the single live Snake run remains a Human decision at that run.
+4. **OPEN.** Whether project slugs other than the Snake fixture should stay git ignored after Phase 1. The Snake fixture is tracked in Phase 1. Recommendation: keep other slugs ignored until Git isolation exists.
+5. **RESOLVED.** Initial live provider identity: the provider is DeepSeek through the OpenAI-compatible adapter (charter §7). The adapter and pricing table still isolate the engine from that choice.
+6. **Not an open decision.** The three-role versus two-role comparison metrics are defined after the Snake run, using its recorded data. No code changes are implied.
+7. **PARTLY RESOLVED.** QA uses the same model as the Developer in Phase 1 and no second provider is required (`config/aiteam.toml`). Whether to assign different models or a second provider per role, and how to compare cost, speed and quality, remains open in the charter.
+
+M5 prerequisites and M5 acceptance are separate requirements. M5 execution needs only the adapter wiring for the selected provider, valid model identifiers and pricing in `config/aiteam.toml`, and a run budget, all recorded above. M5 acceptance is the section E exit criterion together with the live criteria in section F, and it is recorded separately. No existing requirement makes M1–M3 retroactive closeout artefacts a prerequisite for starting M5.
 
 ---
 

@@ -28,7 +28,7 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 | Tests / evidence / logs | `tests/`, `runs/`, `projects/` |
 | Git repository | `https://github.com/yun07/AIEngineeringTeam` |
 | Baseline branch | `main`; review branches are based on the latest `origin/main` |
-| Current milestone / phase | Phase 1 — M4 completed, reviewed and merged; M5 and M6 are the next valid milestones |
+| Current milestone / phase | Phase 1 — M4 completed, reviewed and merged; M5 is next, then M6, M7, M8 in sequence |
 | Current task | No task authorised; current position is recorded in [`PROJECT_STATE.md`](PROJECT_STATE.md) |
 | Configured language | Cantonese, Traditional Chinese |
 | Documentation language policy | `README.md`: Traditional Chinese; `AGENTS.md` and `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`: English |
@@ -101,7 +101,7 @@ flowchart TD
 
 M5 仍然只係 diagnostic，formal acceptance 未記錄；M6–M8 未開始。Phase 1 **未 acceptance**。即時狀態快照見 [`PROJECT_STATE.md`](PROJECT_STATE.md)；該檔只係衍生快照，唔係權威 —— 里程碑記錄以 [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) 為準，原則同治理以 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) 為準。M4 狀態與證據的本次文件更新見 commit `85d6c90`。
 
-**下一步**：M4 已完成，M5 formal acceptance 同 M6 Snake 規格係下一個有效里程碑，兩者可以並行；之後 M7 live run + human QA spot check，最後 M8。以上每一項都要 Human 另外授權。
+**下一步**：M4 已完成，下一步係 **M5**（live provider validation）。順序為 `M5 → M6 → M7 → M8`：M6 要等 M5 完成；M7 要 M5 同 M6 完成；M8 要 M7 完成並被接受。以上每一項都要 Human 另外授權。
 
 ### 6.1 改動點樣驗收
 

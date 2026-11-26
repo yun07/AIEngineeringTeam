@@ -441,7 +441,7 @@ Status notes:
 - M0 → M1 → M2 → M3 → M4 → M5 → M6 are sequential.
 - M5 is the next milestone; M6 begins only after M5 is completed.
 - M7 requires completed M5 and M6.
-- M8 runs only after M7 is complete.
+- M8 runs only after M7 is complete and accepted.
 
 These dependencies are recorded in `plans/phase1-architecture-plan.md` and restated here for visibility; they are not a new decision.
 
