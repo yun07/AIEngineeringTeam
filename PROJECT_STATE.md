@@ -2,7 +2,7 @@
 
 - **Purpose:** short operational snapshot for Continuation Alignment.
 - **Scope:** Phase 1 progress for `yun07/AIEngineeringTeam`.
-- **main HEAD when written:** `6844cfa9606c6bebc82806e41dbb69bc2b1e6640` (the workflow-optimization documentation merge; the M4 implementation merge is `9c11b6a`).
+- **main HEAD when written:** `baae9dcdf251a11cdacb12c3fafc0a50d644bbba` (sequential M5→M8 milestone-order documentation commit, fast-forwarded into `main`; the M4 implementation merge remains `9c11b6a`).
 - **Status of this file:** a derived snapshot, never proof and never an authority. It records derived status only; the canonical documents listed in §1 always win. It never proves that code or tests work.
 
 ## 1. Which document is authoritative
@@ -43,12 +43,12 @@ M1–M3 are present in code but are **not** formally closed. "Present" does not 
 ## 4. Current position and next valid milestones
 
 - Phase 1 is in progress. Phase 1 is **not** accepted.
-- M4 is complete, so **M5 and M6** are the next valid milestones and may run in parallel.
+- M4 is complete. **M5 is the next milestone**; M6 follows M5, then M7, then M8, in that order.
 - No M5, M6, M7 or M8 work is authorised by this snapshot.
 
 ## 5. Dependencies
 
-`M0 → M1 → M2 → M3 → M4`; then M5 and M6 may proceed in parallel; M7 requires both; M8 follows M7.
+`M0 → M1 → M2 → M3 → M4 → M5 → M6 → M7 → M8`, each milestone waiting for the previous one to be completed.
 
 ## 6. Decisions that matter for current work
 
@@ -56,13 +56,13 @@ M1–M3 are present in code but are **not** formally closed. "Present" does not 
 - The live provider is DeepSeek through the OpenAI-compatible adapter; provider, model and pricing live in `config/aiteam.toml`.
 - Roles run as independent sessions with bounded handoffs, and every generated-code execution needs its own human approval.
 - M4 semantics: only an engine-confirmed QA failure backed by verified non-zero execution evidence retries; `max_attempts = 2` counts the initial attempt; exhausted attempts escalate; `BudgetError`, `LimitExceeded`, provider, engine and infrastructure failures never retry.
-- Workflow coordination follows `AGENTS.md` §9 and `plans/operations-decisions.md` OD-002.
+- Workflow coordination follows `AGENTS.md` §9 and `plans/operations-decisions.md` OD-002 and OD-003.
+- Target architecture baseline: WP2 Revision 1 was accepted at the architecture stage by the Human. M5–M8 remain the delivery priority; the observability, governance and evolution steps (A1–A4) are not authorised.
 
 ## 7. Outstanding Human decisions
 
-- Whether M5 and M6 start together or sequentially, and which is authorised first.
+- When to authorise M5, the next milestone. This snapshot authorises no M5–M8 work.
 - Whether M1–M3 need retroactive closeout artefacts before M5 acceptance is recorded.
-- Any change to the milestone dependency order.
 
 ## 8. Latest verified evidence
 
