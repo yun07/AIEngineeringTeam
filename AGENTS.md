@@ -140,6 +140,15 @@ Project governance and authority live in the project's own documents; the README
 3. Preserve unrelated uncommitted work in the working tree. Do not stage, overwrite, reset or sweep it into the change.
 4. Once a review branch is under review, do not rewrite its history; add a corrective commit instead.
 
+**Post-merge branch cleanup.** These rules are mandatory merge-closeout steps. Human approval is required for the merge, but this policy grants standing operational authority to delete review-branch references that meet the safety conditions below. No separate approval is required for such cleanup.
+
+5. **Clean up merged review branches.** After a review branch has been merged, verify that the remote `main` contains its reviewed commit, then delete that remote review branch as part of the merge closeout. Do not leave completed review branches in place indefinitely.
+6. **Clean up superseded branches.** When a newer review branch replaces an older one, assess the older branch once the replacement is merged. Delete it only after confirming that every required change and unique commit is preserved in the merged history.
+7. **Preserve history.** Delete branch references only. Never delete commits, rewrite history, or force-push as part of cleanup.
+8. **Protect unfinished work.** Never delete `main`, protected or permanent branches, active review branches, or any branch holding unmerged work that has not been preserved.
+9. **Verify before deleting.** State the exact remote branch name and its HEAD, confirm the relevant changes are present in `main`, then delete. If a branch's status or contents are uncertain, stop and report instead of guessing.
+10. **Record the result once.** Report deleted branch names and their last HEADs in the merge closeout report. Do not produce a separate cleanup report unless an issue needs escalation.
+
 ### 3. Preflight validation
 
 The README defines the project's preflight command. Run that single command before commit.
