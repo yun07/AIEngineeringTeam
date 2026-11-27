@@ -504,13 +504,15 @@ Add only: wiring for the selected provider's adapter (currently DeepSeek through
 
 Exit criterion: live mode refuses to start with placeholder models or invalid pricing, usage and cost are recorded, redaction is verified in the transcript and log, and the per-execution QA approval prompt is observed.
 
-Current status: live validation completed 2026-11-27 in run `20261127T194853Z-f66a68` (project `m5-validation`, provider `deepseek` with model `deepseek-flash`, budget USD 0.10). One per-execution QA approval was granted and `python -m pytest qa_tests -q` executed with exit code 0; all 25 collected tests passed and the engine accepted the T1 verdict. Redaction was verified by scanning 99 runtime files for the configured key value with zero occurrences. Placeholder models and invalid pricing are refused by `tests/test_live_config.py` and `tests/test_config_cost.py`. Two earlier attempts failed closed, one with no key and one without an interactive approval. The run ended `blocked` because T2 QA exceeded `max_turns_per_session`; that is a task-level turn-limit finding, not an M5 criterion failure. Actual cost was USD 0.047871. This closeout record awaits review and merge.
+Current status: live validation completed 2026-11-27 in run `20261127T194853Z-f66a68` (project `m5-validation`, provider `deepseek` with model `deepseek-flash`, budget USD 0.10). One per-execution QA approval was granted and `python -m pytest qa_tests -q` executed with exit code 0; all 25 collected tests passed and the engine accepted the T1 verdict. Redaction was verified by scanning 99 runtime files for the configured key value with zero occurrences. Placeholder models and invalid pricing are refused by `tests/test_live_config.py` and `tests/test_config_cost.py`. Two earlier attempts failed closed, one with no key and one without an interactive approval. The run ended `blocked` because T2 QA exceeded `max_turns_per_session`; that is a task-level turn-limit finding, not an M5 criterion failure. Actual cost was USD 0.047871. This closeout record is merged into `main` at `3e48fa7`.
 
 ### M6 Snake specification and QA test plan
 
 Write the requirement, the pure-logic interface, the deterministic headless mode and the exact QA test list. Each acceptance criterion gets a stable ID such as `C1`. The plan must include at least one negative test. The Developer writes `game.py`, `app.py` and `README.md`. QA writes only `qa_tests/`.
 
 Exit criterion: a human can read the specification, match every criterion ID to at least one planned check, and identify the negative case.
+
+Current status: the specification is written in [`snake-spec.md`](snake-spec.md). It defines criteria C1–C9, the pure-logic interface including `Game.from_state`, the deterministic headless mode and the exact QA test list K1–K10, with K7 as the designated negative case. Human review raised three findings — the initial-state formula, the absence of a public way to build test states, and missing CLI negative coverage — and all three were corrected in `438a5b5`. The specification is merged into `main` by fast-forward as part of the M6 closeout work package; the specification commit is `3e36ce6` and the review corrections are `438a5b5`. Evidence: [`snake-spec.md`](snake-spec.md).
 
 ### M7 Snake live end-to-end success run
 
@@ -522,7 +524,7 @@ Exit criterion: the live criteria in section F are satisfied, `runs/<run_id>/rep
 
 Update `AI_Engineering_Team.md` progress and environment tables, and the plan checklist, only after M7 is complete. Write `plans/phase1-backlog.md` with the deferred items in section G.
 
-M0 through M8 are sequential: each milestone begins only after the previous one is completed and recorded. M5 validation is complete; M6 is next once this closeout record is merged, then M7, then M8. M7 requires completed M5 and M6. M8 runs only after M7 is complete and accepted.
+M0 through M8 are sequential: each milestone begins only after the previous one is completed and recorded. M5 and M6 are complete; M7 is next, then M8. M7 requires completed M5 and M6. M8 runs only after M7 is complete and accepted.
 
 ### After Phase 1 — architecture comparison
 
@@ -653,8 +655,8 @@ Status legend: `[x]` = completion criteria evidenced; `[ ]` = not evidenced. The
 - [ ] M2 Add QA-only execution with scrubbed environment, per-execution CONFIRM approval prompts, `qa_tests/` restriction, criterion coverage, negative check validation and denial handling — implementation present; formal closeout `UNVERIFIED`
 - [ ] M3 Add cost accounting: usage records, token accounting, USD pricing, budget enforcement and live-mode configuration validation — implementation present; formal closeout `UNVERIFIED`
 - [x] M4 Add retry, failure feedback and escalation — implementation completed, independently reviewed and merged into `main` at `9c11b6a`
-- [x] M5 Validate the live provider adapter on one small task with a tiny budget, rejected placeholders and per-execution QA approvals — live validation completed in run `20261127T194853Z-f66a68` with one approved QA execution (exit 0); closeout record awaits review and merge
-- [ ] M6 Write the Snake specification with criterion IDs and a QA test plan that includes a negative test — not started
+- [x] M5 Validate the live provider adapter on one small task with a tiny budget, rejected placeholders and per-execution QA approvals — live validation completed in run `20261127T194853Z-f66a68` with one approved QA execution (exit 0); closeout record merged into `main` at `3e48fa7`
+- [x] M6 Write the Snake specification with criterion IDs and a QA test plan that includes a negative test — specification written in `plans/snake-spec.md`, Human review completed with three corrections applied (`438a5b5`), merged into `main`
 - [ ] M7 Run the live Snake end-to-end success case, verify acceptance criteria and complete the human QA test file spot check — not started
 - [ ] M8 Update progress documentation only after M7, record the three-role versus two-role comparison plan and the deferred backlog — not started
 
@@ -669,8 +671,8 @@ This table states the same requirements already defined in sections E–F. It ad
 | M2 | QA execution and evidence | QA shell tool, approval prompts, `qa_tests/` restriction, coverage and negative-check validation | M1 | Five M2 scenarios pass; policy denials proven | Scenario tests and approvals log | Not recorded (`UNVERIFIED`) |
 | M3 | Cost and budget | Usage records, pricing, budget stop, live-mode config validation | M2 | Budget-stop scenario passes; invalid pricing rejected | Tests, `usage.jsonl`, report | Not recorded (`UNVERIFIED`) |
 | M4 | Retry and escalation | `qa_failed` routing, failure feedback, attempt counting, escalation | M3 | Retry-then-pass and retry-exhausted pass as separate runs | Scenario tests and `tests/test_m4_retry.py`; merged at `9c11b6a` | Merge approved by the Human 2026-11-24 |
-| M5 | Live provider validation | Adapter wiring, tiny budget, per-execution approval | M4 | Placeholder models and invalid pricing refused; usage and cost recorded; redaction verified; approval prompt observed | Run `20261127T194853Z-f66a68` report, approvals log, usage records | Validation recorded 2026-11-27; closeout record awaits review and merge |
-| M6 | Snake specification | Requirement, criterion IDs, headless mode, QA test plan with a negative test | M5 | Every criterion ID maps to at least one planned check; negative case identifiable | Specification document | Human review of the specification |
+| M5 | Live provider validation | Adapter wiring, tiny budget, per-execution approval | M4 | Placeholder models and invalid pricing refused; usage and cost recorded; redaction verified; approval prompt observed | Run `20261127T194853Z-f66a68` report, approvals log, usage records | Validation recorded 2026-11-27; closeout merged at `3e48fa7` |
+| M6 | Snake specification | Requirement, criterion IDs, headless mode, QA test plan with a negative test | M5 | Every criterion ID maps to at least one planned check; negative case identifiable | `plans/snake-spec.md`; commits `3e36ce6` and `438a5b5` | Human review completed 2026-11-27; three findings corrected before merge |
 | M7 | Snake live end-to-end run | Happy path on the live provider plus human spot check | Completed M5 and M6 | Section F criteria satisfied; report published | `runs/<run_id>/report.md` and recorded spot check | Required — Phase 1 acceptance depends on it |
 | M8 | Documentation and progress | Charter and plan updates, `plans/phase1-backlog.md` | M7 | Progress recorded; backlog written; archived documents untouched | Updated documents | Not started |
 

@@ -24,7 +24,7 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 | Architecture / design documents | `plans/phase1-architecture-plan.md`, `plans/adr-001-hybrid-architecture.md` |
 | Decision records | `plans/adr-001-hybrid-architecture.md` |
 | Status / progress documents | `plans/phase1-architecture-plan.md` (the only formal record of milestones, acceptance and evidence); `PROJECT_STATE.md` (short progress snapshot); `AI_Engineering_Team.md` (project principles and governance); `README.md` (project overview and document entry point) |
-| Technical specifications | `plans/phase1-architecture-plan.md` |
+| Technical specifications | `plans/phase1-architecture-plan.md`, `plans/snake-spec.md` |
 | Tests / evidence / logs | `tests/`, `runs/`, `projects/` |
 | Git repository | `https://github.com/yun07/AIEngineeringTeam` |
 | Baseline branch | `main`; review branches are based on the latest `origin/main` |

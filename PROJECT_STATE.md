@@ -10,9 +10,9 @@ Canonical milestone status, scope and evidence are recorded in `plans/phase1-arc
 
 ## 2. Where the project stands
 
-- Phase 1 is in progress and is not accepted. M4 is complete, reviewed and merged into `main` (implementation merge `9c11b6a`). M5 live validation is complete; its closeout record awaits review and merge.
-- **M6 is the next milestone**; M7 follows M6, then M8. M8 follows M7's completion and the Human acceptance that closes M7, because M7 carries Phase 1 acceptance.
-- No M6–M8 work is authorised by this snapshot.
+- Phase 1 is in progress and is not accepted. M4 is complete, reviewed and merged into `main` (implementation merge `9c11b6a`). M5 live validation and its closeout record are merged at `3e48fa7`. M6 is complete: the Snake specification `plans/snake-spec.md` was reviewed by the Human, three findings were corrected, and it is merged into `main`.
+- **M7 is the next milestone**; M8 follows M7. M8 follows M7's completion and the Human acceptance that closes M7, because M7 carries Phase 1 acceptance.
+- No M7–M8 work is authorised by this snapshot.
 - The WP2 Revision 1 target architecture is an accepted architecture baseline; its observability, governance and evolution steps (A1–A4) are not authorised.
 - Per-milestone status, including the M1–M3 "present but not formally closed" position, is recorded only in the Phase 1 plan.
 
@@ -22,14 +22,15 @@ Architecture and accepted decisions are recorded in `plans/adr-001-hybrid-archit
 
 ## 4. Outstanding Human decisions
 
-- When to authorise M6, the next milestone.
-- Broader open project and design decisions are listed in [AI_Engineering_Team.md](AI_Engineering_Team.md) §7 ("Still open"). They are not prerequisites for M6, and remain unresolved rather than approved decisions.
+- When to authorise M7, the next milestone.
+- Broader open project and design decisions are listed in [AI_Engineering_Team.md](AI_Engineering_Team.md) §7 ("Still open"). They are not prerequisites for M7, and remain unresolved rather than approved decisions.
 
 ## 5. Evidence pointers
 
 - M4: implementation merge `9c11b6ab0842280b51fdd0c4bcec5db1f078c1ca`, branch head `432a776098777c3be5faa16232c53a63c2431c0b`, review fixes `78d6e9c` and `432a776`; full suite 328 tests, 0 failed, 5 skipped at `78d6e9c`; independent review PASS; Human merge approval 2026-11-24.
 - M0: `records/m0-environment-report.md` (PASS).
-- M5: live validation run `20261127T194853Z-f66a68` (project `m5-validation`), one approved QA execution with exit code 0, actual USD 0.047871. Two earlier attempts failed closed (`20261127T194106Z-6aae04`, `20261127T194603Z-0c1f5e`). The run ended `blocked` on T2 `max_turns_per_session`. The earlier diagnostic run `20261123T110208Z-97bc01` remains historical evidence only.
+- M5: live validation run `20261127T194853Z-f66a68` (project `m5-validation`), one approved QA execution with exit code 0, actual USD 0.047871. Two earlier attempts failed closed (`20261127T194106Z-6aae04`, `20261127T194603Z-0c1f5e`). The run ended `blocked` on T2 `max_turns_per_session`. The earlier diagnostic run `20261123T110208Z-97bc01` remains historical evidence only. Closeout record merged at `3e48fa7`.
+- M6: specification `plans/snake-spec.md`; commits `3e36ce6` (specification) and `438a5b5` (review corrections). Human review on 2026-11-27 raised three findings — the initial-state formula, the absence of a public way to build test states, and missing CLI negative coverage — all corrected before merge. Merged into `main` by fast-forward in the M6 closeout work package.
 
 ## 6. Update rule
 
