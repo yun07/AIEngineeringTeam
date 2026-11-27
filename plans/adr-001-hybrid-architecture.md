@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Decision date:** 2026-11-23
 - **Decision owner:** Human
-- **Related:** [`AI_Engineering_Team.md`](../AI_Engineering_Team.md) (charter), [`plans/architecture-decision-review.md`](architecture-decision-review.md) (evidence record, not authority)
+- **Related:** [`AI_Engineering_Team.md`](../AI_Engineering_Team.md) (charter)
 
 ## Context
 

@@ -473,8 +473,8 @@ The Phase 1 blueprint is kept in `plans/phase1-architecture-plan.md` and is subo
 - The local workspace remains the implementation. No generic Workspace Protocol is added without a real second implementation.
 - The live provider is DeepSeek through the OpenAI-compatible adapter, using `deepseek-flash`; provider, model and pricing live in `config/aiteam.toml`.
 - Independent per-role sessions and scoped handoff bundles are implemented, and every generated-code execution needs its own human approval.
-- Existing choices are not automatically refactored to match recommendations in the Architecture Decision Review.
-- Zoo Code orchestration issues are recorded as OD-001 in `plans/operations-decisions.md` and are not Python Workflow Engine defects.
+- Existing implementation choices are not automatically changed solely to align with past review recommendations.
+- Zoo Code orchestration issues are not Python Workflow Engine defects; see AGENTS.md §7.6.
 
 ### Still open
 
