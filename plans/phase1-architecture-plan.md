@@ -520,11 +520,13 @@ Run the real flow for the happy path. Retry, budget-stop and denial paths are al
 
 Exit criterion: the live criteria in section F are satisfied, `runs/<run_id>/report.md` is published, and the user has completed the QA test file spot check. Phase 1 is not accepted until that spot check is recorded.
 
+Current status: completed 2026-11-27 in run `20261127T232029Z-30ab3e` (project `snake`, provider `deepseek`, model `deepseek-flash`, budget USD 0.50). T1–T3 are `done`, all three QA verdicts are `pass`, and the final QA suite ran 56 tests with exit code 0. The engine recorded nine per-execution approvals, all granted. Actual reported cost was USD 0.294202, with USD 0.205798 remaining. The report is `runs/20261127T232029Z-30ab3e/report.md`; the Human completed the QA test file spot check and accepted it on 2026-11-27. The implementation and fixture are merged into `main` at `1b48396`. Two earlier attempts blocked before completion — `20261127T225541Z-73d0a6` on `max_output_tokens` and `20261127T230551Z-89ff83` on `max_context_tokens` — and remain evidence only. Phase 1 acceptance remains a separate Human decision.
+
 ### M8 Documentation and progress
 
 Update `AI_Engineering_Team.md` progress and environment tables, and the plan checklist, only after M7 is complete. Write `plans/phase1-backlog.md` with the deferred items in section G.
 
-M0 through M8 are sequential: each milestone begins only after the previous one is completed and recorded. M5 and M6 are complete; M7 is next, then M8. M7 requires completed M5 and M6. M8 runs only after M7 is complete and accepted.
+M0 through M8 are sequential: each milestone begins only after the previous one is completed and recorded. M5, M6 and M7 are complete; M8 is next. M7 required completed M5 and M6. M8 runs only after M7 is complete and accepted, and after this closeout record is merged into `main`.
 
 ### After Phase 1 — architecture comparison
 
@@ -657,7 +659,7 @@ Status legend: `[x]` = completion criteria evidenced; `[ ]` = not evidenced. The
 - [x] M4 Add retry, failure feedback and escalation — implementation completed, independently reviewed and merged into `main` at `9c11b6a`
 - [x] M5 Validate the live provider adapter on one small task with a tiny budget, rejected placeholders and per-execution QA approvals — live validation completed in run `20261127T194853Z-f66a68` with one approved QA execution (exit 0); closeout record merged into `main` at `3e48fa7`
 - [x] M6 Write the Snake specification with criterion IDs and a QA test plan that includes a negative test — specification written in `plans/snake-spec.md`, Human review completed with three corrections applied (`438a5b5`), merged into `main`
-- [ ] M7 Run the live Snake end-to-end success case, verify acceptance criteria and complete the human QA test file spot check — not started
+- [x] M7 Run the live Snake end-to-end success case, verify acceptance criteria and complete the human QA test file spot check — completed in run `20261127T232029Z-30ab3e` (3/3 tasks done, 3/3 QA pass, 56 tests, actual USD 0.294202); Human spot check accepted 2026-11-27; merged into `main` at `1b48396`
 - [ ] M8 Update progress documentation only after M7, record the three-role versus two-role comparison plan and the deferred backlog — not started
 
 ### Milestone contract table
@@ -673,7 +675,7 @@ This table states the same requirements already defined in sections E–F. It ad
 | M4 | Retry and escalation | `qa_failed` routing, failure feedback, attempt counting, escalation | M3 | Retry-then-pass and retry-exhausted pass as separate runs | Scenario tests and `tests/test_m4_retry.py`; merged at `9c11b6a` | Merge approved by the Human 2026-11-24 |
 | M5 | Live provider validation | Adapter wiring, tiny budget, per-execution approval | M4 | Placeholder models and invalid pricing refused; usage and cost recorded; redaction verified; approval prompt observed | Run `20261127T194853Z-f66a68` report, approvals log, usage records | Validation recorded 2026-11-27; closeout merged at `3e48fa7` |
 | M6 | Snake specification | Requirement, criterion IDs, headless mode, QA test plan with a negative test | M5 | Every criterion ID maps to at least one planned check; negative case identifiable | `plans/snake-spec.md`; commits `3e36ce6` and `438a5b5` | Human review completed 2026-11-27; three findings corrected before merge |
-| M7 | Snake live end-to-end run | Happy path on the live provider plus human spot check | Completed M5 and M6 | Section F criteria satisfied; report published | `runs/<run_id>/report.md` and recorded spot check | Required — Phase 1 acceptance depends on it |
+| M7 | Snake live end-to-end run | Happy path on the live provider plus human spot check | Completed M5 and M6 | Section F criteria satisfied; report published | Run `20261127T232029Z-30ab3e/report.md`, approvals log, recorded spot check; merged at `1b48396` | Spot check completed and accepted 2026-11-27 |
 | M8 | Documentation and progress | Charter and plan updates, `plans/phase1-backlog.md` | M7 | Progress recorded; backlog written; archived documents untouched | Updated documents | Not started |
 
 ### Appendix A — M4 Design Baseline (C1–C7)
