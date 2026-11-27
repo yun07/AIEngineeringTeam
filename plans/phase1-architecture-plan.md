@@ -12,53 +12,7 @@
 
 ## Revision Notes
 
-Changes in revision 2:
-
-1. Path restrictions are no longer described as a sandbox. Phase 1 isolation is logical, in-process, and explicitly not a security boundary.
-2. Execution of any agent-generated code now requires a separate human approval for each execution.
-3. Child processes receive a scrubbed environment allowlist. No API keys or secrets are inherited or passed as arguments.
-4. Package installation is denied in Phase 1 rather than approval-gated.
-5. QA writes only inside `qa_tests/`. The engine, not QA, writes evidence reports under `runs/`.
-6. The plan task-count limit is a single value, `max_tasks_per_plan = 3`, used consistently.
-7. Success, retry, retry exhaustion, budget stop, approval denial and approval grant are separate test runs with separate fake scripts and separate state directories.
-8. Removed from Phase 1: event replay, resumable approvals, `approve` and `resume` commands, `status` command, SQLite, plugin registries, batch approval flags.
-9. Roadmap reordered so each milestone adds only what the next milestone needs, starting from a FakeProvider vertical slice.
-10. Environment assumptions corrected: `ai-team` conda environment is the target, Python 3.12.16 and pip confirmed there, OpenAI SDK not yet confirmed there, pytest and tkinter unverified, Git repository and initial commit already exist.
-
-Changes in revision 3:
-
-1. Execution limits are now part of M1 and the hard constraints. Token accounting, USD pricing and budget enforcement remain in M3.
-2. The fake provider returns simulated usage so limits are testable without paid calls.
-3. The session-wide approval option `a` is removed. Every execution of generated code needs its own `y` or `n`.
-4. Secret access is split explicitly: the trusted engine may read the key, agent tools and child processes never can.
-5. Live provider mode validates model identifiers and pricing before any API call.
-
-Changes in revision 4:
-
-1. This plan is explicitly subordinate to `AI_Engineering_Team.md`; conflicts resolve in favour of the charter.
-2. The Independent Consultant / Reviewer, the Gardening Agent and controlled self-improvement are recorded as future directions, not Phase 1 roles.
-3. A governance constraint states that no agent, including the Orchestrator, can change security rules, approval requirements, budget limits, verification standards or its own permissions.
-4. The live provider and model identifiers are recorded as an open configuration decision, so no provider is embedded in the engine.
-5. The charter's verified environment and Git facts are mirrored here.
-
-Changes in revision 5:
-
-1. The Developer Agent has read, write and list tools only. Shell execution is removed from its role.
-2. QA is the only role that executes commands, so all CONFIRM approvals now originate from QA.
-3. Every acceptance criterion has an ID, and QA must map each ID to at least one named check.
-4. The QA verdict must include at least one negative check for the Snake fixture.
-5. A human spot check of the QA test files is a required Phase 1 acceptance step.
-6. The Orchestrator is retained. A three-role versus two-role comparison is planned after the Snake run, using recorded results.
-7. QA is not required to use a different model in Phase 1. Per-role model configuration remains available.
-8. Progress documents are updated only at milestone boundaries.
-
-Changes proposed in revision 7 (documentation clarity, `PROPOSAL — HUMAN APPROVAL REQUIRED`):
-
-1. The header status reflects verified repository evidence instead of "No implementation started".
-2. A milestone contract table adds Objective, Scope, Dependencies, Completion Criteria, Required Evidence and Human Acceptance for M0–M8.
-3. Dependencies M4 → M5 → M6 → M7 → M8 are stated explicitly.
-4. The checklist records evidence-based status and no longer implies that implementation equals formal closeout.
-5. Revision 6 C1–C7 are consolidated in Appendix A; C2 and C3 are approved rules, while C1 and C4–C7 remain proposed baseline defaults.
+Revision 5 text is approved. Revision 6 clarifications C1–C7 are consolidated in Appendix A: C2 and C3 are approved rules, while C1 and C4–C7 remain proposed baseline defaults. Revision 7 (documentation clarity and consistency) is `PROPOSAL — HUMAN APPROVAL REQUIRED`. The detailed change list for revisions 2–6 is preserved in git history and is not repeated here.
 
 ---
 
@@ -160,26 +114,7 @@ Phase 1 implements this with separate Python objects and separate transcript fil
 
 ### A.5 Component diagram
 
-```mermaid
-flowchart TD
-    U[User] --> CLI[CLI python -m aiteam]
-    CLI --> ENG[Workflow Engine deterministic]
-    ENG --> ORC[Orchestrator Session]
-    ENG --> DEV[Developer Session]
-    ENG --> QA[QA Session]
-    ORC --> PROV[Provider Adapter]
-    DEV --> PROV
-    QA --> PROV
-    DEV --> TOOLS[Tool Layer path guards and limits]
-    QA --> TOOLS
-    TOOLS -->|CONFIRM only from QA| APPR[Human approval prompt]
-    APPR --> U
-    TOOLS --> WS[Project Workspace projects slash slug]
-    PROV --> COST[Cost Manager]
-    COST --> STORE[State Store]
-    ENG --> STORE
-    ENG --> REP[Run report under runs]
-```
+The component diagram is recorded once in [`plans/adr-001-hybrid-architecture.md`](adr-001-hybrid-architecture.md), which is the architecture decision record. The component list in A.3 is the authoritative description in this plan.
 
 ### A.6 State model
 
@@ -415,95 +350,11 @@ sequenceDiagram
 
 ---
 
-## C. Proposed Folder and File Structure
+## C. Repository Layout and Configuration
 
-```text
-c:/AIProjects/AIEngineeringTeam/
-├─ AI_Engineering_Team.md          existing living spec, unchanged in Phase 1 plan
-├─ .gitignore                      exists, extended for state/ and runs/; projects/* ignored except projects/snake/
-├─ .env.example                    key names only, no values
-├─ README.md                       how to run, security posture, environment setup
-├─ pyproject.toml                  metadata, dependencies, pytest config
-├─ config/
-│  └─ aiteam.toml                  models per role, pricing, budgets, limits
-├─ aiteam/
-│  ├─ __main__.py                  python -m aiteam entry point
-│  ├─ cli.py                       run command and approval prompt wiring
-│  ├─ config.py                    toml loading, env overrides, validation, redaction
-│  ├─ models.py                    dataclasses for Project, Task, Run, UsageRecord, ApprovalRecord, Event
-│  ├─ state/
-│  │  └─ store.py                  atomic index.json plus three jsonl logs and session transcripts
-│  ├─ engine/
-│  │  ├─ workflow.py               pure next_action plus handlers and report writing
-│  │  ├─ policy.py                 role matrix, exact allowlist, risk classes, approval prompt, env scrubbing
-│  │  └─ handoff.py                bounded bundles, file manifest, failure feedback
-│  ├─ agents/
-│  │  ├─ base.py                   AgentSession, tool loop, turn cap, transcript, JSON repair
-│  │  ├─ roles.py                  role definitions, tool sets, model selectors
-│  │  └─ prompts/
-│  │     ├─ orchestrator.md
-│  │     ├─ developer.md
-│  │     └─ qa.md
-│  ├─ providers/
-│  │  ├─ base.py                   LLMProvider protocol, LLMResponse, ToolSpec
-│  │  ├─ fake.py                   scripted responses with simulated usage, used by tests and the walking skeleton
-│  │  └─ openai_provider.py        openai SDK implementation
-│  ├─ tools/
-│  │  ├─ filesystem.py             path-contained read, write, list, hash
-│  │  └─ shell.py                  scrubbed env, timeout, cwd pin, output cap
-│  └─ cost/
-│     └─ manager.py                pricing lookup, budget checks, usage aggregation
-├─ tests/
-│  ├─ fakes.py                     fake scripts, simulated usage builders and temporary workspace helpers
-│  ├─ fixtures/
-│  │  ├─ aiteam.fake.toml          fake provider, fake models and zero prices for tests
-│  │  └─ aiteam.invalid-live.toml  placeholder models and bad pricing for validation tests
-│  ├─ test_config.py               includes placeholder, missing pricing and negative price checks
-│  ├─ test_state_store.py
-│  ├─ test_policy.py               allowlist, path guards, env scrubbing, install denial, Developer shell denial, per-execution approval
-│  ├─ test_cost_manager.py
-│  ├─ test_agent_session.py        separate sessions, transcript isolation, Developer tool restriction
-│  ├─ test_qa_evidence.py          criterion coverage, negative check and audit-log matching
-│  └─ scenarios/
-│     ├─ test_success.py
-│     ├─ test_retry_then_pass.py
-│     ├─ test_retry_exhausted.py
-│     ├─ test_budget_stop.py
-│     ├─ test_approval_denied.py
-│     └─ test_approval_granted.py
-├─ plans/
-├─ projects/                       generated work such as projects/snake; only projects/snake/ is tracked, other slugs git ignored in Phase 1
-├─ runs/                           per-run transcripts and report.md, git ignored
-└─ state/                          engine state and logs, git ignored
-```
+The repository layout is the implementation and is not duplicated here; the package structure is visible in the repository. New files follow the layering in A.1: the engine owns state, policy and acceptance, agents own prompts and sessions, tools are the only execution surface, and tests mirror the package they cover.
 
-Configuration is deliberately small. Command policy lives in code as constants in `policy.py`; only models, prices and limits are configurable.
-
-```toml
-[provider]
-name = "openai"                  # example only; provider choice is open and the adapter is replaceable
-
-[models]
-orchestrator = "gpt-4.1"         # example values, replace with your provider's current model IDs
-developer = "gpt-4.1-mini"
-qa = "gpt-4.1-mini"
-
-[limits]
-max_tasks_per_plan = 3
-max_turns_per_session = 12
-max_llm_calls_per_task = 20
-max_attempts = 2
-command_timeout_seconds = 120
-max_tool_output_chars = 8000
-
-[pricing."gpt-4.1"]              # illustrative rates, set from the provider's published prices
-input_per_mtok = 2.00
-output_per_mtok = 8.00
-
-[pricing."gpt-4.1-mini"]
-input_per_mtok = 0.40
-output_per_mtok = 1.60
-```
+Configuration is deliberately small. Command policy lives in code as constants in `policy.py`; only models, prices and limits are configurable. The authoritative values are in [`config/aiteam.toml`](../config/aiteam.toml); example values are not repeated here because they go stale.
 
 ### C.1 Configuration validation
 
@@ -641,7 +492,7 @@ Exit criterion: the success, approval-granted, approval-denial, missing-criterio
 
 Add only: `cost/manager.py`, usage records written to `state/usage.jsonl`, token accounting, USD pricing from `config/aiteam.toml`, the run budget check before each call, per-agent cost aggregation, and the live-mode model and pricing validation from C.1.
 
-Exit criterion: the budget-stop scenario passes and the report shows tokens and cost per agent. `test_config.py` proves that placeholder models, missing pricing entries and negative prices are rejected before any call.
+Exit criterion: the budget-stop scenario passes and the report shows tokens and cost per agent. `tests/test_config_cost.py` proves that placeholder models, missing pricing entries and negative prices are rejected before any call.
 
 ### M4 Retry and escalation
 

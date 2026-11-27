@@ -13,15 +13,12 @@ Canonical milestone status, scope and evidence are recorded in `plans/phase1-arc
 - Phase 1 is in progress and is not accepted. M4 is complete, reviewed and merged into `main` (implementation merge `9c11b6a`).
 - **M5 is the next milestone**; M6 follows M5, then M7, then M8. M8 follows M7's completion and the Human acceptance that closes M7, because M7 carries Phase 1 acceptance.
 - No M5–M8 work is authorised by this snapshot.
+- The WP2 Revision 1 target architecture is an accepted architecture baseline; its observability, governance and evolution steps (A1–A4) are not authorised.
 - Per-milestone status, including the M1–M3 "present but not formally closed" position, is recorded only in the Phase 1 plan.
 
-## 3. Decisions that shape current work
+## 3. Where the rules live
 
-- Hybrid architecture; Phase 1 uses no agent framework (ADR-001).
-- The live provider is DeepSeek through the OpenAI-compatible adapter; provider, model and pricing are in `config/aiteam.toml`.
-- Roles run as independent sessions with bounded handoffs, and every generated-code execution needs its own Human approval.
-- Retry semantics: only an engine-confirmed QA failure backed by verified non-zero execution evidence retries; `max_attempts = 2` counts the initial attempt; exhausted attempts escalate; `BudgetError`, `LimitExceeded`, provider, engine and infrastructure failures never retry.
-- Workflow coordination follows `AGENTS.md` §9. The WP2 Revision 1 target architecture is an accepted architecture baseline; its observability, governance and evolution steps (A1–A4) are not authorised.
+Architecture and accepted decisions are recorded in `plans/adr-001-hybrid-architecture.md` and `AI_Engineering_Team.md` §7. Retry, budget, scope and evidence rules are in `plans/phase1-architecture-plan.md`. Workflow, authorisation and approval rules are in `AGENTS.md`. This snapshot does not restate any of them.
 
 ## 4. Outstanding Human decisions
 

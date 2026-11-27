@@ -283,38 +283,9 @@ The Orchestrator and any other agent must not be able to modify the rules that g
 
 ### 4.8 Document Change and Review Governance
 
-Document changes follow a three-role separation. No role may substitute for another.
+The User is the only Merge Approver. Every document or code change goes through a separate review branch, an independent review of the actual files and diff by the Reviewer, and explicit Human approval before merge. A successful review is not merge approval, and approval to merge one change never authorises the next stage of work.
 
-| Role | Actor | Owns | Must not |
-|---|---|---|---|
-| **Merge Executor (Worker)** | Zoo Code | Executing document edits, running the required checks, the Git operations on a review branch, and executing the merge only after explicit approval from the Approver | Approve a merge; execute a merge without explicit approval from the Approver; treat its own summary as review evidence |
-| **Reviewer** | ChatGPT | Independently inspecting the actual files and the Git diff, for example on GitHub, and raising corrections | Rely on the Worker's summary instead of the repository; approve a merge; execute a merge |
-| **Merge Approver** | User | Holding the only merge approval authority: deciding whether to merge a review branch into `main`, accepting or rejecting the change, and authorizing the next stage of work. The User may execute the approved merge personally or delegate execution to Zoo Code | — |
-
-Mandatory workflow:
-
-1. The Worker makes every document change on a separate review branch. `main` is never edited directly.
-2. When the change is complete, the Worker runs the required checks, commits the change and pushes the review branch.
-3. The Reviewer independently inspects the actual documents and the Git diff, for example on GitHub. A summary from the Worker is not evidence.
-4. If the Reviewer finds problems, the Worker corrects them and resubmits for review. Review and correction repeat until the Reviewer has no material objection.
-5. Merge approval and merge execution:
-   - The User is the only Merge Approver. The User may execute the merge personally, or authorize Zoo Code to execute it.
-   - Zoo Code is the Merge Executor. It executes a merge only after the User explicitly approves it and instructs it to do so.
-   - No person or agent may merge without the User's explicit approval.
-   - The Reviewer (ChatGPT) does not execute merges. A successful review is not merge approval.
-6. Approval to merge a document change does not authorize the next stage of work. Further work needs its own explicit approval.
-
-Protection rule: unapproved changes and pre-existing uncommitted changes must never be swept into a review branch or a merge. A review branch contains only the change under review, and the Worker states explicitly which files are in scope.
-
-Git requirements for the Worker:
-
-- Base every review branch on the current `main`.
-- Keep the commit limited to the files in scope.
-- Preserve unrelated uncommitted work in the working tree. Never stage, commit or merge it without approval.
-- Do not modify, rewrite or merge an existing review branch that is already under review.
-- Push the review branch; do not merge it.
-
-These rules govern documents and review. They do not replace the technical controls on workflow state, approvals, budgets and verification defined elsewhere in this charter and in the phase plans.
+The operating detail — branch creation, change scope, preflight, evidence package, review handoff, blocked cases and post-merge cleanup — is defined once in `AGENTS.md` §7. These rules do not replace the technical controls on workflow state, command approvals, budgets and verification defined in §4.3 and in the Phase 1 plan.
 
 ---
 
@@ -375,7 +346,7 @@ These features should be added when the foundation is reliable, not all at once.
 
 ---
 
-## 6. Current Setup & Progress
+## 6. Current Setup
 
 ### Development Environment
 
@@ -396,12 +367,12 @@ Verification status:
 | Second Python environment | Conda: `local-agent` | Previously confirmed |
 | Python distribution | Miniconda | Previously confirmed |
 | pip | Available in `ai-team` | Verified in M0 |
-| Version control | Git | Verified 2026-11-23; branch `main`, HEAD `b78eaed` (the previously recorded `2433660` is obsolete) |
+| Version control | Git | Verified 2026-11-23; branch `main`. No HEAD SHA is stored here; run `git rev-parse HEAD` and compare with `origin/main` when alignment needs it |
 | OpenAI SDK | 3.57.0 installed in `ai-team` | Verified 2026-11-23 |
 | tiktoken | 0.14.0 installed in `ai-team` | Verified 2026-11-23 |
-| pytest | 9.2.0 installed in `ai-team` | Verified 2026-11-23; full offline suite 294 passed, 5 skipped |
+| pytest | 9.2.0 installed in `ai-team` | Verified 2026-11-23; current suite results are recorded in the Phase 1 plan, not here |
 | tkinter | Tk 8.6 present | Verified in M0; not required for headless acceptance |
-| Git repository in this workspace | Branch `main` at `b78eaed`, synced with `origin/main` and the public remote | Verified 2026-11-23 |
+| Git repository in this workspace | Branch `main`, synced with `origin/main` | Verified 2026-11-23; re-verify rather than storing a SHA |
 
 Zoo Code is currently installed and being used in VS Code. The choice of coding assistant remains revisable.
 
@@ -413,52 +384,11 @@ The live provider is DeepSeek through the OpenAI-compatible SDK adapter, with mo
 
 The approved architecture is Hybrid: this project builds the decisions, while provider SDKs and commodity components may be adopted. The Python Workflow Engine remains the sole authority over workflow state, execution, permissions, approvals, budgets, retries, evidence validation and final acceptance. The local workspace remains the current implementation, and no generic Workspace Protocol is introduced without a real second implementation.
 
-#### Milestone status (M0–M8)
+#### Where progress is recorded
 
-The Phase 1 plan is the canonical milestone record. Three completion states are kept separate: implementation present is not formal closeout, and formal closeout is not Human acceptance.
+Implementation present, formal closeout and Human acceptance are three separate states. The Phase 1 plan is the canonical milestone record: milestones, dependencies, completion criteria, required evidence and acceptance are recorded there and nowhere else. [`PROJECT_STATE.md`](PROJECT_STATE.md) is the compact continuation snapshot; it records the current position and which work is authorised. This charter states no milestone status of its own.
 
-| Milestone | Implementation | Formal closeout | Human acceptance | Evidence |
-|---|---|---|---|---|
-| M0 Environment and repository verification | Completed | Recorded — report PASS | Not separately recorded | `records/m0-environment-report.md` |
-| M1 FakeProvider walking skeleton | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` | source and tests exist; no closeout record |
-| M2 QA execution, evidence and approval | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` | source and scenario tests exist; no closeout record |
-| M3 Cost accounting and budget enforcement | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` | cost modules and tests exist; no closeout record |
-| M4 Retry and escalation | Completed and merged | Recorded — reviewed and merged at `9c11b6a` | Merge approved by the Human 2026-11-24 | `tests/scenarios/test_retry_then_pass.py`, `tests/scenarios/test_retry_exhausted.py`, `tests/test_m4_retry.py` |
-| M5 Live provider validation | Diagnostic only | Not recorded | Not recorded | run `20261123T110208Z-97bc01`; formal acceptance explicitly not recorded |
-| M6 Snake specification | Not started | Not started | Not started | no `projects/snake` artefact |
-| M7 Snake live end-to-end run | Not started | Not started | Not started | — |
-| M8 Documentation and progress | Not started | Not started | Not started | — |
-
-Status notes:
-
-- The DeepSeek Live E2E diagnostic succeeded on `projects/diagnostic` (run `20261123T110208Z-97bc01`): the task completed, the engine accepted the QA evidence, 7 API calls were recorded, and actual cost was USD 0.004748 with no outstanding or uncertain reservation. It created a `hello.txt` file and is not the Snake Game acceptance run.
-- An earlier revision of this section described M0–M3 as implementation closeout complete. Under the three-state separation above that wording overstated the evidence for M1–M3: implementation is present, but no M1–M3 closeout artefacts exist in the repository. This correction is `PROPOSAL — HUMAN APPROVAL REQUIRED`.
-- M4 retry and escalation are completed and merged (`9c11b6a`). Only an engine-confirmed QA failure backed by verified non-zero execution evidence retries once; exhausted attempts escalate. `BudgetError`, provider, engine and infrastructure failures never retry. The status and evidence wording for M4 was updated in documentation commit `85d6c90`.
-- Phase 1 is not accepted. Acceptance requires the Snake run and the recorded human spot check defined in the Phase 1 plan.
-
-#### Milestone dependencies
-
-- M0 → M1 → M2 → M3 → M4 → M5 → M6 are sequential.
-- M5 is the next milestone; M6 begins only after M5 is completed.
-- M7 requires completed M5 and M6.
-- M8 runs only after M7 is complete and accepted.
-
-These dependencies are recorded in `plans/phase1-architecture-plan.md` and restated here for visibility; they are not a new decision.
-
-#### Outstanding work
-
-- M5 formal live-provider milestone acceptance and closeout.
-- M6 Snake specification with criterion IDs and a negative test.
-- M7 Snake live end-to-end run and the human QA test-file spot check.
-- M8 progress and backlog closeout.
-
-#### Current position and next required milestone
-
-- [FACT] Current position: Phase 1, implementation present through the M4 scope, M5 diagnostic only, Phase 1 not accepted.
-- [FACT] M4 was completed, independently reviewed and merged into `main` at `9c11b6a` on 2026-11-24 with explicit Human merge approval.
-- [FACT] The documented dependency order makes M5 the next valid milestone; M6 follows once M5 is completed, then M7 and M8 in turn.
-- `NO TASK AUTHORISED`: neither M5 nor M6 work is authorised by this charter. Each needs its own explicit Human authorization.
-- The operational snapshot for continuation sessions is [`PROJECT_STATE.md`](PROJECT_STATE.md). It is a derived summary only, not an independent authority: this charter remains authoritative for principles, governance and decisions, and the Phase 1 plan remains the canonical milestone record. On any conflict those documents win.
+`NO TASK AUTHORISED`: neither M5 nor M6 work is authorised by this charter. Each requires its own explicit Human authorization.
 
 The Phase 1 blueprint is kept in `plans/phase1-architecture-plan.md` and is subordinate to this charter and to ADR-001.
 
