@@ -30,6 +30,12 @@ Working rules:
 - Map every check to exactly one criterion id and mark its kind as `positive` or
   `negative`.
 - Do not invent output. If a command was denied or failed, report that honestly.
+- Keep every `write_file` small: at most about 1500 characters (roughly 40
+  lines) in one call. If a test file needs more, split it across several files
+  under `qa_tests/` instead of writing one large file.
+- If a tool call fails because its arguments were empty, invalid or truncated,
+  do not repeat the same oversized call. Split the content and record what is
+  still unverified in `unverified_requirements`.
 
 Reply with exactly one JSON object and nothing else:
 

@@ -309,7 +309,18 @@ class OpenAIProvider:
                 text=None, tool_calls=[], usage=self._map_usage(response)
             )
 
-        message = getattr(choices[0], "message", None)
+        choice = choices[0]
+        if getattr(choice, "finish_reason", None) == "length":
+            # A truncated reply can carry a partial tool-call payload. Mapping
+            # it would either hide the truncation or produce a misleading tool
+            # error, so the adapter fails closed with the real cause.
+            raise ProviderError(
+                "output_truncated",
+                "provider output hit max_output_tokens; the reply or its tool "
+                "arguments may be incomplete",
+            )
+
+        message = getattr(choice, "message", None)
         text = getattr(message, "content", None) if message is not None else None
         tool_calls: list[ToolCall] = []
         for call in getattr(message, "tool_calls", None) or []:
@@ -359,15 +370,38 @@ class OpenAIProvider:
 
 
 def _parse_arguments(raw: Any) -> dict[str, Any]:
+    """Decode one tool call's arguments.
+
+    Some providers omit the field for a zero-argument call, so a missing or
+    empty payload means "no arguments". A non-empty payload that is not a JSON
+    object is malformed or truncated; silently returning ``{}`` would hide the
+    cause and turn it into a misleading tool error, so it fails closed.
+    """
     if isinstance(raw, dict):
         return dict(raw)
-    if not isinstance(raw, str) or not raw:
+    if raw is None:
+        return {}
+    if not isinstance(raw, str):
+        raise ProviderError(
+            "tool_arguments_invalid",
+            "tool call arguments are not a JSON string",
+        )
+    if not raw.strip():
         return {}
     try:
         parsed = json.loads(raw)
     except (TypeError, ValueError):
-        return {}
-    return parsed if isinstance(parsed, dict) else {}
+        raise ProviderError(
+            "tool_arguments_invalid",
+            "tool call arguments are not valid JSON; the response was probably "
+            "truncated by max_output_tokens",
+        ) from None
+    if not isinstance(parsed, dict):
+        raise ProviderError(
+            "tool_arguments_invalid",
+            "tool call arguments must decode to a JSON object",
+        )
+    return parsed
 
 
 def create_openai_provider(

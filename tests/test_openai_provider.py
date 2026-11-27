@@ -64,14 +64,19 @@ class APIStatusError(Exception):
         self.status_code = status_code
 
 
-def _response(*, text="hello", tool_calls=None, usage=True):
+def _response(*, text="hello", tool_calls=None, usage=True, finish_reason=None):
     usage_value = (
         SimpleNamespace(prompt_tokens=10, completion_tokens=5)
         if usage is True
         else usage
     )
     message = SimpleNamespace(content=text, tool_calls=tool_calls or [])
-    return SimpleNamespace(choices=[SimpleNamespace(message=message)], usage=usage_value)
+    return SimpleNamespace(
+        choices=[
+            SimpleNamespace(message=message, finish_reason=finish_reason)
+        ],
+        usage=usage_value,
+    )
 
 
 def _spec() -> ToolSpec:
@@ -191,10 +196,10 @@ def test_response_text_tool_calls_and_usage_are_mapped():
     assert result.usage.output_tokens == 5
 
 
-def test_invalid_tool_arguments_become_an_empty_mapping():
+def test_empty_tool_arguments_are_an_empty_mapping():
     tool_call = SimpleNamespace(
         id="call_1",
-        function=SimpleNamespace(name="write_file", arguments="{not json"),
+        function=SimpleNamespace(name="write_file", arguments=""),
     )
     client = FakeClient(_response(text=None, tool_calls=[tool_call]))
 
@@ -207,6 +212,40 @@ def test_invalid_tool_arguments_become_an_empty_mapping():
     )
 
     assert result.tool_calls[0].arguments == {}
+
+
+def test_invalid_tool_arguments_fail_closed():
+    tool_call = SimpleNamespace(
+        id="call_1",
+        function=SimpleNamespace(name="write_file", arguments="{not json"),
+    )
+    client = FakeClient(_response(text=None, tool_calls=[tool_call]))
+
+    with pytest.raises(ProviderError) as info:
+        _provider(client).complete(
+            model="gpt-4.1-mini",
+            system="system",
+            messages=[ChatMessage(role="user", content="hi")],
+            tools=[],
+            max_output_tokens=10,
+        )
+
+    assert info.value.kind == "tool_arguments_invalid"
+
+
+def test_finish_reason_length_raises_output_truncated():
+    client = FakeClient(_response(text=None, finish_reason="length"))
+
+    with pytest.raises(ProviderError) as info:
+        _provider(client).complete(
+            model="gpt-4.1-mini",
+            system="system",
+            messages=[ChatMessage(role="user", content="hi")],
+            tools=[],
+            max_output_tokens=10,
+        )
+
+    assert info.value.kind == "output_truncated"
 
 
 def test_missing_usage_is_none_not_zero():
