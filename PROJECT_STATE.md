@@ -26,6 +26,7 @@ Canonical milestone status, scope and evidence are recorded in `plans/phase1-arc
 ## 4. Outstanding Human decisions
 
 - When to authorise M5, the next milestone.
+- Broader open project and design decisions are listed in [AI_Engineering_Team.md](AI_Engineering_Team.md) §7 ("Still open"). They are not prerequisites for M5, and remain unresolved rather than approved decisions.
 
 ## 5. Evidence pointers
 

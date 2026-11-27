@@ -35,6 +35,7 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 | Environment | Conda `ai-team`, Python 3.12.16 |
 | Preflight command | `python scripts/preflight.py` |
 | Document authority order | `AI_Engineering_Team.md` > `plans/adr-001-hybrid-architecture.md` > `plans/phase1-architecture-plan.md` |
+| Documentation index and reading order | [README.md](README.md) §7 — where each document type is described and when to read it; the mandatory bootstrap order is defined in AGENTS.md §2.1 |
 | Project-specific restrictions | Read-only during alignment; Phase 1 forbids package installation; no agent framework; every generated-code execution needs its own approval; only the engine reads secrets; document changes use a review branch and need Human merge approval |
 | Project limitations | Git hook and CI are not installed; preflight is manual; local `main` may be behind `origin/main` while the working tree is protected |
 
@@ -124,7 +125,7 @@ Layer 0–1 係起步必讀；Layer 2–4 按任務需要再讀。最低 bootstr
 |---|---|---|---|
 | [`AGENTS.md`](AGENTS.md) | 0 | 每個 session 開始 | 全部 |
 | [`PROJECT_STATE.md`](PROJECT_STATE.md) | 1 | 開始工作前；狀態快照，非權威 | 全部 |
-| [`README.md`](README.md) §1.1 | 1 | 需要專案設定值（語言、preflight 指令、authority order） | 設定表 |
+| [`README.md`](README.md) §1.1 | 1 | 起步必讀（Project Configuration）；之後需要設定值時再查 | 設定表 |
 | [`UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`](UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md) | 2 | 做 alignment／對齊測試，或需要授權邊界細節 | 相關章節 |
 | [`AI_Engineering_Team.md`](AI_Engineering_Team.md) | 3 | 涉及原則、治理或安全邊界；最高權威 | 相關章節 |
 | [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) | 3 | 涉及 milestone、範圍、驗收或實作 | 相關章節 |
