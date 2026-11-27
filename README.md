@@ -12,7 +12,7 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 
 ### 1.1 專案設定（Project Configuration）
 
-呢個表係 Protocol Part 1 所需嘅 project values；Protocol 只保留 schema，唔會重複呢啲值。
+呢個表係專案設定值；Protocol 只定義流程，唔會重複呢啲值。
 
 | Field | Value |
 |---|---|
