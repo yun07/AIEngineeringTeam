@@ -18,7 +18,7 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 |---|---|
 | Project name | AI Engineering Team |
 | Project root | `c:/AIProjects/AIEngineeringTeam` |
-| Primary entry document | `AI_Engineering_Team.md` |
+| Primary entry document | `AI_Engineering_Team.md` (project context; the AI operating entry point is `AGENTS.md`, see AGENTS §2) |
 | Compact project state document | `PROJECT_STATE.md` |
 | Working-rules entry point | `AGENTS.md` |
 | Architecture / design documents | `plans/phase1-architecture-plan.md`, `plans/adr-001-hybrid-architecture.md` |
@@ -28,7 +28,7 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 | Tests / evidence / logs | `tests/`, `runs/`, `projects/` |
 | Git repository | `https://github.com/yun07/AIEngineeringTeam` |
 | Baseline branch | `main`; review branches are based on the latest `origin/main` |
-| Current milestone / phase | Phase 1 — M4 completed, reviewed and merged; M5 is next, then M6, M7, M8 in sequence |
+| Current milestone / phase | Phase 1 in progress, not accepted; see [`PROJECT_STATE.md`](PROJECT_STATE.md) |
 | Current task | No task authorised; current position is recorded in [`PROJECT_STATE.md`](PROJECT_STATE.md) |
 | Configured language | Cantonese, Traditional Chinese |
 | Documentation language policy | `README.md`: Traditional Chinese; `AGENTS.md` and `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`: English |
@@ -95,27 +95,9 @@ flowchart TD
 
 ## 6. 現況同下一步
 
-**現況**：Phase 1 進行中。M0 closeout 有紀錄（`records/m0-environment-report.md` PASS）；M1–M3 implementation 已存在，但 formal closeout 仍係 `UNVERIFIED`，冇 closeout artefact。M4 retry／escalation 已完成 implementation、independent review 同 Human 批准的 merge（M4 implementation merge commit `9c11b6a`）。DeepSeek Live E2E diagnostic 已成功（`projects/diagnostic`，7 次 API call，actual USD 0.004748），但只係 `hello.txt` diagnostic，唔係 Snake 驗收，亦唔代表 M5 formal acceptance 已完成。
+Phase 1 進行中，**未 acceptance**。下一步係 M5，之後 M6 → M7 → M8；每一項都要 Human 另行授權。
 
-M5 仍然只係 diagnostic，formal acceptance 未記錄；M6–M8 未開始。Phase 1 **未 acceptance**。即時狀態快照見 [`PROJECT_STATE.md`](PROJECT_STATE.md)；該檔只係衍生快照，唔係權威 —— 里程碑記錄以 [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) 為準，原則同治理以 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) 為準。M4 狀態與證據的本次文件更新見 commit `85d6c90`。
-
-**下一步**：M4 已完成，下一步係 **M5**（live provider validation）。順序為 `M5 → M6 → M7 → M8`：M6 要等 M5 完成；M7 要 M5 同 M6 完成；M8 要 M7 完成並被接受。以上每一項都要 Human 另外授權。
-
-### 6.1 改動點樣驗收
-
-- 文件改動：獨立 review branch + `python scripts/preflight.py`（preflight validation，唔係 Git hook）；commit 後再用 `git diff --stat origin/main...HEAD` 核對範圍。
-- Code 改動：另加 `python -m pytest`，報告實際 exit code 同通過/失敗數。
-- 詳細 evidence、獨立 review 同 Human approval 規則見 [`AGENTS.md`](AGENTS.md)；本節只保留 project 指令。
-
-### 6.2 協作流程
-
-通用 bootstrap、workflow、evidence、review 同 approval 規則已集中在 [`AGENTS.md`](AGENTS.md) 同 [`UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`](UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md)。README 只保留 project 設定、狀態同限制，避免重複。
-
-### 6.3 限制（如實區分）
-
-- **已實現**：`scripts/preflight.py`、17 個 regression tests、review branch evidence handoff。
-- **尚未實現**：Git pre-commit hook、CI 自動觸發、GitHub branch protection 自動檢查。Preflight 要人手執行，而且必須喺自己 repo/worktree 執行。
-- **未來可選（未批准）**：CI required checks、hook 安裝、額外 metrics。
+即時位置、下一步同未授權事項見 [`PROJECT_STATE.md`](PROJECT_STATE.md)。Milestone 狀態、驗收條件同證據以 [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) 為準；工作流程、審批、evidence 同 review 規則見 [`AGENTS.md`](AGENTS.md)。專案限制（hook／CI 未安裝、preflight 要人手跑）見 §1.1 `Project limitations`。
 
 ## 7. 文件索引（唯一 Document Index）
 

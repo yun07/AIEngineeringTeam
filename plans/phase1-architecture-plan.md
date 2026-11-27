@@ -2,8 +2,8 @@
 
 **Project:** Generic AI Engineering Team
 **Scope:** Phase 1 = minimal but complete end-to-end system
-**Status:** Implementation baseline agreed. Phase 1 in progress: M0 closeout recorded; M1–M3 implementation present with formal closeout `UNVERIFIED`; M4 completed, reviewed and merged into `main` at `9c11b6a`; M5 diagnostic only; M6–M8 not started; Phase 1 not accepted.
-**Revision:** 5 approved text retained. Proposed revision 7 (documentation clarity and consistency) — `PROPOSAL — HUMAN APPROVAL REQUIRED`. Revision 6 clarifications C1–C7 are consolidated in Appendix A: C2 and C3 are approved rules; C1 and C4–C7 remain proposed baseline defaults.
+**Status:** Phase 1 in progress; Phase 1 is not accepted. Milestone status, evidence and acceptance are recorded in the milestone contract table and checklist below; the current position is in [`PROJECT_STATE.md`](../PROJECT_STATE.md).
+**Revision:** 5 approved text retained. Revision 6 C1–C7 are consolidated in Appendix A: C2 and C3 are approved rules; C1 and C4–C7 remain proposed baseline defaults. Revision 7 (documentation clarity) is `PROPOSAL — HUMAN APPROVAL REQUIRED`.
 **Companion documents:** [`AI_Engineering_Team.md`](../AI_Engineering_Team.md)
 
 **Relationship to the charter:** This plan implements one minimal Phase 1 slice of the canonical charter. Where the two documents disagree, the charter is authoritative and this plan is corrected. The charter's indicative Phase 1 to Phase 3 capabilities are delivered here as a single Phase 1 vertical slice; later charter phases remain future direction.

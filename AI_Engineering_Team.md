@@ -4,7 +4,7 @@
 
 Last updated: 23 November 2026
 
-**Status:** Canonical charter, proposed revision 3 (documentation clarity pass — `PROPOSAL — HUMAN APPROVAL REQUIRED`). Phase 1 is in progress: M0 closeout is recorded, M1–M3 implementation is present with formal closeout `UNVERIFIED`, M4 is completed, reviewed and merged into `main` at `9c11b6a`, and Phase 1 is not accepted.
+**Status:** Canonical charter, proposed revision 3 (documentation clarity pass — `PROPOSAL — HUMAN APPROVAL REQUIRED`). Phase 1 is in progress and is not accepted. Milestone status, evidence and acceptance are recorded in the Phase 1 plan; the current position is in `PROJECT_STATE.md`.
 
 ## 1. Project Vision
 
@@ -201,6 +201,8 @@ The exact tools and architecture can evolve.
 ---
 
 ## 4. Operating Principles
+
+Operating detail for AI sessions — bootstrap, review procedure, evidence and Git rules — is defined in `AGENTS.md`. This section states this project's principles only.
 
 ### 4.1 Task Workflow
 
