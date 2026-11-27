@@ -23,7 +23,7 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 | Working-rules entry point | `AGENTS.md` |
 | Architecture / design documents | `plans/phase1-architecture-plan.md`, `plans/adr-001-hybrid-architecture.md` |
 | Decision records | `plans/adr-001-hybrid-architecture.md` |
-| Status / progress documents | `plans/phase1-architecture-plan.md` (canonical milestone status and acceptance record); `PROJECT_STATE.md` (compact continuation snapshot, not a competing status authority); `AI_Engineering_Team.md` and `README.md` (governance and current status narrative) |
+| Status / progress documents | `plans/phase1-architecture-plan.md` (the only formal record of milestones, acceptance and evidence); `PROJECT_STATE.md` (short progress snapshot); `AI_Engineering_Team.md` (project principles and governance); `README.md` (project overview and document entry point) |
 | Technical specifications | `plans/phase1-architecture-plan.md` |
 | Tests / evidence / logs | `tests/`, `runs/`, `projects/` |
 | Git repository | `https://github.com/yun07/AIEngineeringTeam` |
@@ -93,11 +93,9 @@ flowchart TD
 
 刻意唔做（engine／執行層）：Docker 隔離、generated work 嘅 Git worktree 隔離、SQLite、斷點續跑、並行任務、外部監控、自我改進、Consultant 角色、手機或語音批准。Review 用嘅獨立 worktree 屬工具操作，唔係 Phase 1 engine isolation。
 
-## 6. 現況同下一步
+## 6. 現況
 
-Phase 1 進行中，**未 acceptance**。下一步係 M5，之後 M6 → M7 → M8；每一項都要 Human 另行授權。
-
-即時位置、下一步同未授權事項見 [`PROJECT_STATE.md`](PROJECT_STATE.md)。Milestone 狀態、驗收條件同證據以 [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) 為準；工作流程、審批、evidence 同 review 規則見 [`AGENTS.md`](AGENTS.md)。專案限制（hook／CI 未安裝、preflight 要人手跑）見 §1.1 `Project limitations`。
+Phase 1 進行中，**未 acceptance**。即時位置、下一步同未授權事項見 [`PROJECT_STATE.md`](PROJECT_STATE.md)；milestone 狀態、驗收條件同證據以 [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) 為準；工作流程、審批同 review 規則見 [`AGENTS.md`](AGENTS.md)。專案限制（hook／CI 未安裝、preflight 要人手跑）見 §1.1 `Project limitations`。
 
 ## 7. 文件索引（唯一 Document Index）
 

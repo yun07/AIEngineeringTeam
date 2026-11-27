@@ -434,7 +434,7 @@ When continuing the project:
 2. Respect the difference between established principles and open decisions.
 3. Avoid asking the user to repeat information already documented here.
 4. Suggest improvements when there is a clear practical benefit.
-5. Update this document when important decisions, architecture or project progress change.
+5. Update this document when important project principles, architecture or approved decisions change.
 6. Treat this document as authoritative when it conflicts with an implementation plan or with code. Resolve the conflict in favour of this charter, or update the charter deliberately first.
 
 **This is a living document, not a rigid technical contract.**

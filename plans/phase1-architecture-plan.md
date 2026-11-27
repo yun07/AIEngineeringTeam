@@ -10,12 +10,6 @@
 
 ---
 
-## Revision Notes
-
-Revision 5 text is approved. Revision 6 clarifications C1–C7 are consolidated in Appendix A: C2 and C3 are approved rules, while C1 and C4–C7 remain proposed baseline defaults. Revision 7 (documentation clarity and consistency) is `PROPOSAL — HUMAN APPROVAL REQUIRED`. The detailed change list for revisions 2–6 is preserved in git history and is not repeated here.
-
----
-
 ## Scope Statement
 
 Phase 1 delivers one working vertical slice of a generic AI engineering team:
