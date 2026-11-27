@@ -6,7 +6,7 @@
 
 ## 1. Authority
 
-Canonical milestone status, scope and evidence are recorded in `plans/phase1-architecture-plan.md`; this file never copies them. Principles and governance are in `AI_Engineering_Team.md`, architecture in `plans/adr-001-hybrid-architecture.md`, operation decisions in `plans/operations-decisions.md`, workflow and approval rules in `AGENTS.md`, the alignment process in `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`, and project values in `README.md` §1.1. If this file disagrees with any of them, they win and this file is corrected.
+Canonical milestone status, scope and evidence are recorded in `plans/phase1-architecture-plan.md`; this file never copies them. Principles and governance are in `AI_Engineering_Team.md`, architecture in `plans/adr-001-hybrid-architecture.md`, workflow and approval rules in `AGENTS.md`, the alignment process in `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`, and project values in `README.md` §1.1. If this file disagrees with any of them, they win and this file is corrected.
 
 ## 2. Where the project stands
 
@@ -21,7 +21,7 @@ Canonical milestone status, scope and evidence are recorded in `plans/phase1-arc
 - The live provider is DeepSeek through the OpenAI-compatible adapter; provider, model and pricing are in `config/aiteam.toml`.
 - Roles run as independent sessions with bounded handoffs, and every generated-code execution needs its own Human approval.
 - Retry semantics: only an engine-confirmed QA failure backed by verified non-zero execution evidence retries; `max_attempts = 2` counts the initial attempt; exhausted attempts escalate; `BudgetError`, `LimitExceeded`, provider, engine and infrastructure failures never retry.
-- Workflow coordination follows `AGENTS.md` §9 with OD-002 and OD-003. The WP2 Revision 1 target architecture is an accepted architecture baseline; its observability, governance and evolution steps (A1–A4) are not authorised.
+- Workflow coordination follows `AGENTS.md` §9. The WP2 Revision 1 target architecture is an accepted architecture baseline; its observability, governance and evolution steps (A1–A4) are not authorised.
 
 ## 4. Outstanding Human decisions
 
@@ -30,7 +30,7 @@ Canonical milestone status, scope and evidence are recorded in `plans/phase1-arc
 ## 5. Evidence pointers
 
 - M4: implementation merge `9c11b6ab0842280b51fdd0c4bcec5db1f078c1ca`, branch head `432a776098777c3be5faa16232c53a63c2431c0b`, review fixes `78d6e9c` and `432a776`; full suite 328 tests, 0 failed, 5 skipped at `78d6e9c`; independent review PASS; Human merge approval 2026-11-24.
-- M0: `plans/m0-environment-report.md` (PASS).
+- M0: `records/m0-environment-report.md` (PASS).
 - M5 diagnostic only: `projects/diagnostic`, run `20261123T110208Z-97bc01`, 7 API calls, actual USD 0.004748 — not a Snake acceptance run.
 
 ## 6. Update rule

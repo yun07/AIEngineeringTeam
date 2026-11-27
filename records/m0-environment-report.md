@@ -82,7 +82,7 @@ The `AGENTS.md` modification predates M0 and was not caused by this milestone. T
 |---|---|
 | `.gitignore` | `state/` and `runs/` ignored; `projects/*` ignored by default while `projects/snake/` is re-included so the fixture source and QA tests stay in Git; all existing rules and the file's UTF-8 BOM preserved |
 | `.env.example` | new, key names only with empty values, no secrets |
-| `plans/m0-environment-report.md` | this report |
+| `records/m0-environment-report.md` | this report |
 
 `.env` itself remains ignored, and the `.env.*` pattern with the `!.env.example` exception already allowed the example file. Verified with `git check-ignore -v`: `.env` matches `.gitignore:2` and `.env.example` matches the negation rule at `.gitignore:4`.
 

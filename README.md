@@ -22,7 +22,7 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 | Compact project state document | `PROJECT_STATE.md` |
 | Working-rules entry point | `AGENTS.md` |
 | Architecture / design documents | `plans/phase1-architecture-plan.md`, `plans/adr-001-hybrid-architecture.md` |
-| Decision records | `plans/adr-001-hybrid-architecture.md`, `plans/operations-decisions.md` |
+| Decision records | `plans/adr-001-hybrid-architecture.md` |
 | Status / progress documents | `plans/phase1-architecture-plan.md` (canonical milestone status and acceptance record); `PROJECT_STATE.md` (compact continuation snapshot, not a competing status authority); `AI_Engineering_Team.md` and `README.md` (governance and current status narrative) |
 | Technical specifications | `plans/phase1-architecture-plan.md` |
 | Tests / evidence / logs | `tests/`, `runs/`, `projects/` |
@@ -34,7 +34,7 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 | Documentation language policy | `README.md`: Traditional Chinese; `AGENTS.md` and `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`: English |
 | Environment | Conda `ai-team`, Python 3.12.16 |
 | Preflight command | `python scripts/preflight.py` |
-| Document authority order | `AI_Engineering_Team.md` > `plans/adr-001-hybrid-architecture.md` > `plans/phase1-architecture-plan.md` > `plans/operations-decisions.md` |
+| Document authority order | `AI_Engineering_Team.md` > `plans/adr-001-hybrid-architecture.md` > `plans/phase1-architecture-plan.md` |
 | Project-specific restrictions | Read-only during alignment; Phase 1 forbids package installation; no agent framework; every generated-code execution needs its own approval; only the engine reads secrets; document changes use a review branch and need Human merge approval |
 | Project limitations | Git hook and CI are not installed; preflight is manual; local `main` may be behind `origin/main` while the working tree is protected |
 
@@ -94,7 +94,7 @@ flowchart TD
 
 ## 6. 現況同下一步
 
-**現況**：Phase 1 進行中。M0 closeout 有紀錄（`plans/m0-environment-report.md` PASS）；M1–M3 implementation 已存在，但 formal closeout 仍係 `UNVERIFIED`，冇 closeout artefact。M4 retry／escalation 已完成 implementation、independent review 同 Human 批准的 merge（M4 implementation merge commit `9c11b6a`）。DeepSeek Live E2E diagnostic 已成功（`projects/diagnostic`，7 次 API call，actual USD 0.004748），但只係 `hello.txt` diagnostic，唔係 Snake 驗收，亦唔代表 M5 formal acceptance 已完成。
+**現況**：Phase 1 進行中。M0 closeout 有紀錄（`records/m0-environment-report.md` PASS）；M1–M3 implementation 已存在，但 formal closeout 仍係 `UNVERIFIED`，冇 closeout artefact。M4 retry／escalation 已完成 implementation、independent review 同 Human 批准的 merge（M4 implementation merge commit `9c11b6a`）。DeepSeek Live E2E diagnostic 已成功（`projects/diagnostic`，7 次 API call，actual USD 0.004748），但只係 `hello.txt` diagnostic，唔係 Snake 驗收，亦唔代表 M5 formal acceptance 已完成。
 
 M5 仍然只係 diagnostic，formal acceptance 未記錄；M6–M8 未開始。Phase 1 **未 acceptance**。即時狀態快照見 [`PROJECT_STATE.md`](PROJECT_STATE.md)；該檔只係衍生快照，唔係權威 —— 里程碑記錄以 [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) 為準，原則同治理以 [`AI_Engineering_Team.md`](AI_Engineering_Team.md) 為準。M4 狀態與證據的本次文件更新見 commit `85d6c90`。
 
@@ -116,17 +116,20 @@ M5 仍然只係 diagnostic，formal acceptance 未記錄；M6–M8 未開始。P
 - **尚未實現**：Git pre-commit hook、CI 自動觸發、GitHub branch protection 自動檢查。Preflight 要人手執行，而且必須喺自己 repo/worktree 執行。
 - **未來可選（未批准）**：CI required checks、hook 安裝、額外 metrics。
 
-## 7. 文件邊份最權威
+## 7. 文件索引（唯一 Document Index）
 
-| 文件 | 幾時睇 |
-|---|---|
-| [`AGENTS.md`](AGENTS.md) | 每次新 session 入口；工作流程同讀取紀律，低於 Charter。 |
-| [`AI_Engineering_Team.md`](AI_Engineering_Team.md) | 最高權威，講願景同原則。任何衝突以佢為準。 |
-| [`plans/adr-001-hybrid-architecture.md`](plans/adr-001-hybrid-architecture.md) | 已接受嘅 Hybrid 架構決定。架構問題以佢為準，但仍低於 Charter。 |
-| [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) | Phase 1 實作藍圖，低於 Charter 同 ADR-001。 |
-| [`plans/operations-decisions.md`](plans/operations-decisions.md) | 操作層決定，例如 Zoo Code orchestration 問題，唔係架構權威。 |
-| [`PROJECT_STATE.md`](PROJECT_STATE.md) | Continuation Alignment 用的狀態快照；衍生自 Charter 同 Phase 1 plan，有衝突時以上述權威文件為準。 |
-| [`plans/oss-architecture-research.md`](plans/oss-architecture-research.md)、[`plans/architecture-decision-review.md`](plans/architecture-decision-review.md)、[`plans/m0-environment-report.md`](plans/m0-environment-report.md) | 歷史研究、決策理由同環境紀錄，只作背景，唔係現行規範。 |
+Layer 0–1 係起步必讀；Layer 2–4 按任務需要再讀。最低 bootstrap 閱讀次序由 [`AGENTS.md`](AGENTS.md) §2.1 定義，本表唔重複該次序。
+
+| 文件 | Layer | 幾時睇 | 範圍 |
+|---|---|---|---|
+| [`AGENTS.md`](AGENTS.md) | 0 | 每個 session 開始 | 全部 |
+| [`PROJECT_STATE.md`](PROJECT_STATE.md) | 1 | 開始工作前；狀態快照，非權威 | 全部 |
+| [`README.md`](README.md) §1.1 | 1 | 需要專案設定值（語言、preflight 指令、authority order） | 設定表 |
+| [`UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`](UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md) | 2 | 做 alignment／對齊測試，或需要授權邊界細節 | 相關章節 |
+| [`AI_Engineering_Team.md`](AI_Engineering_Team.md) | 3 | 涉及原則、治理或安全邊界；最高權威 | 相關章節 |
+| [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) | 3 | 涉及 milestone、範圍、驗收或實作 | 相關章節 |
+| [`plans/adr-001-hybrid-architecture.md`](plans/adr-001-hybrid-architecture.md) | 3 | 架構問題 | 全部（短文） |
+| [`records/m0-environment-report.md`](records/m0-environment-report.md) | 4 | 需要 M0 環境證據時 | 需要時 |
 
 ## 8. 三個常用詞
 

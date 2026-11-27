@@ -419,7 +419,7 @@ The Phase 1 plan is the canonical milestone record. Three completion states are 
 
 | Milestone | Implementation | Formal closeout | Human acceptance | Evidence |
 |---|---|---|---|---|
-| M0 Environment and repository verification | Completed | Recorded — report PASS | Not separately recorded | `plans/m0-environment-report.md` |
+| M0 Environment and repository verification | Completed | Recorded — report PASS | Not separately recorded | `records/m0-environment-report.md` |
 | M1 FakeProvider walking skeleton | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` | source and tests exist; no closeout record |
 | M2 QA execution, evidence and approval | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` | source and scenario tests exist; no closeout record |
 | M3 Cost accounting and budget enforcement | Present | `UNVERIFIED` — no closeout artefact | `UNVERIFIED` | cost modules and tests exist; no closeout record |

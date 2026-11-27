@@ -5,7 +5,6 @@
 **Status:** Implementation baseline agreed. Phase 1 in progress: M0 closeout recorded; M1–M3 implementation present with formal closeout `UNVERIFIED`; M4 completed, reviewed and merged into `main` at `9c11b6a`; M5 diagnostic only; M6–M8 not started; Phase 1 not accepted.
 **Revision:** 5 approved text retained. Proposed revision 7 (documentation clarity and consistency) — `PROPOSAL — HUMAN APPROVAL REQUIRED`. Revision 6 clarifications C1–C7 are consolidated in Appendix A: C2 and C3 are approved rules; C1 and C4–C7 remain proposed baseline defaults.
 **Companion documents:** [`AI_Engineering_Team.md`](../AI_Engineering_Team.md)
-**Archived reference:** `plans/oss-architecture-research.md` and `plans/architecture-decision-review.md` are frozen. Do not update them.
 
 **Relationship to the charter:** This plan implements one minimal Phase 1 slice of the canonical charter. Where the two documents disagree, the charter is authoritative and this plan is corrected. The charter's indicative Phase 1 to Phase 3 capabilities are delivered here as a single Phase 1 vertical slice; later charter phases remain future direction.
 
@@ -51,7 +50,7 @@ Changes in revision 5:
 5. A human spot check of the QA test files is a required Phase 1 acceptance step.
 6. The Orchestrator is retained. A three-role versus two-role comparison is planned after the Snake run, using recorded results.
 7. QA is not required to use a different model in Phase 1. Per-role model configuration remains available.
-8. Progress documents are updated only at milestone boundaries. The research and decision review documents are archived.
+8. Progress documents are updated only at milestone boundaries.
 
 Changes proposed in revision 7 (documentation clarity, `PROPOSAL — HUMAN APPROVAL REQUIRED`):
 
@@ -674,7 +673,7 @@ Exit criterion: the live criteria in section F are satisfied, `runs/<run_id>/rep
 
 ### M8 Documentation and progress
 
-Update `AI_Engineering_Team.md` progress and environment tables, and the plan checklist, only after M7 is complete. Write `plans/phase1-backlog.md` with the deferred items in section G. Do not update the archived research or decision review documents.
+Update `AI_Engineering_Team.md` progress and environment tables, and the plan checklist, only after M7 is complete. Write `plans/phase1-backlog.md` with the deferred items in section G.
 
 M0 through M8 are sequential: each milestone begins only after the previous one is completed and recorded. M5 is next, then M6, then M7, then M8. M7 requires completed M5 and M6. M8 runs only after M7 is complete and accepted.
 
@@ -787,7 +786,7 @@ Verified by QA's own tests, not by claims.
 Status labels are evidence-based. `RESOLVED` items have an approved record or a configured value; `OPEN` items still need a Human decision. This list records status only and does not promote proposed revision 7.
 
 1. **RESOLVED.** Provider identity, model identifiers and pricing entries: `config/aiteam.toml` sets provider `deepseek` with an explicit endpoint, model `deepseek-flash` for all three roles, and a `[pricing."deepseek-flash"]` entry; placeholders and invalid pricing are rejected in live mode. Evidence: charter §7 "Decided and no longer open", `config/aiteam.toml`.
-2. **RESOLVED after M0.** The M0 environment report (2026-11-20) recorded `openai` and `pytest` as **missing** and `tkinter` as present, and deferred the OpenAI SDK until before M5. The OpenAI SDK 3.57.0 and pytest 9.2.0 were installed and verified afterwards in the `ai-team` environment (charter §6, 2026-11-23). The M0 findings are historical evidence; the later verified state is the current one. Evidence: `plans/m0-environment-report.md` and `AI_Engineering_Team.md` §6.
+2. **RESOLVED after M0.** The M0 environment report (2026-11-20) recorded `openai` and `pytest` as **missing** and `tkinter` as present, and deferred the OpenAI SDK until before M5. The OpenAI SDK 3.57.0 and pytest 9.2.0 were installed and verified afterwards in the `ai-team` environment (charter §6, 2026-11-23). The M0 findings are historical evidence; the later verified state is the current one. Evidence: `records/m0-environment-report.md` and `AI_Engineering_Team.md` §6.
 3. **PARTLY RESOLVED.** Model choice is configured in `config/aiteam.toml`. The run budget for the single live Snake run remains a Human decision at that run.
 4. **OPEN.** Whether project slugs other than the Snake fixture should stay git ignored after Phase 1. The Snake fixture is tracked in Phase 1. Recommendation: keep other slugs ignored until Git isolation exists.
 5. **RESOLVED.** Initial live provider identity: the provider is DeepSeek through the OpenAI-compatible adapter (charter §7). The adapter and pricing table still isolate the engine from that choice.
@@ -802,7 +801,7 @@ M5 prerequisites and M5 acceptance are separate requirements. M5 execution needs
 
 Status legend: `[x]` = completion criteria evidenced; `[ ]` = not evidenced. The status text is authoritative; a tick never implies formal closeout or Human acceptance by itself.
 
-- [x] M0 Verify `ai-team` environment and repository, extend `.gitignore`, add `.env.example`, record missing packages as manual actions — completed; `plans/m0-environment-report.md` records PASS
+- [x] M0 Verify `ai-team` environment and repository, extend `.gitignore`, add `.env.example`, record missing packages as manual actions — completed; `records/m0-environment-report.md` records PASS
 - [ ] M1 Build the FakeProvider walking skeleton: models, minimal config, snapshot store, agent session, plan and Developer write stages with read, write and list tools only, execution limits and report — implementation present; formal closeout `UNVERIFIED`
 - [ ] M2 Add QA-only execution with scrubbed environment, per-execution CONFIRM approval prompts, `qa_tests/` restriction, criterion coverage, negative check validation and denial handling — implementation present; formal closeout `UNVERIFIED`
 - [ ] M3 Add cost accounting: usage records, token accounting, USD pricing, budget enforcement and live-mode configuration validation — implementation present; formal closeout `UNVERIFIED`
@@ -818,7 +817,7 @@ This table states the same requirements already defined in sections E–F. It ad
 
 | Milestone | Objective | Scope | Dependencies | Completion criteria | Required evidence | Human acceptance |
 |---|---|---|---|---|---|---|
-| M0 | Verify the environment and repository | Environment checks, `.gitignore`, `.env.example` | None | Every item recorded present or missing; no installation attempted | `plans/m0-environment-report.md` | Report accepted; no separate sign-off recorded |
+| M0 | Verify the environment and repository | Environment checks, `.gitignore`, `.env.example` | None | Every item recorded present or missing; no installation attempted | `records/m0-environment-report.md` | Report accepted; no separate sign-off recorded |
 | M1 | FakeProvider vertical slice | Models, config, store, agent session, plan, Developer write, limits, report | M0 | One fake run creates tasks, writes a file, writes a report, limits asserted | Test run and report | Not recorded (`UNVERIFIED`) |
 | M2 | QA execution and evidence | QA shell tool, approval prompts, `qa_tests/` restriction, coverage and negative-check validation | M1 | Five M2 scenarios pass; policy denials proven | Scenario tests and approvals log | Not recorded (`UNVERIFIED`) |
 | M3 | Cost and budget | Usage records, pricing, budget stop, live-mode config validation | M2 | Budget-stop scenario passes; invalid pricing rejected | Tests, `usage.jsonl`, report | Not recorded (`UNVERIFIED`) |
