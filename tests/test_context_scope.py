@@ -32,7 +32,7 @@ def _calls_for(provider, role):
     return [call for call in provider.calls if call.role == role]
 
 
-def test_each_role_receives_only_its_scope(tmp_path):
+def test_developer_scope_and_full_qa_context(tmp_path):
     _repo(tmp_path)
     engine, _ = build_engine(
         tmp_path,
@@ -54,8 +54,10 @@ def test_each_role_receives_only_its_scope(tmp_path):
     assert "ALPHA_SENTINEL" in developer_bundle
     assert "BETA_SENTINEL" not in developer_bundle
 
+    # M7 fix: QA always receives the full context bundle, so a normative test
+    # plan is never lost when the Orchestrator scopes it to another task.
     assert "ALPHA_SENTINEL" in qa_bundle_text
-    assert "BETA_SENTINEL" not in qa_bundle_text
+    assert "BETA_SENTINEL" in qa_bundle_text
 
 
 def test_task_without_refs_gets_no_context_sections(tmp_path):
@@ -127,5 +129,6 @@ def test_developer_and_qa_transcripts_stay_separate(tmp_path):
 
     assert developer.transcript_path != qa.transcript_path
     assert all(message not in qa.messages for message in developer.messages)
+    # QA gets every supplied section (M7 fix), but no Developer transcript.
     assert "BETA_SENTINEL" in qa.messages[0].content
-    assert "ALPHA_SENTINEL" not in qa.messages[0].content
+    assert "ALPHA_SENTINEL" in qa.messages[0].content

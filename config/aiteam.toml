@@ -18,18 +18,26 @@ qa = "deepseek-flash"
 
 [limits]
 max_tasks_per_plan = 3
-max_turns_per_session = 12
-max_llm_calls_per_task = 20
+# Raised from 12 to 30 for M7: M5 evidence shows QA spent 12/12 turns
+# writing one test file, while the Snake QA plan needs ten test files.
+max_turns_per_session = 30
+# Raised from 20 to 40 for the same M7 reason. Human-approved 2026-11-27.
+max_llm_calls_per_task = 40
 max_attempts = 2
 command_timeout_seconds = 120
 max_tool_output_chars = 8000
 
 [cost]
-max_output_tokens_per_call = 1200
+# Raised from 1200 to 8000 for M7: a full game.py write exceeded 1200
+# output tokens and the provider reply was truncated. Human-approved
+# 2026-11-27.
+max_output_tokens_per_call = 8000
 safety_margin_percent = 10
 estimator = "tiktoken"
-# Operator-confirmed context window for the selected model.
-max_context_tokens = 32000
+# Operator-confirmed context window for the selected model. Raised from
+# 32000 to 65536 for M7 after QA reached 24.5k input tokens plus an 8k
+# output reservation. Human-approved 2026-11-27.
+max_context_tokens = 65536
 
 # Prices are operator-supplied conservative estimates in USD per million
 # tokens, using the provider's published peak / cache-miss rates. Local token

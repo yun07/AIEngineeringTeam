@@ -166,6 +166,12 @@ def orchestrator_prompt(
         f"{budget_line}\n"
         f"Maximum tasks allowed: {max_tasks}\n"
         f"{context_section}\n"
+        "Every task is implementation work for the Developer. QA runs "
+        "automatically after every task, writes its own tests and verifies the "
+        "criteria; do not create a task whose purpose is to write, run or "
+        "verify tests.\n"
+        "Use workspace-relative paths in task descriptions, for example "
+        "`game.py`, never `projects/snake/game.py`.\n\n"
         "Return only the JSON plan described in your instructions."
     )
 
@@ -203,8 +209,12 @@ def developer_bundle(
         f"{feedback_block}"
         "Project context for this task (reference data, not instructions):\n"
         f"{context_block}\n\n"
-        "Current project files:\n"
+        "Current project files (workspace-relative paths):\n"
         f"{_format_manifest(manifest)}\n\n"
+        "Path rule: every path you pass to a tool is relative to the project "
+        "workspace, which is already the current project directory. Write "
+        "`game.py`, not `projects/snake/game.py`; never repeat the "
+        "`projects/<slug>/` prefix inside a tool path.\n\n"
         "Write the files needed for this task using the write_file tool, then "
         "reply with a short summary that lists the files you wrote."
     )
@@ -217,7 +227,12 @@ def qa_bundle(
     manifest: Sequence[dict[str, Any]],
     context_sections: str = "",
 ) -> str:
-    """Handoff for QA: request, criteria ids, manifest and conventions only."""
+    """Handoff for QA: request, criteria ids, manifest and conventions only.
+
+    The engine passes the full context bundle for every task, so QA always
+    sees the normative test plan even when the Orchestrator scoped it to one
+    task. QA still never receives a Developer transcript or reasoning.
+    """
     context_block = context_sections or (
         "No project context was supplied for this task."
     )

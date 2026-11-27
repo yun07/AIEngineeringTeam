@@ -673,7 +673,7 @@ class WorkflowEngine:
                     request=run.request,
                     task=task,
                     manifest=file_manifest(self._workspace.root),
-                    context_sections=self._task_context(task),
+                    context_sections=self._full_context(),
                 )
             )
         except BudgetError as exc:
@@ -1053,6 +1053,18 @@ class WorkflowEngine:
         if self._context is None or not task.context_refs:
             return ""
         return self._context.render_sections(task.context_refs)
+
+    def _full_context(self) -> str:
+        """Return every supplied context section for QA.
+
+        M7 finding: passing only ``task.context_refs`` let the Orchestrator
+        route the normative QA test plan to a single task, so QA verifying a
+        different task never saw it. The bundle is already size-bounded, so QA
+        always receives the full bundle. This adds no Developer transcript.
+        """
+        if self._context is None:
+            return ""
+        return self._context.render_sections(self._context.section_ids)
 
     @staticmethod
     def _written_paths(session: AgentSession) -> list[str]:

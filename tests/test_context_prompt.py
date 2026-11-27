@@ -36,6 +36,9 @@ def test_orchestrator_prompt_labels_sources_and_sections(tmp_path):
     assert f"sha256={bundle.documents[0].sha256}" in prompt
     assert "=== END CONTEXT SOURCE 1 ===" in prompt
     assert "`context_refs`" in prompt
+    assert "QA runs automatically after every task" in prompt
+    assert "do not create a task whose purpose is to write, run or verify" in prompt
+    assert "workspace-relative paths" in prompt
 
 
 def test_developer_bundle_carries_only_given_sections(tmp_path):
@@ -60,9 +63,11 @@ def test_developer_bundle_carries_only_given_sections(tmp_path):
     assert "ALPHA_SENTINEL" in scoped
     assert "BETA_SENTINEL" not in scoped
     assert "No project context was supplied for this task." in unscoped
+    assert "Path rule:" in scoped
+    assert "projects/<slug>/" in scoped
 
 
-def test_qa_bundle_carries_only_given_sections(tmp_path):
+def test_qa_bundle_passes_the_sections_it_is_given(tmp_path):
     bundle = make_bundle(tmp_path)
     task = Task(
         id="T1",

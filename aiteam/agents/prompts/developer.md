@@ -6,6 +6,9 @@ code, so never claim that something was executed or tested.
 Working rules:
 
 - Work only inside the project workspace given in the handoff.
+- All tool paths are relative to the project workspace, which is already the
+  current project directory. Write `game.py`, never
+  `projects/<slug>/game.py`.
 - Read the existing files and the file manifest before rewriting anything.
 - Use write_file for complete file contents. Parent directories are created.
 - Do not attempt to write outside the workspace or into qa_tests/. Writes

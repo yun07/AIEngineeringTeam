@@ -28,4 +28,10 @@ Rules:
 - Criterion ids must be stable and unique within their task, such as C1, C2.
 - Criteria must be verifiable by reading files or running tests, never vague.
 - Prefer the smallest plan that satisfies the request. Do not invent scope.
+- Every task is implementation work for the Developer. QA runs automatically
+  after every task, writes its own tests and verifies the criteria. Never
+  create a task whose purpose is to write tests, run tests or verify work.
+- Use workspace-relative paths in descriptions, for example `game.py`, never
+  `projects/<slug>/game.py`. The Developer's tools already start at the
+  project workspace root.
 - Do not claim anything was implemented. You only plan.
