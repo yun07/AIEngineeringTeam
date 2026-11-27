@@ -109,6 +109,7 @@ Layer 0–1 係起步必讀；Layer 2–4 按任務需要再讀。最低 bootstr
 | [`UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`](UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md) | 2 | 做 alignment／對齊測試，或需要授權邊界細節 | 相關章節 |
 | [`AI_Engineering_Team.md`](AI_Engineering_Team.md) | 3 | 涉及原則、治理或安全邊界；最高權威 | 相關章節 |
 | [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) | 3 | 涉及 milestone、範圍、驗收或實作 | 相關章節 |
+| [`plans/snake-spec.md`](plans/snake-spec.md) | 3 | 涉及 Snake fixture 嘅要求、criterion ID、headless mode 或 QA test plan | 全部（短文） |
 | [`plans/adr-001-hybrid-architecture.md`](plans/adr-001-hybrid-architecture.md) | 3 | 架構問題 | 全部（短文） |
 | [`records/m0-environment-report.md`](records/m0-environment-report.md) | 4 | 需要 M0 環境證據時 | 需要時 |
 
