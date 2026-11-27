@@ -12,8 +12,8 @@ Canonical milestone status, scope and evidence are recorded in `plans/phase1-arc
 
 - Phase 1 is in progress and is not accepted. M4 is complete, reviewed and merged into `main` (implementation merge `9c11b6a`). M5 live validation and its closeout record are merged at `3e48fa7`. M6 is complete: the Snake specification `plans/snake-spec.md` was reviewed by the Human, three findings were corrected, and it is merged into `main`.
 - M7 is complete: live run `20261127T232029Z-30ab3e` finished `completed` with 3/3 tasks done, 3/3 QA pass and 56 passing tests, at an actual cost of USD 0.294202; the Human accepted the QA test file spot check on 2026-11-27, and the M7 implementation and fixture are merged into `main` at `1b48396`.
-- **M8 is the next milestone.** M8 follows M7's completion and acceptance, which this closeout records.
-- No M8 work is authorised by this snapshot.
+- **M8 is the current milestone**: its documentation work package is prepared on review branch `m8-docs-progress` (the deferred backlog is written and the charter and plan are updated), and it awaits Human merge approval and M8 acceptance.
+- No work beyond M8 is authorised by this snapshot.
 - The WP2 Revision 1 target architecture is an accepted architecture baseline; its observability, governance and evolution steps (A1–A4) are not authorised.
 - Per-milestone status, including the M1–M3 "present but not formally closed" position, is recorded only in the Phase 1 plan.
 
@@ -33,6 +33,8 @@ Architecture and accepted decisions are recorded in `plans/adr-001-hybrid-archit
 - M5: live validation run `20261127T194853Z-f66a68` (project `m5-validation`), one approved QA execution with exit code 0, actual USD 0.047871. Two earlier attempts failed closed (`20261127T194106Z-6aae04`, `20261127T194603Z-0c1f5e`). The run ended `blocked` on T2 `max_turns_per_session`. The earlier diagnostic run `20261123T110208Z-97bc01` remains historical evidence only. Closeout record merged at `3e48fa7`.
 - M6: specification `plans/snake-spec.md`; commits `3e36ce6` (specification) and `438a5b5` (review corrections). Human review on 2026-11-27 raised three findings — the initial-state formula, the absence of a public way to build test states, and missing CLI negative coverage — all corrected before merge. Merged into `main` by fast-forward in the M6 closeout work package.
 - M7: live run `20261127T232029Z-30ab3e` (project `snake`, provider `deepseek`, model `deepseek-flash`, budget USD 0.50): 3/3 tasks done, 3/3 QA pass, final QA suite 56 tests with exit code 0, nine per-execution approvals all granted, actual USD 0.294202 with USD 0.205798 remaining. Human QA test file spot check accepted 2026-11-27. Implementation and fixture merged at `1b48396`. Two earlier attempts blocked before completion — `20261127T225541Z-73d0a6` on `max_output_tokens` and `20261127T230551Z-89ff83` on `max_context_tokens` — and remain evidence only.
+
+- M8: documentation work package on review branch `m8-docs-progress`; deferred register `plans/phase1-backlog.md`; merge SHA not yet recorded.
 
 ## 6. Update rule
 

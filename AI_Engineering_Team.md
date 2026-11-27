@@ -369,12 +369,12 @@ Verification status:
 | Second Python environment | Conda: `local-agent` | Previously confirmed |
 | Python distribution | Miniconda | Previously confirmed |
 | pip | Available in `ai-team` | Verified in M0 |
-| Version control | Git | Verified 2026-11-23; branch `main`. No HEAD SHA is stored here; run `git rev-parse HEAD` and compare with `origin/main` when alignment needs it |
+| Version control | Git | Re-verified 2026-11-27 in the M8 work package. No HEAD SHA is stored here; run `git rev-parse HEAD` and compare with `origin/main` when alignment needs it |
 | OpenAI SDK | 3.57.0 installed in `ai-team` | Verified 2026-11-23 |
 | tiktoken | 0.14.0 installed in `ai-team` | Verified 2026-11-23 |
 | pytest | 9.2.0 installed in `ai-team` | Verified 2026-11-23; current suite results are recorded in the Phase 1 plan, not here |
 | tkinter | Tk 8.6 present | Verified in M0; not required for headless acceptance |
-| Git repository in this workspace | Branch `main`, synced with `origin/main` | Verified 2026-11-23; re-verify rather than storing a SHA |
+| Git repository in this workspace | Workspace branch tracks `main`; review branches are based on `origin/main` | Re-verified 2026-11-27 in the M8 work package; re-verify rather than storing a SHA |
 
 Zoo Code is currently installed and being used in VS Code. The choice of coding assistant remains revisable.
 
@@ -390,7 +390,7 @@ The approved architecture is Hybrid: this project builds the decisions, while pr
 
 Implementation present, formal closeout and Human acceptance are three separate states. The Phase 1 plan is the canonical milestone record: milestones, dependencies, completion criteria, required evidence and acceptance are recorded there and nowhere else. [`PROJECT_STATE.md`](PROJECT_STATE.md) is the compact continuation snapshot; it records the current position and which work is authorised. This charter states no milestone status of its own.
 
-`NO TASK AUTHORISED`: neither M5 nor M6 work is authorised by this charter. Each requires its own explicit Human authorization.
+`NO TASK AUTHORISED`: no work beyond the current documentation package is authorised by this charter. This charter records no milestone status: the current position and what is authorised are recorded in [`PROJECT_STATE.md`](PROJECT_STATE.md), and milestone status is recorded only in the Phase 1 plan. Each further step requires its own explicit Human authorization.
 
 The Phase 1 blueprint is kept in `plans/phase1-architecture-plan.md` and is subordinate to this charter and to ADR-001.
 

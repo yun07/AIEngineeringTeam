@@ -528,6 +528,8 @@ Update `AI_Engineering_Team.md` progress and environment tables, and the plan ch
 
 M0 through M8 are sequential: each milestone begins only after the previous one is completed and recorded. M5, M6 and M7 are complete; M8 is next. M7 required completed M5 and M6. M8 runs only after M7 is complete and accepted, and after this closeout record is merged into `main`.
 
+Current status: documentation prepared on review branch `m8-docs-progress`, based on `main` at `497772b`. [`phase1-backlog.md`](phase1-backlog.md) records the section G deferrals, the open decisions and the three-role versus two-role comparison plan; the charter environment table and Current Stage wording are refreshed; the archived M0 record is untouched. M8 is not complete until the Human approves the merge into `main`: a closeout commit then records the merge SHA, ticks the checklist and records M8 acceptance separately. Phase 1 acceptance remains a separate Human decision recorded in the M7 closeout.
+
 ### After Phase 1 — architecture comparison
 
 Once the Snake run is accepted, compare the three-role pipeline with a two-role pipeline: Developer plus Independent QA, no Orchestrator. Use the recorded run data: cost, number of attempts, defects found by QA, defects missed and human interventions. This is an evaluation of the same system, not new Phase 1 scope, and it changes no code by itself. Record the result in `plans/phase1-backlog.md`.
@@ -660,7 +662,7 @@ Status legend: `[x]` = completion criteria evidenced; `[ ]` = not evidenced. The
 - [x] M5 Validate the live provider adapter on one small task with a tiny budget, rejected placeholders and per-execution QA approvals — live validation completed in run `20261127T194853Z-f66a68` with one approved QA execution (exit 0); closeout record merged into `main` at `3e48fa7`
 - [x] M6 Write the Snake specification with criterion IDs and a QA test plan that includes a negative test — specification written in `plans/snake-spec.md`, Human review completed with three corrections applied (`438a5b5`), merged into `main`
 - [x] M7 Run the live Snake end-to-end success case, verify acceptance criteria and complete the human QA test file spot check — completed in run `20261127T232029Z-30ab3e` (3/3 tasks done, 3/3 QA pass, 56 tests, actual USD 0.294202); Human spot check accepted 2026-11-27; merged into `main` at `1b48396`
-- [ ] M8 Update progress documentation only after M7, record the three-role versus two-role comparison plan and the deferred backlog — not started
+- [ ] M8 Update progress documentation only after M7, record the three-role versus two-role comparison plan and the deferred backlog — documentation prepared on review branch `m8-docs-progress`: `plans/phase1-backlog.md` written from section G, charter and plan updated, archived documents untouched; merge approval and M8 acceptance not recorded
 
 ### Milestone contract table
 
@@ -676,7 +678,7 @@ This table states the same requirements already defined in sections E–F. It ad
 | M5 | Live provider validation | Adapter wiring, tiny budget, per-execution approval | M4 | Placeholder models and invalid pricing refused; usage and cost recorded; redaction verified; approval prompt observed | Run `20261127T194853Z-f66a68` report, approvals log, usage records | Validation recorded 2026-11-27; closeout merged at `3e48fa7` |
 | M6 | Snake specification | Requirement, criterion IDs, headless mode, QA test plan with a negative test | M5 | Every criterion ID maps to at least one planned check; negative case identifiable | `plans/snake-spec.md`; commits `3e36ce6` and `438a5b5` | Human review completed 2026-11-27; three findings corrected before merge |
 | M7 | Snake live end-to-end run | Happy path on the live provider plus human spot check | Completed M5 and M6 | Section F criteria satisfied; report published | Run `20261127T232029Z-30ab3e/report.md`, approvals log, recorded spot check; merged at `1b48396` | Spot check completed and accepted 2026-11-27 |
-| M8 | Documentation and progress | Charter and plan updates, `plans/phase1-backlog.md` | M7 | Progress recorded; backlog written; archived documents untouched | Updated documents | Not started |
+| M8 | Documentation and progress | Charter and plan updates, `plans/phase1-backlog.md` | M7 | Progress recorded; backlog written; archived documents untouched | Updated documents | Pending — documentation prepared on the review branch; merge approval not recorded |
 
 ### Appendix A — M4 Design Baseline (C1–C7)
 
