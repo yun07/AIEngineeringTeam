@@ -285,9 +285,9 @@ The Orchestrator and any other agent must not be able to modify the rules that g
 
 ### 4.8 Document Change and Review Governance
 
-The User is the only Merge Approver. Every document or code change goes through a separate review branch, an independent review of the actual files and diff by the Reviewer, and explicit Human approval before merge. A successful review is not merge approval, and approval to merge one change never authorises the next stage of work.
+The User is the only Merge Approver. Every document or code change is made on a separate review branch, and the User decides whether an independent review is required before merge. A review is not merge approval, and approval to merge one change never authorises the next stage of work.
 
-The operating detail — branch creation, change scope, preflight, evidence package, review handoff, blocked cases and post-merge cleanup — is defined once in `AGENTS.md` §7. These rules do not replace the technical controls on workflow state, command approvals, budgets and verification defined in §4.3 and in the Phase 1 plan.
+The operating detail — branch, scope, preflight, evidence, review handoff and post-merge cleanup — is defined once in `AGENTS.md` §7, including that the two review layers apply only when a review is requested. These rules do not replace the technical controls on workflow state, command approvals, budgets and verification defined in §4.3 and in the Phase 1 plan.
 
 ---
 

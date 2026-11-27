@@ -1,284 +1,95 @@
 # AGENTS.md
 
-This file is the common entry point and operational instruction document for both ChatGPT and Zoo Code. It defines generic behaviour that is reusable across projects. Project-specific values, paths, status, authority records and decisions belong in the project `README.md` and the project's own governance documents.
+Generic AI rules for any project. Project values live in the README.
 
-## 1. Communication Language and Documentation Language
+## 1. Language
 
-1. Communicate with the Human in the language configured by the project README (Project Configuration → configured language).
-2. If no language is configured, ask the Human; do not assume a default.
-3. Follow the project's documentation language policy configured in the README. Do not prescribe a specific documentation language in this generic file.
-4. Keep technical terms in English where appropriate. Do not translate source code, technical specifications or project documents unless the Human asks.
+Reply in the language the Human uses. Follow the README documentation-language policy.
 
-## 2. Mandatory Session Bootstrap (Both Agents)
+## 2. Mandatory Session Bootstrap
 
-ChatGPT and Zoo Code must each complete this bootstrap independently. Neither may assume the other agent's summary represents the repository state.
-
-1. Treat a Human-provided `AGENTS.md` URL as the project entry point.
-2. Read `AGENTS.md` first.
-3. Identify the repository root from the provided URL. Do not hardcode a repository URL in this file.
-4. Locate `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md` in the same repository and branch context.
-5. Choose the alignment mode and follow that mode's order. The modes and their minimum reading are defined in §2.1 only.
-6. Verify the repository identity and the current `main` commit in both modes, and report which documents were read and which were not.
-7. Complete session alignment before proposing or undertaking implementation work.
-8. Read accessible repository documents directly. Never ask the Human to provide information that is already accessible in the repository.
-9. If a required document cannot be accessed, name the exact missing document and the access limitation. Report unverified information explicitly; never skip it silently or invent its contents.
-10. Report a concise alignment status covering: repository, branch and commit used as evidence; documents read and missing; project, milestone and task as declared by the README; confirmed decisions and unresolved Human decisions; and work authorization status.
-11. The compact project state document is a snapshot, never proof of implementation or test results. Independent review, independent QA and the authorization boundaries in §6 and §7 are unchanged in both modes.
-12. Bootstrap and alignment are read-only. They do not authorize implementation, code execution, file modification, commit, push, merge or deployment.
+1. Read this file first.
+2. Find the repository root from the link the Human gave.
+3. Read the project alignment protocol in the same repository.
+4. Choose the alignment mode from §2.1 and read what that mode lists.
+5. Before any work, state which repository and `main` commit you checked, and which documents you read or skipped.
+6. Alignment is read-only and authorises nothing. A missing document is reported, never invented.
 
 ### 2.1 Alignment modes
 
-Choose the mode before reading. The project configuration names the compact project state document; a project without one uses Full Alignment.
-
 | Mode | Use when | Minimum reading |
 |---|---|---|
-| **Full Alignment** | First session on a project, a major architecture change, a material conflict, or when the current state cannot be trusted | This file, the alignment protocol, the README Project Configuration, the primary entry document in full, then the Layer 2 documents the task needs |
-| **Continuation Alignment** | Ordinary continuation in the same project, when `main` and the compact project state document are verifiable | This file → the README Project Configuration section → the compact project state document → the relevant protocol sections and task-specific project documents |
+| Full Alignment | First session, major architecture change, material conflict, or an untrusted state | This file, the alignment protocol, the README Project Configuration, the primary entry document in full, then the task's Layer 2 documents |
+| Continuation Alignment | Ordinary continuation, when `main` and the compact project state document are verifiable | This file → README Project Configuration → compact project state → relevant protocol sections → task documents |
 
-Rules:
-
-1. Both modes verify the repository and the current `main` commit, and both report what was read and what was not.
-2. Continuation Alignment follows that fixed order and reads only the protocol sections and project documents that the task touches. It does not read the whole README, the whole charter or the whole repository on every session.
-3. A compact state document is a snapshot, never proof. It may record intent and decisions, but it never proves that code or tests work; verify an implementation claim against the code, tests or run evidence when the task depends on it.
-4. Additional reads or tests are driven by the task's evidence needs, not by completeness.
-5. Both modes preserve independent reasoning, evidence citation, the independent QA requirement, and the authorization boundary in §6 and §7. Neither mode authorises commit, push or merge.
+- Both modes verify the repository and `main` commit, and report what was read.
+- Neither mode authorises commit, push or merge.
 
 ## 3. Roles and Authority
 
-### Human — Project Owner / Sole Decision-Maker
+- **Human** — decides scope and priorities; grants document modify, code modify, test execution, commit, push and merge separately; sole Merge Approver; decides whether a review is needed.
+- **Reviewer** (optional) — reviews the pushed branch when the Human asks, and reports findings. Never directs the Worker, never approves a merge, never executes a merge.
+- **Worker** — executes the authorised work on a review branch, runs the required checks, reports evidence, and merges only after Human approval.
 
-- Defines objectives and priorities.
-- Authorizes implementation scope when required.
-- Resolves open decisions.
-- Is the sole Merge Approver.
+A review is not approval. The absence of a review is not approval. No one may use another role's approval.
 
-### ChatGPT — Reviewer / Workflow Coordinator
+## 4. Workflow
 
-- Reads and understands project documentation.
-- Analyses requirements and proposes solutions.
-- Defines bounded tasks for Zoo Code.
-- May instruct Zoo Code to execute explicitly authorized work.
-- Reviews actual diffs, code changes and verification evidence.
-- Issues targeted correction instructions where necessary.
-- Reports uncertainty honestly.
+1. The Human states the objective and the authorised scope.
+2. The Worker makes the change on a review branch, runs the checks, commits and pushes.
+3. The Worker reports the branch, commit SHA, checks and open items.
+4. If the Human wants a review, the Reviewer reads the pushed branch and reports findings.
+5. The Worker applies corrections the Human authorises.
+6. The Human approves the merge; the Worker merges and verifies the result.
 
-### Zoo Code — Worker / Merge Executor
+The review step is optional and controlled by the Human. The Human is not a channel for patches, diffs or files.
 
-- Reads and follows the same project documentation.
-- Executes authorized tasks.
-- Works on designated review branches.
-- Runs tests and required checks.
-- Provides actual diffs, commit references and verification evidence.
-- Performs merge and push only after explicit Human approval.
+## 5. Handoff and Evidence
 
-Authority rules:
+- The handoff is the pushed remote branch: repository, branch and commit SHA.
+- Evidence is the actual diff, the preflight output, the test results and the open items — never a summary alone.
+- No one claims work they did not do.
+- Never ask the Human to relay patches, diffs or repository files.
 
-- The Human remains the sole decision-maker and Merge Approver.
-- ChatGPT review is not Human approval.
-- Zoo Code merge execution is not approval; it follows Human approval.
-- No role may substitute for another role's approval authority.
+## 6. Authorization
 
-## 4. Standard Collaboration Workflow
-
-Use this as the default workflow between ChatGPT and Zoo Code:
-
-1. The Human describes the objective to ChatGPT.
-2. ChatGPT aligns with the project context and analyses the request.
-3. ChatGPT defines a specific task and implementation scope.
-4. Confirm explicit Human authorization where required.
-5. ChatGPT instructs Zoo Code to execute the authorized task, using an available integration or a forwardable task prompt.
-6. Zoo Code implements, tests, commits and pushes the review branch to the configured remote repository, once the task's push grant exists.
-7. Zoo Code reports the exact repository, branch name, commit SHA, checks and unresolved items.
-8. ChatGPT fetches and reviews the actual remote branch and diff with its own repository or GitHub access. A Worker summary is not a substitute for the actual diff.
-9. ChatGPT instructs Zoo Code to make targeted corrections if necessary, within the authorized scope; corrections are pushed to the same branch.
-10. ChatGPT reports the review outcome to the Human.
-11. The Human makes the final decision and explicitly approves or rejects merge.
-12. Zoo Code performs the approved merge and push, then verifies the resulting state.
-
-## 5. Communication and Handoff
-
-- The standard review handoff is the pushed remote review branch. Zoo Code reports the repository, branch name and commit SHA, and the reviewer reads that branch on the remote.
-- The handoff carries verifiable evidence — the actual diff or commit reference, the preflight output and the test results — never a narrative summary alone. The evidence and review rules are in §7.4.
-- If ChatGPT has an available direct communication or execution integration with Zoo Code, it may use that integration to issue authorized tasks. If no direct integration is available, it produces a concise, ready-to-forward task prompt for the Human to relay to Zoo Code.
-- ChatGPT must never claim to have contacted Zoo Code or executed an action when it has not.
-- ChatGPT must not ask the Human to download a patch, upload a patch, copy a diff, or relay repository files that are accessible on the remote branch. The Human's role is task direction, material decisions, required authorisations and merge approval, not transferring patches, diffs or repository content.
-- If the remote branch or its diff is genuinely inaccessible, ChatGPT states the exact access failure and the unavailable remote resource, uses the available repository or GitHub access first, and asks the Human to decide an alternative review method. A patch or other manual transfer is an exceptional fallback agreed with the Human, never the default workflow.
-
-## 6. Governance and Authorization
-
-- The Human remains the sole decision-maker and Merge Approver.
-- ChatGPT review is not Human approval.
-- Alignment is read-only and does not authorize implementation.
-- Proposals and suggestions are not approved decisions.
-- No agent may silently expand the approved task scope.
-- Existing project-specific governance documents remain authoritative.
-- Unclear authorization or conflicting rules require Human clarification.
-- Merge approval covers that merge only. It does not authorize the next milestone, implementation or follow-up work.
-- Human approval is never replaced by automation, CI or a successful review.
+- Document modify, code modify, test execution, commit, push and merge are separate grants. Ambiguous approval counts as no approval.
+- Merge only with explicit Human approval, and that approval covers that merge only.
+- Never edit a protected branch directly, force-push, or rewrite shared history.
+- Never commit secrets.
 
 ## 7. Development Workflow
 
-Project governance and authority live in the project's own documents; the README states where they are. This section defines the generic operating rules.
+### 1. Change classes
 
-### 1. Change classes and authorization
+| Class | Review branch | Commit / push | Merge |
+|---|---|---|---|
+| Documentation | Required | Explicit Human grant | Human approval only |
+| Code / milestone | Required | Explicit Human grant | Human approval only |
 
-| Class | Examples | Review branch | Commit / push | Merge |
-|---|---|---|---|---|
-| Documentation | README, protocol, agent instructions, plans | Required | Explicit Human grant, normally named in the work package | Human approval only |
-| Code / milestone | Source, tests, configuration | Required | Explicit Human grant, normally named in the work package | Human approval only |
+### 2. Branch and cleanup
 
-- Approval of one class or step never implies approval of another: document edit, code edit, test execution, commit, push and merge are separate grants.
-- Never edit a protected branch directly, force-push, `reset --hard`, or clean unapproved work.
-- Never add `.env`, API keys, passwords or other secrets to Git.
+1. Branch from the baseline named by the README. One branch covers one scope.
+2. Do not rewrite a branch that is under review; add a corrective commit.
+3. After merge, verify `main` contains the reviewed commit, then delete the remote branch. A superseded branch may be deleted once its content is in `main`; the original SHA need not be an ancestor.
+4. Delete references only — never commits or history. Local branch and worktree cleanup needs its own grant.
 
-### 2. Branch and scope
+### 3. Preflight
 
-1. Create the review branch from the latest committed baseline named by the project README.
-2. One branch covers one scope; commits contain only files in that scope.
-3. Preserve unrelated uncommitted work in the working tree. Do not stage, overwrite, reset or sweep it into the change.
-4. Once a review branch is under review, do not rewrite its history; add a corrective commit instead.
-
-**Post-merge branch cleanup.** These rules are mandatory merge-closeout steps. Human approval is required for the merge, but this policy grants standing operational authority to delete review-branch references that meet the safety conditions below. No separate approval is required for such cleanup.
-
-5. **Clean up merged review branches.** After a review branch has been merged, verify that the remote `main` contains its reviewed commit, then delete that remote review branch as part of the merge closeout. Do not leave completed review branches in place indefinitely.
-6. **Clean up superseded branches.** When a newer review branch replaces an older one, assess the older branch once the replacement is merged. Delete it only after confirming that every required change is preserved in the merged history. Preserved means the content is present in `main`; the original commit SHA does not have to be an ancestor when a change was incorporated through replacement commits. Record the content comparison as the evidence.
-7. **Preserve history.** Delete branch references only. Never delete commits, rewrite history, or force-push as part of cleanup.
-8. **Protect unfinished work.** Never delete `main`, protected or permanent branches, active review branches, or any branch holding unmerged work that has not been preserved.
-9. **Verify before deleting.** State the exact remote branch name and its HEAD, confirm the relevant changes are present in `main`, then delete. If a branch's status or contents are uncertain, stop and report instead of guessing.
-10. **Record the result once.** Report deleted branch names and their last HEADs in the merge closeout report. Do not produce a separate cleanup report unless an issue needs escalation.
-11. **Local cleanup needs its own grant.** The standing authority above covers remote review-branch references only. Deleting a local branch or removing a worktree requires explicit Human authorization in that session. Remove the worktree before deleting its branch, and stop and report if a branch cannot be deleted without rewriting history.
-
-### 3. Preflight validation
-
-The README defines the project's preflight command. Run that single command before commit.
-
-- Preflight is a manual validation step run by the Worker. It is not a Git hook. A hook or CI job exists only if the project explicitly says it is installed.
-- Preflight must report PASS or FAIL and name the failing item. It must not silently pass when a check cannot run.
-- For documentation changes, at minimum check the working tree, `git diff --check`, the change scope relative to the baseline, and document consistency.
-- For code changes, also run the project's test command and report the actual command, exit code and pass/fail count. Do not report "tests pass" without evidence.
-- UI work must include a screenshot or recording; headless work does not.
+Run the README preflight command before commit. It must report PASS or FAIL and name any failure. Documentation changes check the working tree, `git diff --check`, scope and consistency; code changes also run the tests and report the command, exit code and pass/fail count.
 
 ### 4. Evidence and review
 
-Reviews accept verifiable evidence only:
+Evidence follows §5. When a review is requested it has two passes: a line-by-line change review, and a whole-document consistency review covering stale facts, contradictions and broken references. Out-of-scope findings are reported, not fixed without approval. A review never replaces QA, evidence or Human approval.
 
-- the actual Git diff, read by the reviewer from the pushed remote branch
-- the preflight command and its actual output
-- test results, or screenshot/log evidence for UI work
-- a list of unresolved items
+### 5. Reporting
 
-The reviewer checks scope, contradictions, whether unapproved proposals were presented as approved rules, and whether tests and evidence match the claims. The Worker fixes issues with additional commits. The reviewer does not execute merges.
-
-The pushed review branch is the standard review medium: Zoo Code reports the repository, branch name and commit SHA, and the reviewer inspects the remote branch and diff directly. Asking the Human to transfer a patch or paste a diff is not part of this workflow; it is an exceptional fallback only when remote access genuinely fails and the Human agrees.
-
-#### Two-Layer Documentation Review
-
-Every documentation change must receive two distinct review passes. The Worker performs both layers in self-review and preflight; the reviewer performs both layers independently on the pushed review branch.
-
-1. **Change Review**
-   - Inspect the actual diff line by line.
-   - Verify factual accuracy, wording, scope compliance and consistency with the authorised requirements.
-   - Confirm that no unrelated or unauthorised change was introduced.
-2. **Document Consistency Review**
-   - Re-examine the complete affected document, not only the changed lines or sections.
-   - Check for contradictions, outdated statements, duplicated facts, inconsistent terminology, status descriptions and broken cross-references.
-   - Where a changed fact is repeated in another authoritative or dependent document, inspect those references for consistency.
-   - This layer is a concrete reason to re-examine an unchanged document or an already-read section; it does not conflict with the re-read limits in §7.6 and §9.
-
-Out-of-scope findings:
-
-- Record and report additional issues discovered outside the authorised change scope.
-- Do not silently expand the task or modify additional content.
-- Obtain Human authorisation before making an out-of-scope correction.
-
-Review outcome:
-
-- A successful Change Review alone is not sufficient for a documentation review PASS.
-- Both layers must pass, or the remaining findings must be reported explicitly.
-- These two layers add documentation checks only. They do not change the independent QA, evidence or Human approval requirements in §6 and §7.1–§7.3.
-
-### 5. Verification reporting
-
-- Keep CHECK, audit and verification reports concise.
-- Include PASS/FAIL, relevant commit and branch identifiers, changed files, essential verification evidence and unresolved concerns.
-- Provide enough evidence for ChatGPT to assess the result independently.
-- Avoid lengthy command logs and repeated explanations unless the requester asks for them.
-- Never sacrifice necessary evidence for brevity.
+One final report per work package: PASS/FAIL, branch, commit, changed files, evidence and open items. Do not re-issue a valid report.
 
 ### 6. Efficiency
 
-- Do not re-read unchanged documents or re-paste the same diff or report.
-- Do not create duplicate branches or commits for the same scope.
-- Do not retry or regenerate the same report without new evidence. Report the cause and the next step instead.
-- Tool-orchestration problems, such as repeated report generation or wasted context, are tooling problems, not evidence of a defect in the project's engine.
+Do not re-read unchanged documents, re-paste the same diff, or create duplicate branches. Do not repeat a report without new evidence. Tooling problems are not engine defects.
 
 ## 8. Document Roles
 
-The project README owns the documentation index and reading order. Use it to identify:
-
-- the primary entry document
-- architecture and design documents
-- decision records and authority order
-- status and progress documents
-- specifications, evidence and archived material
-
-Do not duplicate the project document list in this generic file.
-
-## 9. Workflow Optimization and Coordination
-
-This section defines how the roles keep coordination cheap without weakening verification. It is an operation and documentation rule. It does not change the Workflow Engine, the architecture, or the approval requirements in §6 and §7.
-
-### 1. Responsibilities
-
-| Role | Owns |
-|---|---|
-| **Human** | Project owner and decision-maker. Defines objectives, resolves material decisions, and retains approval authority for commit, push and merge, including sole Merge Approver. |
-| **ChatGPT** | Reviewer and Workflow Coordinator. Optimises the workflow, prepares coherent work packages, independently reviews the actual changes and evidence, and maintains documentation consistency. Owns the wording of documentation updates once the Human agrees and authorises them. |
-| **Zoo Code** | Executor. Executes the approved work package, performs appropriate self-review and refinement, and provides concise evidence-based reports. Does not expand scope and does not decide policy. |
-
-When ChatGPT has repository write access, ChatGPT updates the documentation directly. Zoo Code is the fallback that applies the agreed change when that access is not available. Ownership of the wording stays with ChatGPT in both cases.
-
-### 2. Operating principles
-
-1. **One-pass execution.** Plan the whole operation before acting. Read, run, verify and report in as few passes as the task safely allows, and combine independent steps into one command where practical.
-2. **One-pass output.** Produce one final report per work package, in the shape defined in §7.5, including the self-review outcome required by §9.3. Do not re-issue an earlier report that is still valid, and do not paste raw test output unless it is needed as evidence.
-3. **Minimum task fragmentation.** Bundle related work into one coherent work package with one review boundary. Split a task only where a real approval gate, an unknown that would change the design, or a review boundary requires it.
-4. **Minimum round trips.** Do not ask the Human or the repository for information that is already available. Request additional output, read more files or run more tests only when the evidence at hand is insufficient for a reliable decision, or when a risk or approval gate genuinely requires it.
-5. **Ask only for material decisions.** Ask the Human only for a material decision, genuine ambiguity, risk, or a required authorization. Detail that is already agreed is resolved by the executor inside the authorised scope.
-6. **Cut waste, not quality.** Reduce duplicate reads, reports, dispatches and unnecessary reruns. Never reduce independent QA, independent review or evidence quality to save tokens.
-
-### 3. Self-review and refinement
-
-For multi-step, multi-file, cross-module or otherwise complex work, the executor runs one cycle of:
-
-**Execute → Self-review → Refine → Final report**
-
-1. Review the completed work against the original requirements and acceptance criteria.
-2. Identify omissions, inconsistencies, defects and unnecessary changes.
-3. Refine within the original authorization.
-4. Re-verify the affected scope after refinement.
-5. Report what was reviewed, what was refined and what remains unresolved.
-
-One complete cycle is enough: do not loop, and do not treat self-review as a reason to re-run unaffected checks. For small, low-risk tasks, use proportionate checks without ceremony.
-
-Self-review never replaces independent QA or the reviewer's independent inspection of the actual changes.
-
-### 4. Evidence rules that still apply
-
-- Independent QA, evidence validation, the configured preflight command, review against the actual diff, and Human merge approval are unchanged. Token efficiency never justifies a weaker check, a suppressed traceback, or an unverified claim.
-- Test results are reported as a concise pass/fail summary with the actual command and its exit code. Raw machine-readable dumps are not pasted unless they are needed to diagnose a failure.
-- Identical commands are not re-run without new code, a changed environment, or a specific verification requirement.
-- Unchanged files and already-read sections are not re-read without a concrete reason.
-
-### 5. Boundaries
-
-Changing the collaboration roles, the collaboration workflow rules and their documentation is in scope for this section.
-
-Without separate authorization, this section does not change:
-
-- runtime agent roles or runtime architecture;
-- the Python Workflow Engine;
-- execution policies, budgets and retry rules;
-- independent QA and verification standards.
-
-Repeated workflow problems are recorded against the roles above. A tooling or orchestration problem is not a Workflow Engine defect.
+The README owns the document index and reading order. Do not duplicate the project document list here.

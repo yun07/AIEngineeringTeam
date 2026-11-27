@@ -4,7 +4,7 @@
 - **Documentation clarity revision:** `PROPOSAL — HUMAN APPROVAL REQUIRED` (2026-11-23). This revision clarifies evidence modes, stage ownership, authorization boundaries and uncertainty labels. It is not an approved rule until the Human accepts it.
 - **Generic workflow revision:** `PROPOSAL — HUMAN APPROVAL REQUIRED` (2026-11-23). Moves project-specific values out of this protocol and into the project README. The protocol remains unapproved until the Human accepts it.
 - **Purpose:** Start a new AI session and confirm that it understands the project before any work begins.
-- **Applies to:** any project, any repository-capable coding agent (for example Zoo Code), and any chat-based assistant (for example ChatGPT).
+- **Applies to:** any project, any repository-capable agent and any chat-based assistant. Product names used in this document are examples, not requirements.
 - **Human trigger phrase:** "Read this document and follow its steps to start the Alignment Test."
 
 This document has two parts:
