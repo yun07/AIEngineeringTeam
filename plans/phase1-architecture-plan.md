@@ -526,9 +526,9 @@ Current status: completed 2026-11-27 in run `20261127T232029Z-30ab3e` (project `
 
 Update `AI_Engineering_Team.md` progress and environment tables, and the plan checklist, only after M7 is complete. Write `plans/phase1-backlog.md` with the deferred items in section G.
 
-M0 through M8 are sequential: each milestone begins only after the previous one is completed and recorded. M5, M6 and M7 are complete; M8 is next. M7 required completed M5 and M6. M8 runs only after M7 is complete and accepted, and after this closeout record is merged into `main`.
+M0 through M8 are sequential: each milestone begins only after the previous one is completed and recorded. M5, M6, M7 and M8 are complete. M7 required completed M5 and M6. M8 ran only after M7 was complete and accepted, and after that closeout record was merged into `main`.
 
-Current status: documentation prepared on review branch `m8-docs-progress`, based on `main` at `497772b`. [`phase1-backlog.md`](phase1-backlog.md) records the section G deferrals, the open decisions and the three-role versus two-role comparison plan; the charter environment table and Current Stage wording are refreshed; the archived M0 record is untouched. M8 is not complete until the Human approves the merge into `main`: a closeout commit then records the merge SHA, ticks the checklist and records M8 acceptance separately. Phase 1 acceptance remains a separate Human decision recorded in the M7 closeout.
+Current status: completed in the M8 documentation work package on review branch `m8-docs-progress`. The documentation commit is `bdbeb4f`, merged into `main` by fast-forward together with this closeout record, with the Human merge approval recorded 2026-11-27. [`phase1-backlog.md`](phase1-backlog.md) registers the section G deferrals, the open decisions and the three-role versus two-role comparison plan; the charter environment table and Current Stage wording are refreshed; the archived M0 record is untouched. Phase 1 acceptance remains a separate Human decision recorded in the M7 closeout and is not claimed here.
 
 ### After Phase 1 — architecture comparison
 
@@ -662,7 +662,7 @@ Status legend: `[x]` = completion criteria evidenced; `[ ]` = not evidenced. The
 - [x] M5 Validate the live provider adapter on one small task with a tiny budget, rejected placeholders and per-execution QA approvals — live validation completed in run `20261127T194853Z-f66a68` with one approved QA execution (exit 0); closeout record merged into `main` at `3e48fa7`
 - [x] M6 Write the Snake specification with criterion IDs and a QA test plan that includes a negative test — specification written in `plans/snake-spec.md`, Human review completed with three corrections applied (`438a5b5`), merged into `main`
 - [x] M7 Run the live Snake end-to-end success case, verify acceptance criteria and complete the human QA test file spot check — completed in run `20261127T232029Z-30ab3e` (3/3 tasks done, 3/3 QA pass, 56 tests, actual USD 0.294202); Human spot check accepted 2026-11-27; merged into `main` at `1b48396`
-- [ ] M8 Update progress documentation only after M7, record the three-role versus two-role comparison plan and the deferred backlog — documentation prepared on review branch `m8-docs-progress`: `plans/phase1-backlog.md` written from section G, charter and plan updated, archived documents untouched; merge approval and M8 acceptance not recorded
+- [x] M8 Update progress documentation only after M7, record the three-role versus two-role comparison plan and the deferred backlog — completed: `plans/phase1-backlog.md` written from section G, charter and plan updated, archived documents untouched; documentation commit `bdbeb4f` merged into `main` by fast-forward with the M8 closeout record; Human merge approval 2026-11-27
 
 ### Milestone contract table
 
@@ -678,7 +678,7 @@ This table states the same requirements already defined in sections E–F. It ad
 | M5 | Live provider validation | Adapter wiring, tiny budget, per-execution approval | M4 | Placeholder models and invalid pricing refused; usage and cost recorded; redaction verified; approval prompt observed | Run `20261127T194853Z-f66a68` report, approvals log, usage records | Validation recorded 2026-11-27; closeout merged at `3e48fa7` |
 | M6 | Snake specification | Requirement, criterion IDs, headless mode, QA test plan with a negative test | M5 | Every criterion ID maps to at least one planned check; negative case identifiable | `plans/snake-spec.md`; commits `3e36ce6` and `438a5b5` | Human review completed 2026-11-27; three findings corrected before merge |
 | M7 | Snake live end-to-end run | Happy path on the live provider plus human spot check | Completed M5 and M6 | Section F criteria satisfied; report published | Run `20261127T232029Z-30ab3e/report.md`, approvals log, recorded spot check; merged at `1b48396` | Spot check completed and accepted 2026-11-27 |
-| M8 | Documentation and progress | Charter and plan updates, `plans/phase1-backlog.md` | M7 | Progress recorded; backlog written; archived documents untouched | Updated documents | Pending — documentation prepared on the review branch; merge approval not recorded |
+| M8 | Documentation and progress | Charter and plan updates, `plans/phase1-backlog.md` | M7 | Progress recorded; backlog written; archived documents untouched | Updated documents; documentation commit `bdbeb4f` merged at M8 closeout | Merge approved by the Human 2026-11-27; formal M8 acceptance not separately recorded |
 
 ### Appendix A — M4 Design Baseline (C1–C7)
 

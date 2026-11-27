@@ -12,8 +12,8 @@ Canonical milestone status, scope and evidence are recorded in `plans/phase1-arc
 
 - Phase 1 is in progress and is not accepted. M4 is complete, reviewed and merged into `main` (implementation merge `9c11b6a`). M5 live validation and its closeout record are merged at `3e48fa7`. M6 is complete: the Snake specification `plans/snake-spec.md` was reviewed by the Human, three findings were corrected, and it is merged into `main`.
 - M7 is complete: live run `20261127T232029Z-30ab3e` finished `completed` with 3/3 tasks done, 3/3 QA pass and 56 passing tests, at an actual cost of USD 0.294202; the Human accepted the QA test file spot check on 2026-11-27, and the M7 implementation and fixture are merged into `main` at `1b48396`.
-- **M8 is the current milestone**: its documentation work package is prepared on review branch `m8-docs-progress` (the deferred backlog is written and the charter and plan are updated), and it awaits Human merge approval and M8 acceptance.
-- No work beyond M8 is authorised by this snapshot.
+- **M8 is complete**: the deferred backlog is written in `plans/phase1-backlog.md`, the charter and plan are refreshed, and documentation commit `bdbeb4f` is merged into `main` by fast-forward with the M8 closeout record; Human merge approval 2026-11-27.
+- No further work is authorised by this snapshot.
 - The WP2 Revision 1 target architecture is an accepted architecture baseline; its observability, governance and evolution steps (A1–A4) are not authorised.
 - Per-milestone status, including the M1–M3 "present but not formally closed" position, is recorded only in the Phase 1 plan.
 
@@ -23,7 +23,7 @@ Architecture and accepted decisions are recorded in `plans/adr-001-hybrid-archit
 
 ## 4. Outstanding Human decisions
 
-- When to authorise M8, the next milestone.
+- Whether and when to record Phase 1 acceptance, and when to authorise the three-role versus two-role comparison.
 - Broader open project and design decisions are listed in [AI_Engineering_Team.md](AI_Engineering_Team.md) §7 ("Still open"). They are not prerequisites for M8, and remain unresolved rather than approved decisions.
 
 ## 5. Evidence pointers
@@ -34,7 +34,7 @@ Architecture and accepted decisions are recorded in `plans/adr-001-hybrid-archit
 - M6: specification `plans/snake-spec.md`; commits `3e36ce6` (specification) and `438a5b5` (review corrections). Human review on 2026-11-27 raised three findings — the initial-state formula, the absence of a public way to build test states, and missing CLI negative coverage — all corrected before merge. Merged into `main` by fast-forward in the M6 closeout work package.
 - M7: live run `20261127T232029Z-30ab3e` (project `snake`, provider `deepseek`, model `deepseek-flash`, budget USD 0.50): 3/3 tasks done, 3/3 QA pass, final QA suite 56 tests with exit code 0, nine per-execution approvals all granted, actual USD 0.294202 with USD 0.205798 remaining. Human QA test file spot check accepted 2026-11-27. Implementation and fixture merged at `1b48396`. Two earlier attempts blocked before completion — `20261127T225541Z-73d0a6` on `max_output_tokens` and `20261127T230551Z-89ff83` on `max_context_tokens` — and remain evidence only.
 
-- M8: documentation work package on review branch `m8-docs-progress`; deferred register `plans/phase1-backlog.md`; merge SHA not yet recorded.
+- M8: deferred register `plans/phase1-backlog.md`; documentation commit `bdbeb4f`, merged into `main` by fast-forward with the M8 closeout commit in the same work package; Human merge approval 2026-11-27.
 
 ## 6. Update rule
 

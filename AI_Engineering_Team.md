@@ -390,7 +390,7 @@ The approved architecture is Hybrid: this project builds the decisions, while pr
 
 Implementation present, formal closeout and Human acceptance are three separate states. The Phase 1 plan is the canonical milestone record: milestones, dependencies, completion criteria, required evidence and acceptance are recorded there and nowhere else. [`PROJECT_STATE.md`](PROJECT_STATE.md) is the compact continuation snapshot; it records the current position and which work is authorised. This charter states no milestone status of its own.
 
-`NO TASK AUTHORISED`: no work beyond the current documentation package is authorised by this charter. This charter records no milestone status: the current position and what is authorised are recorded in [`PROJECT_STATE.md`](PROJECT_STATE.md), and milestone status is recorded only in the Phase 1 plan. Each further step requires its own explicit Human authorization.
+`NO TASK AUTHORISED`: no work beyond the M8 documentation package recorded in the Phase 1 plan is authorised by this charter. This charter records no milestone status: the current position and what is authorised are recorded in [`PROJECT_STATE.md`](PROJECT_STATE.md), and milestone status is recorded only in the Phase 1 plan. Each further step requires its own explicit Human authorization.
 
 The Phase 1 blueprint is kept in `plans/phase1-architecture-plan.md` and is subordinate to this charter and to ADR-001.
 
