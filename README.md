@@ -28,7 +28,7 @@ QA 未通過時，系統會帶住 QA 失敗證據重試一次（`max_attempts = 
 | Tests / evidence / logs | `tests/`, `runs/`, `projects/` |
 | Git repository | `https://github.com/yun07/AIEngineeringTeam` |
 | Baseline branch | `main`; review branches are based on the latest `origin/main` |
-| Current milestone / phase | Phase 1 in progress, not accepted; see [`PROJECT_STATE.md`](PROJECT_STATE.md) |
+| Current milestone / phase | Phase 1 accepted 2026-11-28; see [`PROJECT_STATE.md`](PROJECT_STATE.md) |
 | Current task | No task authorised; current position is recorded in [`PROJECT_STATE.md`](PROJECT_STATE.md) |
 | Configured language | Cantonese, Traditional Chinese |
 | Documentation language policy | `README.md`: Traditional Chinese; `AGENTS.md` and `UNIVERSAL_SESSION_ALIGNMENT_PROTOCOL.md`: English |
@@ -95,7 +95,7 @@ flowchart TD
 
 ## 6. 現況
 
-Phase 1 進行中，**未 acceptance**。即時位置、下一步同未授權事項見 [`PROJECT_STATE.md`](PROJECT_STATE.md)；milestone 狀態、驗收條件同證據以 [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) 為準；工作流程、審批同 review 規則見 [`AGENTS.md`](AGENTS.md)。專案限制（hook／CI 未安裝、preflight 要人手跑）見 §1.1 `Project limitations`。
+Phase 1 已於 2026-11-28 由 Human acceptance 接受。即時位置同未授權事項見 [`PROJECT_STATE.md`](PROJECT_STATE.md)；milestone 狀態、驗收條件同證據以 [`plans/phase1-architecture-plan.md`](plans/phase1-architecture-plan.md) 為準；工作流程、審批同 review 規則見 [`AGENTS.md`](AGENTS.md)。專案限制（hook／CI 未安裝、preflight 要人手跑）見 §1.1 `Project limitations`。
 
 ## 7. 文件索引（唯一 Document Index）
 

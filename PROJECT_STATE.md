@@ -10,9 +10,9 @@ Canonical milestone status, scope and evidence are recorded in `plans/phase1-arc
 
 ## 2. Where the project stands
 
-- Phase 1 is in progress and is not accepted. M4 is complete, reviewed and merged into `main` (implementation merge `9c11b6a`). M5 live validation and its closeout record are merged at `3e48fa7`. M6 is complete: the Snake specification `plans/snake-spec.md` was reviewed by the Human, three findings were corrected, and it is merged into `main`.
+- Phase 1 is accepted: the Human recorded Phase 1 acceptance on 2026-11-28, after M7's live run and the QA test file spot check. M4 is complete, reviewed and merged into `main` (implementation merge `9c11b6a`). M5 live validation and its closeout record are merged at `3e48fa7`. M6 is complete: the Snake specification `plans/snake-spec.md` was reviewed by the Human, three findings were corrected, and it is merged into `main`.
 - M7 is complete: live run `20261127T232029Z-30ab3e` finished `completed` with 3/3 tasks done, 3/3 QA pass and 56 passing tests, at an actual cost of USD 0.294202; the Human accepted the QA test file spot check on 2026-11-27, and the M7 implementation and fixture are merged into `main` at `1b48396`.
-- **M8 is complete**: the deferred backlog is written in `plans/phase1-backlog.md`, the charter and plan are refreshed, and documentation commit `bdbeb4f` is merged into `main` by fast-forward with the M8 closeout record; Human merge approval 2026-11-27.
+- **M8 is complete and accepted**: the deferred backlog is written in `plans/phase1-backlog.md`, the charter and plan are refreshed, and documentation commit `bdbeb4f` is merged into `main` by fast-forward at `2a62e23`; Human merge approval 2026-11-27, M8 and Phase 1 acceptance 2026-11-28.
 - No further work is authorised by this snapshot.
 - The WP2 Revision 1 target architecture is an accepted architecture baseline; its observability, governance and evolution steps (A1–A4) are not authorised.
 - Per-milestone status, including the M1–M3 "present but not formally closed" position, is recorded only in the Phase 1 plan.
@@ -23,7 +23,7 @@ Architecture and accepted decisions are recorded in `plans/adr-001-hybrid-archit
 
 ## 4. Outstanding Human decisions
 
-- Whether and when to record Phase 1 acceptance, and when to authorise the three-role versus two-role comparison.
+- None outstanding from M8: Phase 1 acceptance is recorded on 2026-11-28, and the three-role versus two-role comparison was declined on the same date.
 - Broader open project and design decisions are listed in [AI_Engineering_Team.md](AI_Engineering_Team.md) §7 ("Still open"). They are not prerequisites for M8, and remain unresolved rather than approved decisions.
 
 ## 5. Evidence pointers

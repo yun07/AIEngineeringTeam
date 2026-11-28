@@ -72,7 +72,7 @@ Recorded per the plan's "After Phase 1 — architecture comparison" section and 
 | Human interventions | Number of per-execution approvals, denials and escalations | Approvals log for the run |
 
 - **Method:** a two-role pipeline needs its own run with the Orchestrator removed and the plan supplied directly. That is a configuration change outside Phase 1 scope, so it is not run here; the comparison stays an evaluation of the same system.
-- **Status:** plan recorded. The result is pending and is recorded in this section only after the Human decides Phase 1 acceptance and authorises the evaluation.
+- **Status:** the Human decided on 2026-11-28 not to run this comparison. No result will be recorded and no work is planned; the metrics and method stay here as a historical definition.
 
 ## 5. Other recorded deferrals (pointers outside section G)
 
