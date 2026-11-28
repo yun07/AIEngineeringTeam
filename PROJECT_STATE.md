@@ -23,7 +23,7 @@ Architecture and accepted decisions are recorded in `plans/adr-001-hybrid-archit
 
 ## 4. Outstanding Human decisions
 
-- None outstanding from M8: Phase 1 acceptance is recorded on 2026-11-28, and the three-role versus two-role comparison was declined on the same date.
+- None outstanding from M8: Phase 1 acceptance is recorded on 2026-11-28. The three-role versus two-role comparison was authorised on 2026-11-28 and is recorded in `plans/phase1-backlog.md` §4: the Orchestrator was 1.1% of run cost, and no two-role run was executed.
 - Broader open project and design decisions are listed in [AI_Engineering_Team.md](AI_Engineering_Team.md) §7 ("Still open"). They are not prerequisites for M8, and remain unresolved rather than approved decisions.
 
 ## 5. Evidence pointers
@@ -37,6 +37,8 @@ Architecture and accepted decisions are recorded in `plans/adr-001-hybrid-archit
 - M8: deferred register `plans/phase1-backlog.md`; documentation commit `bdbeb4f`, merged into `main` by fast-forward with the M8 closeout commit in the same work package; Human merge approval 2026-11-27.
 
 - M1–M3: formal closeout recorded 2026-11-28 from the existing suite at `ad0d2ea` — 326 passed, 5 skipped, 0 failed (`python -m pytest -o addopts= -m "not live" --tb=no -q`); the tests cited for each milestone are listed in the Phase 1 plan.
+
+- Three-role comparison baseline: M7 run `20261127T232029Z-30ab3e` Cost table — developer USD 0.041077 (14 calls), orchestrator USD 0.003216 (1 call), QA USD 0.249909 (48 calls), total USD 0.294202; the result is recorded in `plans/phase1-backlog.md` §4.
 
 ## 6. Update rule
 

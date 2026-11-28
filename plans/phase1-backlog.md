@@ -55,7 +55,7 @@ Section G records one revisit trigger per design decision. They are the conditio
 - **Item 7 — partly resolved.** QA used the same model as the Developer in Phase 1. Whether to assign a different model or a second provider per role, and how to compare cost, speed and quality, remains open.
 - The charter's own open list is [`AI_Engineering_Team.md`](../AI_Engineering_Team.md) §7 "Still open"; it is pointed to here, not copied.
 
-## 4. Three-role versus two-role comparison plan
+## 4. Three-role versus two-role comparison
 
 Recorded per the plan's "After Phase 1 — architecture comparison" section and the M8 checklist entry. Recording the plan is documentation only; it changes no code.
 
@@ -72,7 +72,24 @@ Recorded per the plan's "After Phase 1 — architecture comparison" section and 
 | Human interventions | Number of per-execution approvals, denials and escalations | Approvals log for the run |
 
 - **Method:** a two-role pipeline needs its own run with the Orchestrator removed and the plan supplied directly. That is a configuration change outside Phase 1 scope, so it is not run here; the comparison stays an evaluation of the same system.
-- **Status:** the Human decided on 2026-11-28 not to run this comparison. No result will be recorded and no work is planned; the metrics and method stay here as a historical definition.
+
+### 4.1 Measured result from the M7 run
+
+Measured on the three-role run only. No two-role run was executed. The figures come from `runs/20261127T232029Z-30ab3e/report.md`; the two-role figure is stated as a bound, not a measurement.
+
+| Metric | Three-role value (measured) | Source |
+|---|---|---|
+| Total cost | USD 0.294202 of a USD 0.50 budget | Run report, Cost table |
+| Cost per agent | developer USD 0.041077 (14 calls), orchestrator USD 0.003216 (1 call), QA USD 0.249909 (48 calls) | Run report, Cost table |
+| Orchestrator share | 1.1% of cost and 1 of 63 calls (1.6%) | Derived from the Cost table |
+| Attempts | 3 tasks, each at attempt 1, no retry started | Run report, Execution table |
+| Defects found by QA | No product defect reported. Three failed QA executions were faults in QA's own test oracles (T1 two, T2 one, T3 one) and were fixed inside QA | QA evidence summaries; 9 recorded command executions |
+| Defects missed | None recorded after the pass verdict, and the human spot check accepted the suite. A single run cannot bound this | QA evidence; recorded spot check |
+| Human interventions | 9 per-execution approvals, all granted; 0 denials; 0 escalations; 1 post-run QA test file spot check; 2 earlier attempts blocked by token limits | Approvals table; Phase 1 plan §E M7 status |
+
+- **Two-role projection:** removing the Orchestrator saves at most USD 0.003216, about 1.1% of this run, and only if the plan is supplied at no cost. If the Developer must produce the plan, its cost rises by an unmeasured amount. Attempts, QA defect detection and human intervention under two roles are unmeasured.
+- **Conclusion:** on this run the Orchestrator cost about 1% of the total and produced a three-task plan whose criteria mapped one-to-one to QA checks. The measured upside of removing it is small and the quality risk is unmeasured, so this evidence does not justify a two-role pipeline. The evaluation changed no code and no engine behaviour.
+- **Status:** authorised by the Human on 2026-11-28 and the result recorded on the same date from the three-role baseline. No two-role run was executed and none is planned.
 
 ## 5. Other recorded deferrals (pointers outside section G)
 

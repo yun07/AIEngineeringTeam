@@ -538,7 +538,7 @@ Current status: completed in the M8 documentation work package on review branch 
 
 ### After Phase 1 — architecture comparison
 
-Once the Snake run is accepted, compare the three-role pipeline with a two-role pipeline: Developer plus Independent QA, no Orchestrator. Use the recorded run data: cost, number of attempts, defects found by QA, defects missed and human interventions. This is an evaluation of the same system, not new Phase 1 scope, and it changes no code by itself. Record the result in `plans/phase1-backlog.md`. The Human decided on 2026-11-28 not to run this comparison, so no result will be recorded; the method stays defined in [`phase1-backlog.md`](phase1-backlog.md) §4 for reference.
+Once the Snake run is accepted, compare the three-role pipeline with a two-role pipeline: Developer plus Independent QA, no Orchestrator. Use the recorded run data: cost, number of attempts, defects found by QA, defects missed and human interventions. This is an evaluation of the same system, not new Phase 1 scope, and it changes no code by itself. Record the result in `plans/phase1-backlog.md`. The Human authorised this comparison on 2026-11-28; the measured three-role baseline and the bounded two-role projection are recorded in [`phase1-backlog.md`](phase1-backlog.md) §4. No two-role run was executed, because that needs the Orchestrator removed, which is a configuration change outside Phase 1 scope.
 
 ---
 
