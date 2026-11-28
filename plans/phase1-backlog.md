@@ -80,7 +80,7 @@ These are already recorded elsewhere; they are listed here for completeness and 
 
 - `README.md` §5 deliberate non-goals for the engine and execution layer: Docker isolation, Git worktree isolation for generated work, SQLite, checkpoint resume, parallel tasks, external monitoring, self-improvement, a Consultant role, and mobile or voice approval. Review worktrees remain a tooling operation, not Phase 1 engine isolation.
 - `README.md` §1.1 Project limitations: no Git hook and no CI are installed, and preflight is manual.
-- `plans/phase1-architecture-plan.md` checklist: M1–M3 implementations are present, but their formal closeout is `UNVERIFIED`.
+- `plans/phase1-architecture-plan.md` checklist: the M1–M3 formal closeout was recorded on 2026-11-28 from existing test evidence, so this item is closed.
 - `PROJECT_STATE.md` §2: the WP2 Revision 1 observability, governance and evolution steps A1–A4 are not authorised.
 
 ## 6. Update rule

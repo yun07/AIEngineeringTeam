@@ -15,7 +15,7 @@ Canonical milestone status, scope and evidence are recorded in `plans/phase1-arc
 - **M8 is complete and accepted**: the deferred backlog is written in `plans/phase1-backlog.md`, the charter and plan are refreshed, and documentation commit `bdbeb4f` is merged into `main` by fast-forward at `2a62e23`; Human merge approval 2026-11-27, M8 and Phase 1 acceptance 2026-11-28.
 - No further work is authorised by this snapshot.
 - The WP2 Revision 1 target architecture is an accepted architecture baseline; its observability, governance and evolution steps (A1–A4) are not authorised.
-- Per-milestone status, including the M1–M3 "present but not formally closed" position, is recorded only in the Phase 1 plan.
+- Per-milestone status, including the M1–M3 closeouts recorded on 2026-11-28 from existing test evidence, is recorded only in the Phase 1 plan.
 
 ## 3. Where the rules live
 
@@ -35,6 +35,8 @@ Architecture and accepted decisions are recorded in `plans/adr-001-hybrid-archit
 - M7: live run `20261127T232029Z-30ab3e` (project `snake`, provider `deepseek`, model `deepseek-flash`, budget USD 0.50): 3/3 tasks done, 3/3 QA pass, final QA suite 56 tests with exit code 0, nine per-execution approvals all granted, actual USD 0.294202 with USD 0.205798 remaining. Human QA test file spot check accepted 2026-11-27. Implementation and fixture merged at `1b48396`. Two earlier attempts blocked before completion — `20261127T225541Z-73d0a6` on `max_output_tokens` and `20261127T230551Z-89ff83` on `max_context_tokens` — and remain evidence only.
 
 - M8: deferred register `plans/phase1-backlog.md`; documentation commit `bdbeb4f`, merged into `main` by fast-forward with the M8 closeout commit in the same work package; Human merge approval 2026-11-27.
+
+- M1–M3: formal closeout recorded 2026-11-28 from the existing suite at `ad0d2ea` — 326 passed, 5 skipped, 0 failed (`python -m pytest -o addopts= -m "not live" --tb=no -q`); the tests cited for each milestone are listed in the Phase 1 plan.
 
 ## 6. Update rule
 
